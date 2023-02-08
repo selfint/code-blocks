@@ -1,6 +1,6 @@
 import axios from "axios";
 import { ChildProcess, exec } from "child_process";
-import { GetSubtreesArgs, BlockLocationTree, MoveItemArgs, MoveItemResponse } from "./types";
+import { GetSubtreesArgs, MoveItemArgs, MoveItemResponse, GetSubtreesResponse } from "./types";
 import * as vscode from "vscode";
 
 const GET_SUBTREES_ENDPOINT = "http://localhost:8000/get_subtrees";
@@ -38,13 +38,13 @@ export class CodeBlocksServerRC {
     } else if (this.instances > 1) {
       this.instances -= 1;
     } else {
-      console.error(`UNREACHABLE: CodeBlocksServerRc instances < 0 (instances=${this.instances})`);
+      console.error(`UNREACHABLE: CodeBlocksServerRC instances < 0 (instances=${this.instances})`);
     }
     console.log(`Stop called, now instances=${this.instances}`);
   }
 }
 
-export async function getBlockTrees(args: GetSubtreesArgs): Promise<BlockLocationTree[]> {
+export async function getBlockTrees(args: GetSubtreesArgs): Promise<GetSubtreesResponse> {
   if (args.language === "typescriptreact") {
     args.language = "tsx";
   }

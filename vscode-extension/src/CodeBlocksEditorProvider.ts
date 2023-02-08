@@ -6,22 +6,18 @@ import { BlockLocation, MoveItemArgs } from "./codeBlocks/types";
 import { getQueryStrings } from "./codeBlocks/queries";
 import { SUPPORTED_LANGUAGES } from "./codeBlocks/types";
 
-/**
- * Provider for cat scratch editors.
- *
- * Cat scratch editors are used for `.cscratch` files, which are just json files.
- * To get started, run this extension and open an empty `.cscratch` file in VS Code.
- *
- * This provider demonstrates:
- *
- * - Setting up the initial webview for a custom editor.
- * - Loading scripts and styles in a custom editor.
- * - Synchronizing changes between a text document and a custom editor.
- */
+function getDocLang(document: vscode.TextDocument): string {
+  let lang = document.languageId;
+
+  if (lang === "typescriptreact") {
+    lang = "tsx";
+  }
+
+  return lang;
+}
+
 export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider {
   private static readonly viewType = "codeBlocks.editor";
-
-  private static readonly scratchCharacters = ["😸", "😹", "😺", "😻", "😼", "😽", "😾", "🙀", "😿", "🐱"];
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
@@ -53,21 +49,9 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     };
     webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
 
-    function getDocLang(): string {
-      let lang = document.languageId;
-
-      if (lang === "typescriptreact") {
-        lang = "tsx";
-      }
-
-      console.log(`Doclang: ${lang}`);
-
-      return lang;
-    }
-
     async function updateWebview() {
       const text = document.getText();
-      const lang = getDocLang();
+      const lang = getDocLang(document);
 
       // @ts-expect-error
       if (SUPPORTED_LANGUAGES.includes(lang)) {
@@ -77,7 +61,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
           // @ts-expect-error
           items: getQueryStrings(lang),
           // @ts-expect-error
-          language: getDocLang(),
+          language: getDocLang(document),
         });
 
         webviewPanel.webview.postMessage({
@@ -117,9 +101,9 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
       const blockTrees = await getBlockTrees({
         content: newContent,
         // @ts-expect-error
-        items: getQueryStrings(getDocLang()),
+        items: getQueryStrings(getDocLang(document)),
         // @ts-expect-error
-        language: getDocLang(),
+        language: getDocLang(document),
       });
 
       webviewPanel.webview.postMessage({
@@ -135,36 +119,44 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
 
       switch (command) {
         case "move":
-          const src: BlockLocation = args.src;
-          const dst: BlockLocation = args.dst;
-          const moveArgs: MoveItemArgs = {
-            content: document.getText(),
-            src_item: src,
-            dst_item: dst,
-            //@ts-expect-error
-            item_types: getQueryStrings(document.languageId),
-            //@ts-expect-error
-            language: getDocLang(),
-          };
-
-          const response = await moveBlock(moveArgs);
-
-          if (response.Err !== undefined) {
-            vscode.window.showErrorMessage(`Failed to move block: ${response.Err}`);
-          } else if (response.Ok !== undefined) {
-            const newContent = response.Ok;
-
-            const edit = new vscode.WorkspaceEdit();
-
-            edit.replace(document.uri, new vscode.Range(0, 0, document.lineCount, 0), newContent);
-
-            await vscode.workspace.applyEdit(edit);
-          }
+          await this.handleMoveCommand(args, document);
           break;
       }
     }, undefined);
 
     await updateWebview();
+  }
+
+  private async handleMoveCommand(
+    args: { src: BlockLocation; dst: BlockLocation },
+    document: vscode.TextDocument
+  ): Promise<void> {
+    const moveArgs: MoveItemArgs = {
+      content: document.getText(),
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      src_item: args.src,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      dst_item: args.dst,
+      //@ts-expect-error
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      item_types: getQueryStrings(document.languageId),
+      //@ts-expect-error
+      language: getDocLang(document),
+    };
+
+    const response = await moveBlock(moveArgs);
+
+    if (response.Err !== undefined) {
+      vscode.window.showErrorMessage(`Failed to move block: ${response.Err}`);
+    } else if (response.Ok !== undefined) {
+      const newContent = response.Ok;
+
+      const edit = new vscode.WorkspaceEdit();
+
+      edit.replace(document.uri, new vscode.Range(0, 0, document.lineCount, 0), newContent);
+
+      await vscode.workspace.applyEdit(edit);
+    }
   }
 
   /**
@@ -188,7 +180,6 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
 
     const nonce = getNonce();
 
-    // Tip: Install the es6-string-html VS Code extension to enable code highlighting below
     return /*html*/ `
       <!DOCTYPE html>
       <html lang="en">
@@ -204,69 +195,5 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
         </body>
       </html>
     `;
-  }
-
-  /**
-   * Add a new scratch to the current document.
-   */
-  private addNewScratch(document: vscode.TextDocument) {
-    const json = this.getDocumentAsJson(document);
-    const character =
-      CodeBlocksEditorProvider.scratchCharacters[
-        Math.floor(Math.random() * CodeBlocksEditorProvider.scratchCharacters.length)
-      ];
-    json.scratches = [
-      ...(Array.isArray(json.scratches) ? json.scratches : []),
-      {
-        id: getNonce(),
-        text: character,
-        created: Date.now(),
-      },
-    ];
-
-    return this.updateTextDocument(document, json);
-  }
-
-  /**
-   * Delete an existing scratch from a document.
-   */
-  private deleteScratch(document: vscode.TextDocument, id: string) {
-    const json = this.getDocumentAsJson(document);
-    if (!Array.isArray(json.scratches)) {
-      return;
-    }
-
-    json.scratches = json.scratches.filter((note: any) => note.id !== id);
-
-    return this.updateTextDocument(document, json);
-  }
-
-  /**
-   * Try to get a current document as json text.
-   */
-  private getDocumentAsJson(document: vscode.TextDocument): any {
-    const text = document.getText();
-    if (text.trim().length === 0) {
-      return {};
-    }
-
-    try {
-      return JSON.parse(text);
-    } catch {
-      throw new Error("Could not get document as json. Content is not valid json");
-    }
-  }
-
-  /**
-   * Write out the json to a given document.
-   */
-  private updateTextDocument(document: vscode.TextDocument, json: any) {
-    const edit = new vscode.WorkspaceEdit();
-
-    // Just replace the entire document every time for this example extension.
-    // A more complete extension should compute minimal edits instead.
-    edit.replace(document.uri, new vscode.Range(0, 0, document.lineCount, 0), JSON.stringify(json, null, 2));
-
-    return vscode.workspace.applyEdit(edit);
   }
 }
