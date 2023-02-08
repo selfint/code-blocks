@@ -1,0 +1,28 @@
+---
+source: tests/rust/main.rs
+expression: "get_subtrees(&[\"mod_item\", \"function_item\"],\n    &mut build_tree(r#\"\nmod m {\n    fn foo() {\n        fn in_foo() {\n            bar();\n        }\n    }\n\n    fn bar() {}\n}\n\nfn baz() {}\n\"#).walk())"
+---
+[
+    NodeTree {
+        node: {Node mod_item (1, 0) - (9, 1)},
+        children: [
+            NodeTree {
+                node: {Node function_item (2, 4) - (6, 5)},
+                children: [
+                    NodeTree {
+                        node: {Node function_item (3, 8) - (5, 9)},
+                        children: [],
+                    },
+                ],
+            },
+            NodeTree {
+                node: {Node function_item (8, 4) - (8, 15)},
+                children: [],
+            },
+        ],
+    },
+    NodeTree {
+        node: {Node function_item (11, 0) - (11, 11)},
+        children: [],
+    },
+]

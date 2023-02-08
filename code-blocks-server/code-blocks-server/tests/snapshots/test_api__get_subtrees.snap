@@ -1,0 +1,74 @@
+---
+source: tests/test_api.rs
+expression: "post_request!(get_subtrees_endpoint, GetSubtreesArgs\n    {\n        items : get_query_strings(SupportedLanguage :: Rust), language :\n        SupportedLanguage :: Rust, content :\n        r#\"\nmod m {\n    fn foo() {}\n    fn baz() {}\n}\n\n#[cfg(test)]\nmod m {\n    /// comment 1\n    #[test]\n    fn foo() {}\n\n    #[test]\n    #[ignore]\n    /// comment 2\n    fn baz() {}\n}\n            \"#.to_string()\n    }, GetSubtreesResponse)"
+---
+[
+    BlockLocationTree {
+        block: BlockLocation {
+            start_byte: 1,
+            end_byte: 42,
+            start_row: 1,
+            start_col: 0,
+            end_row: 4,
+            end_col: 1,
+        },
+        children: [
+            BlockLocationTree {
+                block: BlockLocation {
+                    start_byte: 13,
+                    end_byte: 24,
+                    start_row: 2,
+                    start_col: 4,
+                    end_row: 2,
+                    end_col: 15,
+                },
+                children: [],
+            },
+            BlockLocationTree {
+                block: BlockLocation {
+                    start_byte: 29,
+                    end_byte: 40,
+                    start_row: 3,
+                    start_col: 4,
+                    end_row: 3,
+                    end_col: 15,
+                },
+                children: [],
+            },
+        ],
+    },
+    BlockLocationTree {
+        block: BlockLocation {
+            start_byte: 44,
+            end_byte: 173,
+            start_row: 6,
+            start_col: 0,
+            end_row: 16,
+            end_col: 1,
+        },
+        children: [
+            BlockLocationTree {
+                block: BlockLocation {
+                    start_byte: 69,
+                    end_byte: 110,
+                    start_row: 8,
+                    start_col: 4,
+                    end_row: 10,
+                    end_col: 15,
+                },
+                children: [],
+            },
+            BlockLocationTree {
+                block: BlockLocation {
+                    start_byte: 116,
+                    end_byte: 171,
+                    start_row: 12,
+                    start_col: 4,
+                    end_row: 15,
+                    end_col: 15,
+                },
+                children: [],
+            },
+        ],
+    },
+]

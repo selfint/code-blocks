@@ -1,0 +1,13 @@
+---
+source: tests/rust/main.rs
+expression: "code_blocks::move_block(src_item, dst_item,\n        r#\"\n    fn foo() {}\n /* ^dst */\n\n    fn bar() {}\n\n    fn baz() {}\n /* ^src */\n\"#).unwrap()"
+---
+
+    fn foo() {}
+
+    fn baz() {}
+ /* ^dst */
+
+    fn bar() {}
+ /* ^src */
+

@@ -1,0 +1,19 @@
+---
+source: tests/test_api.rs
+expression: "post_request!(move_item_endpoint, MoveItemArgs\n        {\n            item_types : get_query_strings(SupportedLanguage::Rust), content :\n            r#\"\n    mod m1 {\n/*  ^dst */\n        fn foo() {}\n    }\n\n    mod m2 {\n        fn bar() {}\n    }\n\n    mod m3 {\n/*  ^src */\n        fn baz() {}\n    }\n\"#.to_string(),\n            language : SupportedLanguage::Rust, src_item : src_item.into(),\n            dst_item : dst_item.into(),\n        }, MoveItemResponse).unwrap()"
+---
+
+    mod m1 {
+/*  ^dst */
+        fn foo() {}
+    }
+
+    mod m3 {
+/*  ^src */
+        fn baz() {}
+    }
+
+    mod m2 {
+        fn bar() {}
+    }
+

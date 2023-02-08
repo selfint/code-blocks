@@ -1,0 +1,15 @@
+---
+source: tests/rust/main.rs
+expression: "format!(\"{}\\n\\n{}\",\n    r#\"\n    mod m {\n/*  ^fail */\n        fn foo() {}\n     /* ^src */\n    }\n\n    fn baz() {}\n\"#,\n    result.err().unwrap())"
+---
+
+    mod m {
+/*  ^fail */
+        fn foo() {}
+     /* ^src */
+    }
+
+    fn baz() {}
+
+
+Can't move items to different scopes

@@ -1,0 +1,5 @@
+---
+source: tests/test_api.rs
+expression: "post_request!(move_item_endpoint, MoveItemArgs\n            {\n                item_types : get_query_strings(SupportedLanguage::Rust),\n                content :\n                r#\"\n    mod m1 {\n        fn foo() {}\n    }\n\n    mod m2 {\n        fn bar() {}\n    /*  ^fail */\n    }\n\n    mod m3 {\n/*  ^src */\n        fn baz() {}\n    }\n\"#.to_string(),\n                language : SupportedLanguage::Rust, src_item :\n                src_item.into(), dst_item : fail_item.into(),\n            }, MoveItemResponse).err().unwrap()"
+---
+Can't move items to different scopes

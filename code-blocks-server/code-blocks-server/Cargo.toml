@@ -1,0 +1,29 @@
+[package]
+name = "code-blocks-server"
+version = "0.1.0"
+edition = "2021"
+authors = ["Tom Selfin selfint@gmail.com"]
+description = "A tool to re-order your code"
+readme = "README.md"
+repository = "https://github.com/selfint/code-blocks"
+license = "MIT"
+keywords = ["rest-api", "refactor", "tree-sitter"]
+categories = [
+    "command-line-utilities",
+    "development-tools",
+    "parsing",
+    "text-editors",
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+code-blocks = { path = "../code-blocks", version = "0.1.0" }
+rocket = { version = "0.5.0-rc.2", features = ["json"] }
+serde = { version = "1.0.152", features = ["derive"] }
+tree-sitter = "0.20.9"
+tree-sitter-rust = "0.20.3"
+tree-sitter-typescript = "0.20.2"
+
+[dev-dependencies]
+insta = { version = "1.26.0", features = ["json"] }

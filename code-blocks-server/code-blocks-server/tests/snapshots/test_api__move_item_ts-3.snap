@@ -1,0 +1,5 @@
+---
+source: tests/test_api.rs
+expression: "post_request!(move_item_endpoint, MoveItemArgs\n            {\n                item_types : get_query_strings(SupportedLanguage::TypeScript),\n                content :\n                r#\"\n    class TsClass {\n        constructor() {}\n\n        /**\n        * bar docs\n        */\n        foo() {}\n    /*  ^src */\n\n        bar() {}\n\n        baz() {}\n    }\n\n    function baz() {}\n/*  ^fail */\n    \"#.to_string(),\n                language : SupportedLanguage::TypeScript, src_item :\n                src_item.into(), dst_item : fail_item.into(),\n            }, MoveItemResponse).err().unwrap()"
+---
+Can't move items to different scopes

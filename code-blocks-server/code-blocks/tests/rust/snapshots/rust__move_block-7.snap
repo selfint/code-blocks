@@ -1,0 +1,19 @@
+---
+source: code-blocks/tests/rust/main.rs
+expression: "code_blocks::move_block(src_item, dst_item,\n        r#\"\n    mod m1 {\n/*  ^src */\n        fn foo() {}\n    }\n\n    mod m2 {\n        fn bar() {}\n    }\n\n    mod m3 {\n/*  ^dst */\n        fn baz() {}\n    }\n\"#).unwrap()"
+---
+
+    mod m2 {
+        fn bar() {}
+    }
+
+    mod m3 {
+/*  ^dst */
+        fn baz() {}
+    }
+
+    mod m1 {
+/*  ^src */
+        fn foo() {}
+    }
+

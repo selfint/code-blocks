@@ -1,0 +1,22 @@
+---
+source: tests/test_api.rs
+expression: "post_request!(move_item_endpoint, MoveItemArgs\n        {\n            item_types : get_query_strings(SupportedLanguage::TypeScript),\n            content :\n            r#\"\n    /**\n    * class docs\n    */\n    class TsClass {\n/*  ^src */\n        constructor() {}\n\n        foo() {}\n\n        bar() {}\n\n        baz() {}\n    }\n\n    function baz() {}\n/*  ^dst */\n    \"#.to_string(),\n            language : SupportedLanguage::TypeScript, src_item :\n            src_item.into(), dst_item : dst_item.into(),\n        }, MoveItemResponse).unwrap()"
+---
+
+    function baz() {}
+
+    /**
+    * class docs
+    */
+    class TsClass {
+/*  ^src */
+        constructor() {}
+
+        foo() {}
+
+        bar() {}
+
+        baz() {}
+    }
+/*  ^dst */
+    
