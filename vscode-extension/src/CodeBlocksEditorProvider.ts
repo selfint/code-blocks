@@ -1,14 +1,10 @@
 import * as vscode from "vscode";
-import {
-  BlockLocation,
-  getBlockTrees,
-  getQueryStrings,
-  moveBlock,
-  MoveItemArgs,
-  SUPPORTED_LANGUAGES,
-} from "./codeBlocks/codeBlocks";
 import { getNonce } from "./utilities/getNonce";
 import { getUri } from "./utilities/getUri";
+import { CodeBlocksServerRC, getBlockTrees, moveBlock } from "./codeBlocks/codeBlocks";
+import { BlockLocation, MoveItemArgs } from "./codeBlocks/types";
+import { getQueryStrings } from "./codeBlocks/queries";
+import { SUPPORTED_LANGUAGES } from "./codeBlocks/types";
 
 /**
  * Provider for cat scratch editors.
@@ -48,13 +44,16 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     webviewPanel: vscode.WebviewPanel,
     _token: vscode.CancellationToken
   ): Promise<void> {
+    // Start code-blocks-server
+    CodeBlocksServerRC.startServer();
+
     // Setup initial content for the webview
     webviewPanel.webview.options = {
       enableScripts: true,
     };
     webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
 
-    function getDocLang() {
+    function getDocLang(): string {
       let lang = document.languageId;
 
       if (lang === "typescriptreact") {
@@ -107,6 +106,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     // Make sure we get rid of the listener when our editor is closed.
     webviewPanel.onDidDispose(() => {
       changeDocumentSubscription.dispose();
+      CodeBlocksServerRC.stopServer();
     });
 
     vscode.workspace.onDidChangeTextDocument(async (event) => {

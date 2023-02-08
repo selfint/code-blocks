@@ -27,7 +27,6 @@
 				"cwd": "${workspaceFolder}${pathSeparator}vscode-extension"
 			},
 			"dependsOn": [
-				"code-blocks-server",
 				"webview-ui",
 			]
 		},
