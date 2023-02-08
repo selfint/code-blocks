@@ -94,5 +94,43 @@ export function getQueryStrings(lang: SupportedLanguage): string[] {
       return [...typescriptQueries, ...tsxQueries];
     case "typescriptreact":
       return getQueryStrings("tsx");
+    case "svelte":
+      return [
+        `
+(
+  (comment)* @header
+  .
+  (element) @item
+)
+        `,
+        `
+(
+  (comment)* @header
+  .
+  (each_statement) @item
+)
+        `,
+        `
+(
+  (comment)* @header
+  .
+  (if_statement) @item
+)
+        `,
+        `
+(
+  (comment)* @header
+  .
+  (style_element) @item
+)
+        `,
+        `
+(
+  (comment)* @header
+  .
+  (script_element) @item
+)
+        `,
+      ];
   }
 }

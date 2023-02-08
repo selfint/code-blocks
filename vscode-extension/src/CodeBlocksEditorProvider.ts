@@ -60,6 +60,8 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
         lang = "tsx";
       }
 
+      console.log(`Doclang: ${lang}`);
+
       return lang;
     }
 

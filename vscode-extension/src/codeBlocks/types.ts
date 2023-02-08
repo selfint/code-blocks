@@ -33,5 +33,5 @@ export type MoveItemResponse = {
   Err: string | undefined;
 };
 
-export const SUPPORTED_LANGUAGES = ["rust", "typescript", "tsx", "typescriptreact"] as const;
+export const SUPPORTED_LANGUAGES = ["rust", "typescript", "tsx", "typescriptreact", "svelte"] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];

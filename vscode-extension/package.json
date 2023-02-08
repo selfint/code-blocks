@@ -36,6 +36,9 @@
           },
           {
             "filenamePattern": "*.rs"
+          },
+          {
+            "filenamePattern": "*.svelte"
           }
         ],
         "priority": "option"
