@@ -1,5 +1,5 @@
 ---
-source: tests/rust/main.rs
+source: code-blocks/tests/rust/main.rs
 expression: subtrees
 ---
 [

@@ -1,5 +1,5 @@
 ---
-source: tests/test_api.rs
+source: code-blocks-server/tests/test_api.rs
 expression: "post_request!(move_item_endpoint, MoveItemArgs\n        {\n            item_types : get_query_strings(SupportedLanguage::TypeScript),\n            content :\n            r#\"\nclass TsClass {\n    constructor() {}\n\n    /**\n    * bar docs\n    */\n    foo() {}\n/*  ^src */\n\n    bar() {}\n/*  ^dst */\n\n    baz() {}\n}\n\nfunction baz() {}\n    \"#.to_string(),\n            language : SupportedLanguage::TypeScript, src_item :\n            src_item.into(), dst_item : dst_item.into(),\n        }, MoveItemResponse).unwrap()"
 ---
 

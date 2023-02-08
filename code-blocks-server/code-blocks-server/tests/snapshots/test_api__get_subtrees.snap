@@ -1,5 +1,5 @@
 ---
-source: tests/test_api.rs
+source: code-blocks-server/tests/test_api.rs
 expression: "post_request!(get_subtrees_endpoint, GetSubtreesArgs\n    {\n        items : get_query_strings(SupportedLanguage :: Rust), language :\n        SupportedLanguage :: Rust, content :\n        r#\"\nmod m {\n    fn foo() {}\n    fn baz() {}\n}\n\n#[cfg(test)]\nmod m {\n    /// comment 1\n    #[test]\n    fn foo() {}\n\n    #[test]\n    #[ignore]\n    /// comment 2\n    fn baz() {}\n}\n            \"#.to_string()\n    }, GetSubtreesResponse)"
 ---
 [
