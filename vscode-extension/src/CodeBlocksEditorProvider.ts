@@ -6,7 +6,7 @@ import {
   moveBlock,
   MoveItemArgs,
   SUPPORTED_LANGUAGES,
-} from "./shuffle/codeBlocks";
+} from "./codeBlocks/codeBlocks";
 import { getNonce } from "./utilities/getNonce";
 import { getUri } from "./utilities/getUri";
 
@@ -22,17 +22,17 @@ import { getUri } from "./utilities/getUri";
  * - Loading scripts and styles in a custom editor.
  * - Synchronizing changes between a text document and a custom editor.
  */
-export class ShuffleEditorProvider implements vscode.CustomTextEditorProvider {
-  private static readonly viewType = "shuffle.editor";
+export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider {
+  private static readonly viewType = "codeBlocks.editor";
 
   private static readonly scratchCharacters = ["😸", "😹", "😺", "😻", "😼", "😽", "😾", "🙀", "😿", "🐱"];
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
   public static register(context: vscode.ExtensionContext): vscode.Disposable {
-    const provider = new ShuffleEditorProvider(context);
+    const provider = new CodeBlocksEditorProvider(context);
     const providerRegistration = vscode.window.registerCustomEditorProvider(
-      ShuffleEditorProvider.viewType,
+      CodeBlocksEditorProvider.viewType,
       provider
     );
     return providerRegistration;
@@ -85,7 +85,7 @@ export class ShuffleEditorProvider implements vscode.CustomTextEditorProvider {
           blockTrees: blockTrees,
         });
       } else {
-        vscode.window.showErrorMessage(`Can't shuffle code in unsupported language: ${document.languageId}`);
+        vscode.window.showErrorMessage(`Opened file in unsupported language: ${document.languageId}`);
         return;
       }
     }
@@ -210,8 +210,8 @@ export class ShuffleEditorProvider implements vscode.CustomTextEditorProvider {
   private addNewScratch(document: vscode.TextDocument) {
     const json = this.getDocumentAsJson(document);
     const character =
-      ShuffleEditorProvider.scratchCharacters[
-        Math.floor(Math.random() * ShuffleEditorProvider.scratchCharacters.length)
+      CodeBlocksEditorProvider.scratchCharacters[
+        Math.floor(Math.random() * CodeBlocksEditorProvider.scratchCharacters.length)
       ];
     json.scratches = [
       ...(Array.isArray(json.scratches) ? json.scratches : []),

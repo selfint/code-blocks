@@ -9,7 +9,6 @@
 </script>
 
 <main>
-  <h1>Welcome to shuffle 2</h1>
   {#if blockTrees.length !== 0}
     <div class="block">
       {text.substring(0, blockTrees[0].block.start_byte)}
@@ -18,6 +17,8 @@
       {/each}
       {text.substring(blockTrees[blockTrees.length - 1].block.end_byte, text.length)}
     </div>
+  {:else}
+    <div>No blocks available.</div>
   {/if}
 </main>
 

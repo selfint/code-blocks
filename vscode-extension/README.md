@@ -1,15 +1,15 @@
-# Shuffle
+# Code Blocks
 
-Shuffle your code around!
+Move your code blocks around!
 
-This extension allows you to move your code blocks around, **_in any language_**.
+This extension allows you to move your code as blocks, **_in any language_**.
 
 ## Examples
 
 ### TypeScript + JSX
 
-![example](./assets/Shuffle-demo-2.gif)
+![example](./assets/CodeBlocks-demo-2.gif)
 
 ### Rust
 
-![example](./assets/Shuffle-demo-4.gif)
+![example](./assets/CodeBlocks-demo-4.gif)
