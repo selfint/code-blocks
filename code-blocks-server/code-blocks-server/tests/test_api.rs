@@ -134,6 +134,7 @@ fn get_query_strings(lang: SupportedLanguage) -> Vec<String> {
             .to_string(),
         ],
         SupportedLanguage::TSX => get_query_strings(SupportedLanguage::TypeScript),
+        SupportedLanguage::Svelte => todo!(),
     }
 }
 

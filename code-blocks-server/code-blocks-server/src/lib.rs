@@ -53,6 +53,7 @@ pub enum SupportedLanguage {
     Rust,
     TypeScript,
     TSX,
+    Svelte,
 }
 
 impl SupportedLanguage {
@@ -61,6 +62,7 @@ impl SupportedLanguage {
             SupportedLanguage::Rust => tree_sitter_rust::language(),
             SupportedLanguage::TypeScript => tree_sitter_typescript::language_typescript(),
             SupportedLanguage::TSX => tree_sitter_typescript::language_tsx(),
+            SupportedLanguage::Svelte => tree_sitter_svelte::language(),
         }
     }
 }
