@@ -18,9 +18,11 @@
     }
   );
 
-  function setSelected(block: BlockLocation): void {
+  function handleBlockClicked(block: BlockLocation): void {
     if (selected === undefined) {
       selected = block;
+    } else if (selected === block) {
+      selected = undefined;
     } else {
       vscode.postMessage({
         command: "move",
@@ -35,7 +37,7 @@
 </script>
 
 <main>
-  <ContentTree {blockTrees} {text} {selected} onClickHandler={setSelected} />
+  <ContentTree {blockTrees} {text} {selected} onClickHandler={handleBlockClicked} />
 </main>
 
 <style>
