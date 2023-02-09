@@ -76,6 +76,12 @@ jobs:
         with:
           toolchain: stable
           target: ${{ matrix.target }}
+      - name: Setup build tools
+        if: startsWith(${{ matrix.os }}, 'ubuntu')
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: aarch64-linux-gnu-gcc
+          version: ${{ matrix.target }}
       - name: Build release binary
         run: cd code-blocks-server && cargo build --release --target ${{ matrix.target }} --bin code-blocks-server
       - name: Upload release binary
