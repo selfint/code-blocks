@@ -1,6 +1,11 @@
-import { ExtensionContext } from "vscode";
+import { ExtensionContext, window } from "vscode";
 import { CodeBlocksEditorProvider } from "./CodeBlocksEditorProvider";
 
 export function activate(context: ExtensionContext) {
-  context.subscriptions.push(CodeBlocksEditorProvider.register(context));
+  context.subscriptions.push(
+    window.registerCustomEditorProvider(
+      CodeBlocksEditorProvider.viewType,
+      new CodeBlocksEditorProvider(context)
+    )
+  );
 }

@@ -13,13 +13,7 @@
 <div
   class="block"
   style="border-color: {borderColor}"
-  on:click|self={(event) => {
-    event.preventDefault();
-    onClickHandler(tree.block);
-    console.log(
-      `After handler: borderColor=${borderColor} block=${tree.block.start_byte} selected=${selected.start_byte}`
-    );
-  }}
+  on:click|self|preventDefault={() => onClickHandler(tree.block)}
 >
   {#if tree.children.length !== 0}
     <div>
@@ -43,7 +37,6 @@
 
 <style>
   .block {
-    border-color: white;
     border-width: 1px;
     border-style: solid;
     margin-left: 10px;

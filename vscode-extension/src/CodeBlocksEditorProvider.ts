@@ -17,29 +17,29 @@ function getDocLang(document: vscode.TextDocument): string {
 }
 
 export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider {
-  private static readonly viewType = "codeBlocks.editor";
+  public static readonly viewType = "codeBlocks.editor";
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
-  public static register(context: vscode.ExtensionContext): vscode.Disposable {
-    const provider = new CodeBlocksEditorProvider(context);
-    const providerRegistration = vscode.window.registerCustomEditorProvider(
-      CodeBlocksEditorProvider.viewType,
-      provider
-    );
-    return providerRegistration;
+  async handleMessage(document: vscode.TextDocument, message: { command: string; args: any }): Promise<void> {
+    switch (message.command) {
+      case "move":
+        await this.handleMoveCommand(message.args, document);
+        break;
+    }
   }
 
-  /**
-   * Called when our custom editor is opened.
-   *
-   *
-   */
   public async resolveCustomTextEditor(
     document: vscode.TextDocument,
     webviewPanel: vscode.WebviewPanel,
     _token: vscode.CancellationToken
   ): Promise<void> {
+    //@ts-expect-error
+    if (!SUPPORTED_LANGUAGES.includes(getDocLang(document))) {
+      vscode.window.showErrorMessage(`Opened file in unsupported language: ${document.languageId}`);
+      return;
+    }
+
     // Start code-blocks-server
     CodeBlocksServerRC.startServer();
 
@@ -49,82 +49,46 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     };
     webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
 
-    async function updateWebview() {
-      const text = document.getText();
-      const lang = getDocLang(document);
+    this.subscribeToDocEvents(webviewPanel, document);
 
-      // @ts-expect-error
-      if (SUPPORTED_LANGUAGES.includes(lang)) {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        const blockTrees = await getBlockTrees({
-          content: text,
-          // @ts-expect-error
-          items: getQueryStrings(lang),
-          // @ts-expect-error
-          language: getDocLang(document),
-        });
+    await this.updateWebview(document, webviewPanel);
+  }
 
-        webviewPanel.webview.postMessage({
-          type: "update",
-          text: document.getText(),
-          blockTrees: blockTrees,
-        });
-      } else {
-        vscode.window.showErrorMessage(`Opened file in unsupported language: ${document.languageId}`);
-        return;
-      }
-    }
-
-    // Hook up event handlers so that we can synchronize the webview with the text document.
-    //
-    // The text document acts as our model, so we have to sync change in the document to our
-    // editor and sync changes in the editor back to the document.
-    //
-    // Remember that a single text document can also be shared between multiple custom
-    // editors (this happens for example when you split a custom editor)
+  private subscribeToDocEvents(webviewPanel: vscode.WebviewPanel, document: vscode.TextDocument) {
+    const didReceiveMessageSubscription = webviewPanel.webview.onDidReceiveMessage(
+      async (message: { command: string; args: any }) => this.handleMessage(document, message),
+      undefined
+    );
 
     const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(async (e) => {
       if (e.document.uri.toString() === document.uri.toString()) {
-        await updateWebview();
+        await this.updateWebview(e.document, webviewPanel);
       }
     });
 
-    // Make sure we get rid of the listener when our editor is closed.
     webviewPanel.onDidDispose(() => {
       changeDocumentSubscription.dispose();
+      didReceiveMessageSubscription.dispose();
       CodeBlocksServerRC.stopServer();
     });
+  }
 
-    vscode.workspace.onDidChangeTextDocument(async (event) => {
-      const newContent = event.document.getText();
+  private async updateWebview(document: vscode.TextDocument, webviewPanel: vscode.WebviewPanel) {
+    const content = document.getText();
 
-      const blockTrees = await getBlockTrees({
-        content: newContent,
-        // @ts-expect-error
-        items: getQueryStrings(getDocLang(document)),
-        // @ts-expect-error
-        language: getDocLang(document),
-      });
-
-      webviewPanel.webview.postMessage({
-        type: "update",
-        text: newContent,
-        blockTrees: blockTrees,
-      });
+    const blockTrees = await getBlockTrees({
+      content: content,
+      // @ts-expect-error
+      items: getQueryStrings(getDocLang(document)),
+      // @ts-expect-error
+      language: getDocLang(document),
     });
 
-    webviewPanel.webview.onDidReceiveMessage(async (message: { command: string; args: any }) => {
-      const command = message.command;
-      const args = message.args;
-
-      switch (command) {
-        case "move":
-          await this.handleMoveCommand(args, document);
-          break;
-      }
-    }, undefined);
-
-    await updateWebview();
+    webviewPanel.webview.postMessage({
+      type: "update",
+      text: content,
+      blockTrees: blockTrees,
+    });
   }
 
   private async handleMoveCommand(
