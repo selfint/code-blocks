@@ -24,14 +24,9 @@ jobs:
           - os: macos-latest
 
     runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        working-directory: ./code-blocks-server
     
     steps:
       - uses: actions/checkout@v3
-      - name: debug
-        run: pwd
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2.0.1
         with:
@@ -42,15 +37,9 @@ jobs:
           toolchain: stable
           components: rust-src
       - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --verbose
+        run: cd code-blocks-server && cargo build --verbose
       - name: Test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --verbose -- --nocapture
+        run: cd code-blocks-server && cargo test --verbose -- --nocapture
 
   build:
     name: Build release binaries
@@ -67,9 +56,6 @@ jobs:
           - os: windows-latest
             artifact: target/release/code-blocks-server.exe
     runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        working-directory: ./code-blocks-server
     steps:
       - uses: actions/checkout@v3
       - name: Rust Cache
@@ -81,10 +67,7 @@ jobs:
         with:
           toolchain: stable
       - name: Build release binary
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --bin code-blocks-server
+        run: cd code-blocks-server && cargo build --release --bin code-blocks-server
       - name: Upload release binary
         uses: actions/upload-artifact@v3
         with:
@@ -94,9 +77,6 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./code-blocks-server
     needs: build
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
