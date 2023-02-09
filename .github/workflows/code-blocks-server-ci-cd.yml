@@ -101,11 +101,11 @@ jobs:
         with:
           name: ${{ github.ref_name }}-x86_64-unknown-linux-gnu-binary
           path: x86_64-unknown-linux-gnu
-      - name: Download Linux artifact aarch64
-        uses: actions/download-artifact@v3
-        with:
-          name: ${{ github.ref_name }}-aarch64-unknown-linux-gnu-binary
-          path: aarch64-unknown-linux-gnu
+      # - name: Download Linux artifact aarch64
+      #   uses: actions/download-artifact@v3
+      #   with:
+      #     name: ${{ github.ref_name }}-aarch64-unknown-linux-gnu-binary
+      #     path: aarch64-unknown-linux-gnu
 
       - name: Download Mac artifact aarch64
         uses: actions/download-artifact@v3
@@ -123,21 +123,21 @@ jobs:
         with:
           name: ${{ github.ref_name }}-x86_64-pc-windows-msvc-binary
           path: x86_64-pc-windows-msvc
-      - name: Download Windows artifact aarch64
-        uses: actions/download-artifact@v3
-        with:
-          name: ${{ github.ref_name }}-aarch64-pc-windows-msv-binary
-          path: aarch64-pc-windows-msv
+      # - name: Download Windows artifact aarch64
+      #   uses: actions/download-artifact@v3
+      #   with:
+      #     name: ${{ github.ref_name }}-aarch64-pc-windows-msv-binary
+      #     path: aarch64-pc-windows-msv
 
       - name: Rename artifacts
         run: |
           mkdir artifacts
           mv x86_64-unknown-linux-gnu/code-blocks-server    artifacts/x86_64-unknown-linux-gnu-code-blocks-server 
-          mv aarch64-unknown-linux-gnu/code-blocks-server   artifacts/aarch64-unknown-linux-gnu-code-blocks-server 
+          # mv aarch64-unknown-linux-gnu/code-blocks-server   artifacts/aarch64-unknown-linux-gnu-code-blocks-server 
           mv x86_64-apple-darwin/code-blocks-server         artifacts/x86_64-apple-darwin-code-blocks-server 
           mv aarch64-apple-darwin/code-blocks-server        artifacts/aarch64-apple-darwin-code-blocks-server 
           mv x86_64-pc-windows-msvc/code-blocks-server.exe  artifacts/x86_64-pc-windows-msvc-code-blocks-server.exe 
-          mv aarch64-pc-windows-msv/code-blocks-server.exe  artifacts/aarch64-pc-windows-msv-code-blocks-server.exe 
+          # mv aarch64-pc-windows-msv/code-blocks-server.exe  artifacts/aarch64-pc-windows-msv-code-blocks-server.exe 
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
