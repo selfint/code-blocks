@@ -42,29 +42,46 @@ jobs:
       fail-fast: true
       matrix:
         include:
-          - os: ubuntu-latest
-            artifact: code-blocks-server/target/release/code-blocks-server
-          - os: macos-latest
-            artifact: code-blocks-server/target/release/code-blocks-server
-          - os: windows-latest
-            artifact: code-blocks-server\target\release\code-blocks-server.exe
+          - artifact: code-blocks-server/target/x86_64-unknown-linux-gnu/release/code-blocks-server
+            target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - artifact: code-blocks-server/target/aarch64-unknown-linux-gnu/release/code-blocks-server
+            target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+
+          # TODO: macos-latest runners are very slow right now, in the future change this to macos-latest
+          - artifact: code-blocks-server/target/x86_64-apple-darwin/release/code-blocks-server
+            target: x86_64-apple-darwin
+            os: ubuntu-latest
+          - artifact: code-blocks-server/target/aarch64-apple-darwin/release/code-blocks-server
+            target: aarch64-apple-darwin
+            os: ubuntu-latest
+
+          - artifact: code-blocks-server\target\x86_64-pc-windows-msvc\release\code-blocks-server.exe
+            target: x86_64-pc-windows-msvc
+            os: windows-latest
+          - artifact: code-blocks-server\target\aarch64-pc-windows-msvc\release\code-blocks-server.exe
+            target: aarch64-pc-windows-msv
+            os: windows-latest
+
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2.0.1
         with:
-          prefix-key: "${{ matrix.os }}"
+          prefix-key: "${{ matrix.target }}"
       - name: Setup rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+          target: ${{ matrix.target }}
       - name: Build release binary
-        run: cd code-blocks-server && cargo build --release --bin code-blocks-server
+        run: cd code-blocks-server && cargo build --release --target ${{ matrix.target }} --bin code-blocks-server
       - name: Upload release binary
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ github.ref_name }}-${{ matrix.os }}-binary
+          name: ${{ github.ref_name }}-${{ matrix.target }}-binary
           path: ${{ matrix.artifact }}
 
   release:
@@ -73,27 +90,48 @@ jobs:
     needs: build
     if: startsWith(github.ref, 'refs/tags/code-blocks-server-v')
     steps:
-      - name: Download Linux artifact
+      - name: Download Linux artifact x86_64
         uses: actions/download-artifact@v3
         with:
-          name: ${{ github.ref_name }}-ubuntu-latest-binary
-          path: linux
-      - name: Download Mac artifact
+          name: ${{ github.ref_name }}-x86_64-unknown-linux-gnu-binary
+          path: x86_64-unknown-linux-gnu
+      - name: Download Linux artifact aarch64
         uses: actions/download-artifact@v3
         with:
-          name: ${{ github.ref_name }}-macos-latest-binary
-          path: mac
-      - name: Download Windows artifact
+          name: ${{ github.ref_name }}-aarch64-unknown-linux-gnu-binary
+          path: aarch64-unknown-linux-gnu
+
+      - name: Download Mac artifact aarch64
         uses: actions/download-artifact@v3
         with:
-          name: ${{ github.ref_name }}-windows-latest-binary
-          path: windows
+          name: ${{ github.ref_name }}-aarch64-apple-darwin-binary
+          path: aarch64-apple-darwin
+      - name: Download Mac artifact x86_64
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ github.ref_name }}-x86_64-apple-darwin-binary
+          path: x86_64-apple-darwin
+
+      - name: Download Windows artifact x86_64
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ github.ref_name }}-x86_64-pc-windows-msvc-binary
+          path: x86_64-pc-windows-msvc
+      - name: Download Windows artifact aarch64
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ github.ref_name }}-aarch64-pc-windows-msv-binary
+          path: aarch64-pc-windows-msv
+
       - name: Rename artifacts
         run: |
           mkdir artifacts
-          mv linux/code-blocks-server artifacts/code-blocks-server-linux
-          mv mac/code-blocks-server artifacts/code-blocks-server-mac
-          mv windows/code-blocks-server.exe artifacts/code-blocks-server-windows.exe
+          mv x86_64-unknown-linux-gnu/code-blocks-server    artifacts/x86_64-unknown-linux-gnu-code-blocks-server 
+          mv aarch64-unknown-linux-gnu/code-blocks-server   artifacts/aarch64-unknown-linux-gnu-code-blocks-server 
+          mv x86_64-apple-darwin/code-blocks-server         artifacts/x86_64-apple-darwin-code-blocks-server 
+          mv aarch64-apple-darwin/code-blocks-server        artifacts/aarch64-apple-darwin-code-blocks-server 
+          mv x86_64-pc-windows-msvc/code-blocks-server.exe  artifacts/x86_64-pc-windows-msvc-code-blocks-server.exe 
+          mv aarch64-pc-windows-msv/code-blocks-server.exe  artifacts/aarch64-pc-windows-msv-code-blocks-server.exe 
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
