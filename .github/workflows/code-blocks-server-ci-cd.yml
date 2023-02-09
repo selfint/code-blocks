@@ -80,7 +80,7 @@ jobs:
         if: startsWith(${{ matrix.os }}, 'ubuntu')
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: aarch64-linux-gnu-gcc
+          packages: gcc-aarch64-linux-gnu
           version: ${{ matrix.target }}
       - name: Build release binary
         run: cd code-blocks-server && cargo build --release --target ${{ matrix.target }} --bin code-blocks-server
