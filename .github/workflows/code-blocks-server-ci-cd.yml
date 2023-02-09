@@ -15,27 +15,17 @@ env:
 
 jobs:
   test:
-    name: Test *nix
-    strategy:
-      fail-fast: true
-      matrix:
-        include:
-          - os: ubuntu-latest
-          - os: macos-latest
-
-    runs-on: ${{ matrix.os }}
+    name: Test
+    runs-on: ubuntu-latest
     
     steps:
       - uses: actions/checkout@v3
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2.0.1
-        with:
-          prefix-key: "${{ matrix.os }}"
       - name: Setup rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-          components: rust-src
       - name: Build
         run: cd code-blocks-server && cargo build --verbose
       - name: Test
@@ -50,11 +40,11 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            artifact: target/release/code-blocks-server
+            artifact: code-blocks-server/target/release/code-blocks-server
           - os: macos-latest
-            artifact: target/release/code-blocks-server
+            artifact: code-blocks-server/target/release/code-blocks-server
           - os: windows-latest
-            artifact: target/release/code-blocks-server.exe
+            artifact: code-blocks-server\target\release\code-blocks-server.exe
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
