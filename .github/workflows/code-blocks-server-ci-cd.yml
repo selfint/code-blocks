@@ -1,0 +1,126 @@
+name: code-blocks-server CI/CD
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*.*.*"
+  pull_request:
+    branches:
+      - main
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: Test *nix
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: ubuntu-latest
+          - os: macos-latest
+
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: ./code-blocks-server
+    
+    steps:
+      - uses: actions/checkout@v3
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2.0.1
+        with:
+          prefix-key: "${{ matrix.os }}"
+      - name: Setup rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rust-src
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --verbose
+      - name: Test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --verbose -- --nocapture
+
+  build:
+    name: Build release binaries
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: test
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: target/release/code-blocks-server
+          - os: macos-latest
+            artifact: target/release/code-blocks-server
+          - os: windows-latest
+            artifact: target/release/code-blocks-server.exe
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: ./code-blocks-server
+    steps:
+      - uses: actions/checkout@v3
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2.0.1
+        with:
+          prefix-key: "${{ matrix.os }}"
+      - name: Setup rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Build release binary
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --bin code-blocks-server
+      - name: Upload release binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ github.ref_name }}-${{ matrix.os }}-binary
+          path: ${{ matrix.artifact }}
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./code-blocks-server
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ github.ref_name }}-ubuntu-latest-binary
+          path: linux
+      - name: Download Mac artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ github.ref_name }}-macos-latest-binary
+          path: mac
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ github.ref_name }}-windows-latest-binary
+          path: windows
+      - name: Rename artifacts
+        run: |
+          mkdir artifacts
+          mv linux/code-blocks-server artifacts/code-blocks-server-linux
+          mv mac/code-blocks-server artifacts/code-blocks-server-mac
+          mv windows/code-blocks-server.exe artifacts/code-blocks-server-windows.exe
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+          files: artifacts/*
