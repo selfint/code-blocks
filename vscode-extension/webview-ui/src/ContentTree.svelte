@@ -10,7 +10,7 @@
 
 <main>
   {#if blockTrees.length !== 0}
-    <div class="block">
+    <div>
       {text.substring(0, blockTrees[0].block.start_byte)}
       {#each blockTrees as tree}
         <Tree {text} {tree} {onClickHandler} {selected} />
@@ -21,16 +21,3 @@
     <div>No blocks available.</div>
   {/if}
 </main>
-
-<style>
-  .block {
-    border-color: white;
-    border-width: 1px;
-    border-style: solid;
-    margin-left: 10px;
-    margin-top: 5px;
-    margin-bottom: 5px;
-    text-align: left;
-    padding: 5px;
-  }
-</style>

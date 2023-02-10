@@ -47,5 +47,11 @@
     justify-content: center;
     align-items: flex-start;
     height: 100%;
+    margin: 10px;
+    padding: 0 var(--container-padding);
+    color: var(--vscode-foreground);
+    font-size: var(--vscode-font-size);
+    font-weight: var(--vscode-font-weight);
+    font-family: var(--vscode-font-family);
   }
 </style>
