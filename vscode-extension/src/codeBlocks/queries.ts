@@ -1,5 +1,5 @@
 import { SupportedLanguage } from "./types";
-import queriesStringsJson from "./queriesStrings.json";
+import queriesStringsJson from "./queryStrings.json";
 
 export function getQueryStrings(lang: SupportedLanguage): string[] {
   switch (lang) {
