@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { children } from "svelte/internal";
   import type { BlockLocation, BlockLocationTree } from "./types";
 
   export let text: string;
@@ -7,10 +6,13 @@
   export let onClickHandler: (block: BlockLocation) => void;
   export let selectedBlock: BlockLocation | undefined;
 
-  const selectedColor = "var(--vscode-editor-selectionBackground)";
-  const defaultColor = "var(--vscode-editor-background)";
+  const selectedBgColor = "var(--vscode-editor-selectionBackground)";
+  const selectedFgColor = "var(--vscode-editor-selectionForeground)";
+  const defaultBgColor = "var(--vscode-editor-background)";
+  const defaultFgColor = "var(--vscode-editor-foreground)";
 
-  $: backgroundColor = tree.block === selectedBlock ? selectedColor : defaultColor;
+  $: backgroundColor = tree.block === selectedBlock ? selectedBgColor : defaultBgColor;
+  $: foregroundColor = tree.block === selectedBlock ? selectedFgColor : defaultFgColor;
 
   const sliceLengthLimit = 100;
 
@@ -30,7 +32,7 @@
 <main>
   <div
     class="block"
-    style="background-color: {backgroundColor}"
+    style="color: {foregroundColor}; background-color: {backgroundColor}"
     on:click|self|preventDefault={() => onClickHandler(tree.block)}
     on:keypress|self|preventDefault={() => onClickHandler(tree.block)}
   >
@@ -66,11 +68,9 @@
 
 <style>
   .block {
-    background-color: var(--vscode-editor-background);
     border-color: var(--vscode-editorIndentGuide-background);
     border-style: solid;
     border-width: 1px;
-    color: var(--vscode-editor-foreground);
     font-family: var(--vscode-font-family);
     font-size: var(--vscode-font-size);
     font-weight: var(--vscode-font-weight);
