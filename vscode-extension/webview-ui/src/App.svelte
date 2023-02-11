@@ -1,14 +1,11 @@
 <script lang="ts">
-  import { provideVSCodeDesignSystem, vsCodeButton } from "@vscode/webview-ui-toolkit";
-  import ContentTree from "./ContentTree.svelte";
+  import Tree from "./Tree.svelte";
   import type { BlockLocation, BlockLocationTree } from "./types";
   import { vscode } from "./utilities/vscode";
 
-  provideVSCodeDesignSystem().register(vsCodeButton());
-
-  let text = "placeholder";
-  let blockTrees = [];
-  let selected: BlockLocation | undefined = undefined;
+  let text: string | undefined = undefined;
+  let blockTrees: BlockLocationTree[] | undefined = undefined;
+  let selectedBlock: BlockLocation | undefined = undefined;
 
   window.addEventListener(
     "message",
@@ -19,39 +16,42 @@
   );
 
   function handleBlockClicked(block: BlockLocation): void {
-    if (selected === undefined) {
-      selected = block;
-    } else if (selected === block) {
-      selected = undefined;
+    if (selectedBlock === undefined) {
+      selectedBlock = block;
+    } else if (selectedBlock === block) {
+      selectedBlock = undefined;
     } else {
       vscode.postMessage({
         command: "move",
         args: {
-          src: selected,
+          src: selectedBlock,
           dst: block,
         },
       });
-      selected = undefined;
+      selectedBlock = undefined;
     }
   }
 </script>
 
 <main>
-  <ContentTree {blockTrees} {text} {selected} onClickHandler={handleBlockClicked} />
+  {#if blockTrees === undefined || blockTrees.length === 0}
+    <div>No blocks available.</div>
+  {:else}
+    <div>
+      {text.substring(0, blockTrees[0].block.start_byte)}
+      {#each blockTrees as tree}
+        <Tree {text} {tree} onClickHandler={handleBlockClicked} {selectedBlock} />
+      {/each}
+      {text.substring(blockTrees[blockTrees.length - 1].block.end_byte, text.length)}
+    </div>
+  {/if}
 </main>
 
 <style>
   main {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    height: 100%;
-    margin: 10px;
-    padding: 0 var(--container-padding);
-    color: var(--vscode-foreground);
+    color: var(--vscode-editor-foreground);
+    font-family: var(--vscode-font-family);
     font-size: var(--vscode-font-size);
     font-weight: var(--vscode-font-weight);
-    font-family: var(--vscode-font-family);
   }
 </style>
