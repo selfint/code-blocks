@@ -1,7 +1,7 @@
 {
-  "name": "hello-world-svelte",
-  "displayName": "hello-world-svelte",
-  "description": "A hello world sample extension to demonstrate using Svelte with the Webview UI Toolkit for VS Code.",
+  "name": "code-blocks",
+  "displayName": "Code blocks",
+  "description": "An extension for manipulating your code's syntax tree.",
   "version": "0.0.1",
   "private": true,
   "license": "MIT",
@@ -15,15 +15,6 @@
   "main": "./out/extension.js",
   "contributes": {
     "customEditors": [
-      {
-        "viewType": "catCustoms.catScratch",
-        "displayName": "Cat Scratch",
-        "selector": [
-          {
-            "filenamePattern": "*.cscratch"
-          }
-        ]
-      },
       {
         "viewType": "codeBlocks.editor",
         "displayName": "Code Blocks",
@@ -46,12 +37,8 @@
     ],
     "commands": [
       {
-        "command": "hello-world.showHelloWorld",
-        "title": "Hello World (Svelte): Show"
-      },
-      {
         "command": "codeBlocks.open",
-        "title": "Open Code Blocks editor"
+        "title": "Code Blocks: Open active file in Code Blocks editor"
       }
     ]
   },

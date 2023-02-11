@@ -1,5 +1,15 @@
-import { ExtensionContext, window } from "vscode";
+import { ExtensionContext, window, commands, Uri } from "vscode";
 import { CodeBlocksEditorProvider } from "./CodeBlocksEditorProvider";
+
+function reopenWithCodeBocksEditor() {
+  const activeTabInput = window.tabGroups.activeTabGroup.activeTab?.input as {
+    [key: string]: any;
+    uri: Uri | undefined;
+  };
+  if (activeTabInput.uri) {
+    commands.executeCommand("vscode.openWith", activeTabInput.uri, "codeBlocks.editor");
+  }
+}
 
 export function activate(context: ExtensionContext) {
   context.subscriptions.push(
@@ -8,4 +18,8 @@ export function activate(context: ExtensionContext) {
       new CodeBlocksEditorProvider(context)
     )
   );
+
+  const reopenCommand = "workbench.action.reopenWithEditor";
+
+  context.subscriptions.push(commands.registerCommand("codeBlocks.open", reopenWithCodeBocksEditor));
 }
