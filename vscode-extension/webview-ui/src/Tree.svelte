@@ -3,7 +3,7 @@
 
   export let text: string;
   export let tree: BlockLocationTree;
-  export let onClickHandler: (block: BlockLocation) => void;
+  export let onClick: (block: BlockLocation) => void;
   export let selectedBlock: BlockLocation | undefined;
 
   const selectedBgColor = "var(--vscode-editor-selectionBackground)";
@@ -33,31 +33,22 @@
   <div
     class="block"
     style="color: {foregroundColor}; background-color: {backgroundColor}"
-    on:click|self|preventDefault={() => onClickHandler(tree.block)}
-    on:keypress|self|preventDefault={() => onClickHandler(tree.block)}
+    on:click|stopPropagation|preventDefault={() => onClick(tree.block)}
+    on:keypress|stopPropagation|preventDefault={() => onClick(tree.block)}
   >
     {#if tree.children.length !== 0}
-      <div
-        on:click|self|preventDefault={() => onClickHandler(tree.block)}
-        on:keypress|self|preventDefault={() => onClickHandler(tree.block)}
-      >
+      <div>
         {textSlice(tree.block.start_byte, tree.children[0].block.start_byte)}
       </div>
       {#each tree.children as childTree, i}
-        <svelte:self {text} tree={childTree} {onClickHandler} {selectedBlock} />
+        <svelte:self {text} tree={childTree} {onClick} {selectedBlock} />
         {#if i !== tree.children.length - 1}
-          <div
-            on:click|self|preventDefault={() => onClickHandler(tree.block)}
-            on:keypress|self|preventDefault={() => onClickHandler(tree.block)}
-          >
+          <div>
             {textSlice(tree.children[i].block.end_byte, tree.children[i + 1].block.start_byte)}
           </div>
         {/if}
       {/each}
-      <div
-        on:click|self|preventDefault={() => onClickHandler(tree.block)}
-        on:keypress|self|preventDefault={() => onClickHandler(tree.block)}
-      >
+      <div>
         {textSlice(tree.children.at(-1).block.end_byte, tree.block.end_byte)}
       </div>
     {:else}
