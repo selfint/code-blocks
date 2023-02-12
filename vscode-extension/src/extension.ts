@@ -19,7 +19,5 @@ export function activate(context: ExtensionContext) {
     )
   );
 
-  const reopenCommand = "workbench.action.reopenWithEditor";
-
   context.subscriptions.push(commands.registerCommand("codeBlocks.open", reopenWithCodeBocksEditor));
 }

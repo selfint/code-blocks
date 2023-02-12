@@ -5,6 +5,7 @@ import { CodeBlocksServerRC, getBlockTrees, moveBlock } from "./codeBlocks/codeB
 import { BlockLocation, MoveItemArgs } from "./codeBlocks/types";
 import { getQueryStrings } from "./codeBlocks/queries";
 import { SUPPORTED_LANGUAGES } from "./codeBlocks/types";
+import { MoveCommand, UpdateMessage } from "./types";
 
 function getDocLang(document: vscode.TextDocument): string {
   let lang = document.languageId;
@@ -21,7 +22,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
-  async handleMessage(document: vscode.TextDocument, message: { command: string; args: any }): Promise<void> {
+  async handleMessage(document: vscode.TextDocument, message: MoveCommand): Promise<void> {
     switch (message.command) {
       case "move":
         await this.handleMoveCommand(message.args, document);
@@ -56,18 +57,18 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
 
   private subscribeToDocEvents(webviewPanel: vscode.WebviewPanel, document: vscode.TextDocument) {
     const didReceiveMessageSubscription = webviewPanel.webview.onDidReceiveMessage(
-      async (message: { command: string; args: any }) => this.handleMessage(document, message),
+      async (message: MoveCommand) => this.handleMessage(document, message),
       undefined
     );
 
-    const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(async (e) => {
+    const didChangeTextDocumentSubscription = vscode.workspace.onDidChangeTextDocument(async (e) => {
       if (e.document.uri.toString() === document.uri.toString()) {
         await this.updateWebview(e.document, webviewPanel);
       }
     });
 
     webviewPanel.onDidDispose(() => {
-      changeDocumentSubscription.dispose();
+      didChangeTextDocumentSubscription.dispose();
       didReceiveMessageSubscription.dispose();
       CodeBlocksServerRC.stopServer();
     });
@@ -84,11 +85,12 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
       language: getDocLang(document),
     });
 
-    webviewPanel.webview.postMessage({
+    const updateMessage: UpdateMessage = {
       type: "update",
       text: content,
       blockTrees: blockTrees,
-    });
+    };
+    webviewPanel.webview.postMessage(updateMessage);
   }
 
   private async handleMoveCommand(
