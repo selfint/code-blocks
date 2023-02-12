@@ -5,7 +5,7 @@ import { CodeBlocksServerRC, getBlockTrees, moveBlock } from "./codeBlocks/codeB
 import { BlockLocation, MoveItemArgs } from "./codeBlocks/types";
 import { getQueryStrings } from "./codeBlocks/queries";
 import { SUPPORTED_LANGUAGES } from "./codeBlocks/types";
-import { MoveCommand, UpdateMessage } from "./types";
+import { MoveCommand, UpdateMessage } from "./messages";
 
 function getDocLang(document: vscode.TextDocument): string {
   let lang = document.languageId;

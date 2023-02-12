@@ -13,17 +13,3 @@ export type BlockLocationTree = {
   block: BlockLocation;
   children: BlockLocationTree[];
 };
-
-export type UpdateMessage = {
-  type: "update";
-  text: string;
-  blockTrees: BlockLocationTree[];
-};
-
-export type MoveCommand = {
-  command: "move";
-  args: {
-    src: BlockLocation;
-    dst: BlockLocation;
-  };
-};

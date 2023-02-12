@@ -1,6 +1,7 @@
 <script lang="ts">
   import Tree from "./Tree.svelte";
-  import type { BlockLocation, BlockLocationTree, MoveCommand, UpdateMessage } from "./types";
+  import type { BlockLocation, BlockLocationTree } from "./types";
+  import type { MoveCommand, UpdateMessage } from "./messages";
   import { vscode } from "./utilities/vscode";
 
   let text: string | undefined = undefined;
