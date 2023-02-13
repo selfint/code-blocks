@@ -30,9 +30,9 @@ jobs:
         with:
           toolchain: stable
       - name: Build
-        run: cd code-blocks-server && cargo build --verbose
+        run: cd code-blocks-server && cargo build --verbose --all-features
       - name: Test
-        run: cd code-blocks-server && cargo test --verbose -- --nocapture
+        run: cd code-blocks-server && cargo test --verbose --all-features -- --nocapture
 
   build:
     name: Build release binaries
@@ -43,24 +43,28 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
-            artifact: code-blocks-server/target/x86_64-unknown-linux-gnu/release/code-blocks-server
+            rest-artifact: code-blocks-server/target/x86_64-unknown-linux-gnu/release/code-blocks-rest
+            # cli-artifact: code-blocks-server/target/x86_64-unknown-linux-gnu/release/code-blocks-cli
             os: ubuntu-latest
           # - target: aarch64-unknown-linux-gnu
-          #   artifact: code-blocks-server/target/aarch64-unknown-linux-gnu/release/code-blocks-server
+          #   artifact: code-blocks-server/target/aarch64-unknown-linux-gnu/release/code-blocks-rest
           #   os: ubuntu-latest
 
           - target: x86_64-apple-darwin
-            artifact: code-blocks-server/target/x86_64-apple-darwin/release/code-blocks-server
+            rest-artifact: code-blocks-server/target/x86_64-apple-darwin/release/code-blocks-rest
+            # cli-artifact: code-blocks-server/target/x86_64-apple-darwin/release/code-blocks-cli
             os: macos-latest
           - target: aarch64-apple-darwin
-            artifact: code-blocks-server/target/aarch64-apple-darwin/release/code-blocks-server
+            rest-artifact: code-blocks-server/target/aarch64-apple-darwin/release/code-blocks-rest
+            # cli-artifact: code-blocks-server/target/aarch64-apple-darwin/release/code-blocks-cli
             os: macos-latest
 
           - target: x86_64-pc-windows-msvc
-            artifact: code-blocks-server\target\x86_64-pc-windows-msvc\release\code-blocks-server.exe
+            rest-artifact: code-blocks-server\target\x86_64-pc-windows-msvc\release\code-blocks-rest.exe
+            # cli-artifact: code-blocks-server\target\x86_64-pc-windows-msvc\release\code-blocks-cli.exe
             os: windows-latest
           # - target: aarch64-pc-windows-msv
-          #   artifact: code-blocks-server\target\aarch64-pc-windows-msvc\release\code-blocks-server.exe
+          #   artifact: code-blocks-server\target\aarch64-pc-windows-msvc\release\code-blocks-rest.exe
           #   os: windows-latest
 
     runs-on: ${{ matrix.os }}
@@ -83,12 +87,13 @@ jobs:
       #     packages: gcc-aarch64-linux-gnu
       #     version: ${{ matrix.target }}
       - name: Build release binary
-        run: cd code-blocks-server && cargo build --release --target ${{ matrix.target }} --bin code-blocks-server
+        run: cd code-blocks-server && cargo build --release --target ${{ matrix.target }} --all-features
       - name: Upload release binary
         uses: actions/upload-artifact@v3
         with:
           name: ${{ github.ref_name }}-${{ matrix.target }}-binary
-          path: ${{ matrix.artifact }}
+          path: |
+            ${{ matrix.rest-artifact }}
 
   release:
     name: Release
@@ -132,12 +137,20 @@ jobs:
       - name: Rename artifacts
         run: |
           mkdir artifacts
-          mv x86_64-unknown-linux-gnu/code-blocks-server    artifacts/x86_64-unknown-linux-gnu-code-blocks-server 
-          # mv aarch64-unknown-linux-gnu/code-blocks-server   artifacts/aarch64-unknown-linux-gnu-code-blocks-server 
-          mv x86_64-apple-darwin/code-blocks-server         artifacts/x86_64-apple-darwin-code-blocks-server 
-          mv aarch64-apple-darwin/code-blocks-server        artifacts/aarch64-apple-darwin-code-blocks-server 
-          mv x86_64-pc-windows-msvc/code-blocks-server.exe  artifacts/x86_64-pc-windows-msvc-code-blocks-server.exe 
-          # mv aarch64-pc-windows-msv/code-blocks-server.exe  artifacts/aarch64-pc-windows-msv-code-blocks-server.exe 
+
+          mv x86_64-unknown-linux-gnu/code-blocks-rest    artifacts/x86_64-unknown-linux-gnu-code-blocks-rest 
+          # mv aarch64-unknown-linux-gnu/code-blocks-rest   artifacts/aarch64-unknown-linux-gnu-code-blocks-rest 
+          mv x86_64-apple-darwin/code-blocks-rest         artifacts/x86_64-apple-darwin-code-blocks-rest 
+          mv aarch64-apple-darwin/code-blocks-rest        artifacts/aarch64-apple-darwin-code-blocks-rest 
+          mv x86_64-pc-windows-msvc/code-blocks-rest.exe  artifacts/x86_64-pc-windows-msvc-code-blocks-rest.exe 
+          # mv aarch64-pc-windows-msv/code-blocks-rest.exe  artifacts/aarch64-pc-windows-msv-code-blocks-rest.exe 
+
+          # mv x86_64-unknown-linux-gnu/code-blocks-cli    artifacts/x86_64-unknown-linux-gnu-code-blocks-cli 
+          # # mv aarch64-unknown-linux-gnu/code-blocks-cli   artifacts/aarch64-unknown-linux-gnu-code-blocks-cli 
+          # mv x86_64-apple-darwin/code-blocks-cli         artifacts/x86_64-apple-darwin-code-blocks-cli 
+          # mv aarch64-apple-darwin/code-blocks-cli        artifacts/aarch64-apple-darwin-code-blocks-cli 
+          # mv x86_64-pc-windows-msvc/code-blocks-cli.exe  artifacts/x86_64-pc-windows-msvc-code-blocks-cli.exe 
+          # # mv aarch64-pc-windows-msv/code-blocks-cli.exe  artifacts/aarch64-pc-windows-msv-code-blocks-cli.exe 
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
