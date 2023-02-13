@@ -20,7 +20,7 @@ export type GetSubtreesArgs = {
 
 export type GetSubtreesResponse = BlockLocationTree[];
 
-export type MoveItemArgs = {
+export type MoveBlockArgs = {
   queries: string[];
   text: string;
   language: SupportedLanguage;
@@ -28,7 +28,7 @@ export type MoveItemArgs = {
   dstBlock: BlockLocation;
 };
 
-export type MoveItemResponse = string;
+export type MoveBlockResponse = string;
 
 export type JsonResult<T> =
   | {

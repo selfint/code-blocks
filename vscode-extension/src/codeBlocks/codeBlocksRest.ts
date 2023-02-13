@@ -1,6 +1,6 @@
 import axios from "axios";
 import { ChildProcess, exec } from "child_process";
-import { GetSubtreesArgs, MoveItemArgs, MoveItemResponse, GetSubtreesResponse, JsonResult } from "./types";
+import { GetSubtreesArgs, MoveBlockArgs, MoveBlockResponse, GetSubtreesResponse, JsonResult } from "./types";
 import * as vscode from "vscode";
 
 const GET_SUBTREES_ENDPOINT = "http://localhost:8000/get_subtrees";
@@ -81,7 +81,7 @@ export async function getBlockTrees(args: GetSubtreesArgs): Promise<JsonResult<G
   return response.data;
 }
 
-export async function moveBlock(args: MoveItemArgs): Promise<JsonResult<MoveItemResponse>> {
+export async function moveBlock(args: MoveBlockArgs): Promise<JsonResult<MoveBlockResponse>> {
   if (args.language === "typescriptreact") {
     args.language = "tsx";
   }

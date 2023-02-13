@@ -1,8 +1,14 @@
 import * as vscode from "vscode";
 import { getNonce } from "./utilities/getNonce";
 import { getUri } from "./utilities/getUri";
-import { CodeBlocksServerRC, getBlockTrees, moveBlock } from "./codeBlocks/codeBlocks";
-import { BlockLocation, MoveItemArgs } from "./codeBlocks/types";
+import { getBlockTrees, moveBlock } from "./codeBlocks/codeBlocksCli";
+import {
+  BlockLocation,
+  GetSubtreesResponse,
+  JsonResult,
+  MoveBlockArgs,
+  MoveBlockResponse,
+} from "./codeBlocks/types";
 import { getQueryStrings } from "./codeBlocks/queries";
 import { SUPPORTED_LANGUAGES } from "./codeBlocks/types";
 import { MoveCommand, UpdateMessage } from "./messages";
@@ -41,9 +47,6 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
       return;
     }
 
-    // Start code-blocks-server
-    CodeBlocksServerRC.startServer();
-
     // Setup initial content for the webview
     webviewPanel.webview.options = {
       enableScripts: true,
@@ -70,20 +73,26 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     webviewPanel.onDidDispose(() => {
       didChangeTextDocumentSubscription.dispose();
       didReceiveMessageSubscription.dispose();
-      CodeBlocksServerRC.stopServer();
     });
   }
 
   private async updateWebview(document: vscode.TextDocument, webviewPanel: vscode.WebviewPanel) {
     const content = document.getText();
 
-    const response = await getBlockTrees({
-      text: content,
-      // @ts-expect-error
-      queries: getQueryStrings(getDocLang(document)),
-      // @ts-expect-error
-      language: getDocLang(document),
-    });
+    let response: JsonResult<GetSubtreesResponse>;
+
+    try {
+      response = await getBlockTrees({
+        text: content,
+        // @ts-expect-error
+        queries: getQueryStrings(getDocLang(document)),
+        // @ts-expect-error
+        language: getDocLang(document),
+      });
+    } catch (error) {
+      vscode.window.showErrorMessage(JSON.stringify(error));
+      return;
+    }
 
     switch (response.status) {
       case "ok":
@@ -104,7 +113,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     args: { src: BlockLocation; dst: BlockLocation },
     document: vscode.TextDocument
   ): Promise<void> {
-    const moveArgs: MoveItemArgs = {
+    const moveArgs: MoveBlockArgs = {
       text: document.getText(),
       srcBlock: args.src,
       dstBlock: args.dst,
@@ -114,7 +123,14 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
       language: getDocLang(document),
     };
 
-    const response = await moveBlock(moveArgs);
+    let response: JsonResult<MoveBlockResponse>;
+
+    try {
+      response = await moveBlock(moveArgs);
+    } catch (error) {
+      vscode.window.showErrorMessage(JSON.stringify(error));
+      return;
+    }
 
     switch (response.status) {
       case "ok":
