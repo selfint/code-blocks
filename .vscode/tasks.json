@@ -26,7 +26,7 @@
 			},
 			"dependsOn": [
 				"webview-ui",
-				"code-blocks-server",
+				// "code-blocks-server",
 			]
 		},
 		{
