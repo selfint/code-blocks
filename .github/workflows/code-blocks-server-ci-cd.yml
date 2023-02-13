@@ -96,6 +96,7 @@ jobs:
           name: ${{ github.ref_name }}-${{ matrix.target }}-binary
           path: |
             ${{ matrix.rest-artifact }}
+            ${{ matrix.cli-artifact }}
 
   release:
     name: Release
