@@ -1,19 +1,11 @@
 use code_blocks::get_query_subtrees;
 use code_blocks::Block;
 use code_blocks::BlockTree;
-use code_blocks_server::build_tree;
-use code_blocks_server::get_subtrees_endpoint;
-use code_blocks_server::move_item_endpoint;
-use code_blocks_server::rocket_uri_macro_get_subtrees_endpoint;
-use code_blocks_server::rocket_uri_macro_move_item_endpoint;
+use code_blocks_server::get_subtrees;
 use code_blocks_server::GetSubtreesArgs;
-use code_blocks_server::GetSubtreesResponse;
-use code_blocks_server::MoveItemArgs;
-use code_blocks_server::MoveItemResponse;
+use code_blocks_server::MoveBlockArgs;
 use code_blocks_server::SupportedLanguage;
-
-use rocket::local::blocking::Client;
-use rocket::{routes, uri};
+use tree_sitter::Parser;
 use tree_sitter::Point;
 use tree_sitter::Query;
 
@@ -145,26 +137,12 @@ fn get_queries(lang: SupportedLanguage) -> Vec<Query> {
         .collect()
 }
 
-macro_rules! post_request {
-    ($endpoint:ident, $body:expr, $response_ty:ty) => {
-        Client::tracked(rocket::build().mount("/", routes![$endpoint]))
-            .expect("valid rocket instance")
-            .post(uri!($endpoint))
-            .json(&$body)
-            .dispatch()
-            .into_json::<$response_ty>()
-            .unwrap()
-    };
-}
-
 #[test]
 fn test_get_subtrees() {
-    insta::assert_debug_snapshot!(post_request!(
-        get_subtrees_endpoint,
-        GetSubtreesArgs {
-            items: get_query_strings(SupportedLanguage::Rust),
-            language: SupportedLanguage::Rust,
-            content: r#"
+    insta::assert_debug_snapshot!(get_subtrees(GetSubtreesArgs {
+        queries: get_query_strings(SupportedLanguage::Rust),
+        language: SupportedLanguage::Rust,
+        text: r#"
 mod m {
     fn foo() {}
     fn baz() {}
@@ -182,17 +160,13 @@ mod m {
     fn baz() {}
 }
             "#
-            .to_string()
-        },
-        GetSubtreesResponse
-    ));
+        .to_string()
+    }));
 
-    insta::assert_debug_snapshot!(post_request!(
-        get_subtrees_endpoint,
-        GetSubtreesArgs {
-            items: get_query_strings(SupportedLanguage::TypeScript),
-            language: SupportedLanguage::TypeScript,
-            content: r#"
+    insta::assert_debug_snapshot!(code_blocks_server::get_subtrees(GetSubtreesArgs {
+        queries: get_query_strings(SupportedLanguage::TypeScript),
+        language: SupportedLanguage::TypeScript,
+        text: r#"
 class TsClass {
     constructor() {}
 
@@ -208,46 +182,38 @@ export function baz() {}
 
 export default function baz2() {}
             "#
-            .to_string()
-        },
-        GetSubtreesResponse
-    ));
+        .to_string()
+    }));
 }
 
 macro_rules! check {
     ($lang:expr, $text:literal) => {
-        let tree = build_tree($text, $lang.get_language());
+        let mut parser = Parser::new();
+        parser.set_language($lang.get_language()).unwrap();
+        let tree = parser.parse($text, None).unwrap();
 
         let items = get_query_subtrees(&get_queries($lang), &tree, $text);
-        let src_item = copy_item_above("^src", $text, &items).unwrap();
-        let dst_item = copy_item_above("^dst", $text, &items);
-        let fail_item = copy_item_above("^fail", $text, &items);
+        let src_block = copy_item_above("^src", $text, &items).unwrap();
+        let dst_block = copy_item_above("^dst", $text, &items);
+        let fail_block = copy_item_above("^fail", $text, &items);
 
-        if let Some(dst_item) = dst_item {
-            insta::assert_display_snapshot!(post_request!(
-                move_item_endpoint,
-                MoveItemArgs {
-                    item_types: get_query_strings($lang),
-                    content: $text.to_string(),
-                    language: $lang,
-                    src_item: src_item.into(),
-                    dst_item: dst_item.into(),
-                },
-                MoveItemResponse
-            )
+        if let Some(dst_block) = dst_block {
+            insta::assert_display_snapshot!(code_blocks_server::move_block(MoveBlockArgs {
+                queries: get_query_strings($lang),
+                text: $text.to_string(),
+                language: $lang,
+                src_block: src_block.into(),
+                dst_block: dst_block.into(),
+            })
             .unwrap());
-        } else if let Some(fail_item) = fail_item {
-            insta::assert_display_snapshot!(post_request!(
-                move_item_endpoint,
-                MoveItemArgs {
-                    item_types: get_query_strings($lang),
-                    content: $text.to_string(),
-                    language: $lang,
-                    src_item: src_item.into(),
-                    dst_item: fail_item.into(),
-                },
-                MoveItemResponse
-            )
+        } else if let Some(fail_block) = fail_block {
+            insta::assert_display_snapshot!(code_blocks_server::move_block(MoveBlockArgs {
+                queries: get_query_strings($lang),
+                text: $text.to_string(),
+                language: $lang,
+                src_block: src_block.into(),
+                dst_block: fail_block.into(),
+            },)
             .err()
             .unwrap());
         }

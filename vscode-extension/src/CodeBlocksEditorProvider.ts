@@ -77,20 +77,27 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
   private async updateWebview(document: vscode.TextDocument, webviewPanel: vscode.WebviewPanel) {
     const content = document.getText();
 
-    const blockTrees = await getBlockTrees({
-      content: content,
+    const response = await getBlockTrees({
+      text: content,
       // @ts-expect-error
-      items: getQueryStrings(getDocLang(document)),
+      queries: getQueryStrings(getDocLang(document)),
       // @ts-expect-error
       language: getDocLang(document),
     });
 
-    const updateMessage: UpdateMessage = {
-      type: "update",
-      text: content,
-      blockTrees: blockTrees,
-    };
-    webviewPanel.webview.postMessage(updateMessage);
+    switch (response.status) {
+      case "ok":
+        webviewPanel.webview.postMessage({
+          type: "update",
+          text: content,
+          blockTrees: response.result,
+        } as UpdateMessage);
+        break;
+
+      case "error":
+        vscode.window.showErrorMessage(`Failed to get blocks: ${response.result}`);
+        break;
+    }
   }
 
   private async handleMoveCommand(
@@ -98,30 +105,30 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     document: vscode.TextDocument
   ): Promise<void> {
     const moveArgs: MoveItemArgs = {
-      content: document.getText(),
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      src_item: args.src,
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      dst_item: args.dst,
+      text: document.getText(),
+      srcBlock: args.src,
+      dstBlock: args.dst,
       //@ts-expect-error
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      item_types: getQueryStrings(document.languageId),
+      queries: getQueryStrings(document.languageId),
       //@ts-expect-error
       language: getDocLang(document),
     };
 
     const response = await moveBlock(moveArgs);
 
-    if (response.Err !== undefined) {
-      vscode.window.showErrorMessage(`Failed to move block: ${response.Err}`);
-    } else if (response.Ok !== undefined) {
-      const newContent = response.Ok;
+    switch (response.status) {
+      case "ok":
+        const newContent = response.result;
 
-      const edit = new vscode.WorkspaceEdit();
+        const edit = new vscode.WorkspaceEdit();
+        edit.replace(document.uri, new vscode.Range(0, 0, document.lineCount, 0), newContent);
 
-      edit.replace(document.uri, new vscode.Range(0, 0, document.lineCount, 0), newContent);
+        await vscode.workspace.applyEdit(edit);
+        break;
 
-      await vscode.workspace.applyEdit(edit);
+      case "error":
+        vscode.window.showErrorMessage(`Failed to move block: ${response.result}`);
+        break;
     }
   }
 

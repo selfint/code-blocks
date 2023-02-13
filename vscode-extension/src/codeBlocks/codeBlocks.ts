@@ -1,10 +1,10 @@
 import axios from "axios";
 import { ChildProcess, exec } from "child_process";
-import { GetSubtreesArgs, MoveItemArgs, MoveItemResponse, GetSubtreesResponse } from "./types";
+import { GetSubtreesArgs, MoveItemArgs, MoveItemResponse, GetSubtreesResponse, JsonResult } from "./types";
 import * as vscode from "vscode";
 
 const GET_SUBTREES_ENDPOINT = "http://localhost:8000/get_subtrees";
-const MOVE_ITEM_ENDPOINT = "http://localhost:8000/move_item";
+const MOVE_ITEM_ENDPOINT = "http://localhost:8000/move_block";
 
 export class CodeBlocksServerRC {
   private static instances: number = 0;
@@ -67,7 +67,7 @@ export class CodeBlocksServerRC {
   }
 }
 
-export async function getBlockTrees(args: GetSubtreesArgs): Promise<GetSubtreesResponse> {
+export async function getBlockTrees(args: GetSubtreesArgs): Promise<JsonResult<GetSubtreesResponse>> {
   if (args.language === "typescriptreact") {
     args.language = "tsx";
   }
@@ -81,7 +81,7 @@ export async function getBlockTrees(args: GetSubtreesArgs): Promise<GetSubtreesR
   return response.data;
 }
 
-export async function moveBlock(args: MoveItemArgs): Promise<MoveItemResponse> {
+export async function moveBlock(args: MoveItemArgs): Promise<JsonResult<MoveItemResponse>> {
   if (args.language === "typescriptreact") {
     args.language = "tsx";
   }

@@ -1,12 +1,12 @@
 /// <reference types="svelte" />
 
 export type BlockLocation = {
-  start_byte: number;
-  end_byte: number;
-  start_row: number;
-  start_col: number;
-  end_row: number;
-  end_col: number;
+  startByte: number;
+  endByte: number;
+  startRow: number;
+  startCol: number;
+  endRow: number;
+  endCol: number;
 };
 
 export type BlockLocationTree = {

@@ -38,21 +38,21 @@
   >
     {#if tree.children.length !== 0}
       <div>
-        {textSlice(tree.block.start_byte, tree.children[0].block.start_byte)}
+        {textSlice(tree.block.startByte, tree.children[0].block.startByte)}
       </div>
       {#each tree.children as childTree, i}
         <svelte:self {text} tree={childTree} {onClick} {selectedBlock} />
         {#if i !== tree.children.length - 1}
           <div>
-            {textSlice(tree.children[i].block.end_byte, tree.children[i + 1].block.start_byte)}
+            {textSlice(tree.children[i].block.endByte, tree.children[i + 1].block.startByte)}
           </div>
         {/if}
       {/each}
       <div>
-        {textSlice(tree.children.at(-1).block.end_byte, tree.block.end_byte)}
+        {textSlice(tree.children.at(-1).block.endByte, tree.block.endByte)}
       </div>
     {:else}
-      {textSlice(tree.block.start_byte, tree.block.end_byte)}
+      {textSlice(tree.block.startByte, tree.block.endByte)}
     {/if}
   </div>
 </main>

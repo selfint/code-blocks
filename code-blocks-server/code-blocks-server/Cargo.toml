@@ -1,6 +1,6 @@
 [package]
 name = "code-blocks-server"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 authors = ["Tom Selfin selfint@gmail.com"]
 description = "A tool to re-order your code"
@@ -18,9 +18,11 @@ categories = [
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0.69"
 code-blocks = { path = "../code-blocks", version = "0.1.0" }
-rocket = { version = "0.5.0-rc.2", features = ["json"] }
+rocket = { version = "0.5.0-rc.2", features = ["json"], optional = true }
 serde = { version = "1.0.152", features = ["derive"] }
+# serde_json = { version = "1.0.93", optional = true }
 tree-sitter = "0.20.9"
 tree-sitter-rust = "0.20.3"
 tree-sitter-svelte = "0.10.2"
@@ -28,3 +30,15 @@ tree-sitter-typescript = "0.20.2"
 
 [dev-dependencies]
 insta = { version = "1.26.0", features = ["json"] }
+
+[features]
+rest = ["rocket"]
+# cli = ["serde_json"]
+
+[[bin]]
+name = "code-blocks-rest"
+required-features = ["rest"]
+
+# [[bin]]
+# name = "code-blocks-cli"
+# required-features = ["cli"]
