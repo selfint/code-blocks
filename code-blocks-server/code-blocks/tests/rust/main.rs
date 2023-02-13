@@ -142,16 +142,16 @@ macro_rules! check {
         let tree = build_tree($text);
 
         let items = get_query_subtrees(&rust_queries(), &tree, $text);
-        let src_item = copy_item_above("^src", $text, &items).unwrap();
+        let src_block = copy_item_above("^src", $text, &items).unwrap();
         let dst_item = copy_item_above("^dst", $text, &items);
         let fail_item = copy_item_above("^fail", $text, &items);
 
         if let Some(dst_item) = dst_item {
             insta::assert_display_snapshot!(
-                code_blocks::move_block(src_item, dst_item, $text).unwrap()
+                code_blocks::move_block(src_block, dst_item, $text).unwrap()
             );
         } else if let Some(fail_item) = fail_item {
-            let result = code_blocks::move_block(src_item, fail_item, $text);
+            let result = code_blocks::move_block(src_block, fail_item, $text);
             assert!(result.is_err());
 
             insta::assert_display_snapshot!(format!("{}\n\n{}", $text, result.err().unwrap()));

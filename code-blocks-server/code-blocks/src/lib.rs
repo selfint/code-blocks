@@ -45,11 +45,11 @@ pub fn get_query_subtrees<'tree>(
 }
 
 pub fn move_block<'tree>(
-    src_item: Block<'tree>,
+    src_block: Block<'tree>,
     dst_item: Block<'tree>,
     text: &str,
 ) -> Result<String> {
-    let (Some(src_head), Some(src_tail)) = src_item.head_tail() else {
+    let (Some(src_head), Some(src_tail)) = src_block.head_tail() else {
         return Err(anyhow!("Can't move empty block"));
     };
 
@@ -57,7 +57,7 @@ pub fn move_block<'tree>(
         return Err(anyhow!("Can't move empty block"));
     };
 
-    let Some(src_block_range) = src_item.byte_range() else {
+    let Some(src_block_range) = src_block.byte_range() else {
         return Err(anyhow!("Can't move empty block"));
     };
 

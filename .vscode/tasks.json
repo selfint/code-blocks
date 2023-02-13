@@ -26,7 +26,7 @@
 			},
 			"dependsOn": [
 				"webview-ui",
-				// "code-blocks-server",
+				"code-blocks-server",
 			]
 		},
 		{
@@ -43,7 +43,9 @@
 			"command": "cargo",
 			"args": [
 				"run",
-				"--release"
+				"--release",
+				"--bin=code-blocks-rest",
+				"--features=rest"
 			],
 			"options": {
 				"cwd": "${workspaceFolder}${pathSeparator}code-blocks-server${pathSeparator}code-blocks-server"

@@ -40,11 +40,11 @@
     <div>No blocks available.</div>
   {:else}
     <div>
-      {text.substring(0, blockTrees[0].block.start_byte)}
+      {text.substring(0, blockTrees[0].block.startByte)}
       {#each blockTrees as tree}
         <Tree {text} {tree} onClick={handleBlockClicked} {selectedBlock} />
       {/each}
-      {text.substring(blockTrees[blockTrees.length - 1].block.end_byte, text.length)}
+      {text.substring(blockTrees[blockTrees.length - 1].block.endByte, text.length)}
     </div>
   {/if}
 </main>
