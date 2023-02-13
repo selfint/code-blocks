@@ -22,7 +22,7 @@ anyhow = "1.0.69"
 code-blocks = { path = "../code-blocks", version = "0.1.0" }
 rocket = { version = "0.5.0-rc.2", features = ["json"], optional = true }
 serde = { version = "1.0.152", features = ["derive"] }
-# serde_json = { version = "1.0.93", optional = true }
+serde_json = { version = "1.0.93", optional = true }
 tree-sitter = "0.20.9"
 tree-sitter-rust = "0.20.3"
 tree-sitter-svelte = "0.10.2"
@@ -33,12 +33,12 @@ insta = { version = "1.26.0", features = ["json"] }
 
 [features]
 rest = ["rocket"]
-# cli = ["serde_json"]
+cli = ["serde_json"]
 
 [[bin]]
 name = "code-blocks-rest"
 required-features = ["rest"]
 
-# [[bin]]
-# name = "code-blocks-cli"
-# required-features = ["cli"]
+[[bin]]
+name = "code-blocks-cli"
+required-features = ["cli"]
