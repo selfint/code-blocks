@@ -103,7 +103,7 @@ async function installViaRelease(): Promise<boolean> {
         lastPercentage = percentage;
       };
 
-      let downloadTarget = path.join(os.tmpdir(), `code-blocks-cli@${process.pid}`);
+      let downloadTarget = path.join(os.tmpdir(), `code-blocks-cli`);
       const uri = getPlatfromBinaryUrl();
       if (uri === undefined) {
         vscode.window.showErrorMessage(`Unsupported os/arch: ${os.platform()}-${os.arch()}`);
@@ -118,7 +118,7 @@ async function installViaRelease(): Promise<boolean> {
       });
 
       await vscode.window.showInformationMessage(
-        `code-blocks-cli downloaded to: ${downloadTarget}, please add it to your PATH and press OK`,
+        `code-blocks-cli downloaded to: ${downloadTarget} please add it to your PATH (and ensure it is executable), then press OK`,
         "OK"
       );
 
