@@ -12,6 +12,7 @@ import {
 import { getQueryStrings } from "./codeBlocks/queries";
 import { SUPPORTED_LANGUAGES } from "./codeBlocks/types";
 import { MoveCommand, UpdateMessage } from "./messages";
+import { ensureInstalled } from "./codeBlocks/installer";
 
 function getDocLang(document: vscode.TextDocument): string {
   let lang = document.languageId;
@@ -46,6 +47,8 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
       vscode.window.showErrorMessage(`Opened file in unsupported language: ${document.languageId}`);
       return;
     }
+
+    await ensureInstalled();
 
     // Setup initial content for the webview
     webviewPanel.webview.options = {
