@@ -48,7 +48,10 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
       return;
     }
 
-    await ensureInstalled();
+    const serverInstalled = await ensureInstalled();
+    if (!serverInstalled) {
+      vscode.window.showErrorMessage("Failed to install server");
+    }
 
     // Setup initial content for the webview
     webviewPanel.webview.options = {
