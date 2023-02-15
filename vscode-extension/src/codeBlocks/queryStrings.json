@@ -6,17 +6,17 @@
     "(impl_item) @item"
   ],
   "typescript": [
-    " ( (comment)* @header . (class_declaration) @item)",
-    " ( (comment)* @header . (method_definition) @item)",
-    " ( (comment)* @header . (function_declaration) @item)",
-    " ( (comment)* @header . (export_statement) @item)"
+    "( (comment)* @header . (class_declaration) @item)",
+    "( (comment)* @header . (method_definition) @item)",
+    "( (comment)* @header . (function_declaration) @item)",
+    "( (comment)* @header . (export_statement) @item)"
   ],
   "tsx": ["(jsx_element) @item", "(jsx_self_closing_element) @item"],
   "svelte": [
-    " ( (comment)* @header . (element) @item)",
-    " ( (comment)* @header . (each_statement) @item)",
-    " ( (comment)* @header . (if_statement) @item)",
-    " ( (comment)* @header . (style_element) @item)",
-    " ( (comment)* @header . (script_element) @item)"
+    "( (comment)* @header . (element) @item)",
+    "( (comment)* @header . (each_statement) @item)",
+    "( (comment)* @header . (if_statement) @item)",
+    "( (comment)* @header . (style_element) @item)",
+    "( (comment)* @header . (script_element) @item)"
   ]
 }
