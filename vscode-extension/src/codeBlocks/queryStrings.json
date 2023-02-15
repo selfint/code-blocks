@@ -3,7 +3,7 @@
     "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (function_item) @item)",
     "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (mod_item) @item)",
     "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (struct_item) @item)",
-    "(impl_item) @item"
+    "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (impl_item) @item)"
   ],
   "typescript": [
     "( (comment)* @header . (class_declaration) @item)",
