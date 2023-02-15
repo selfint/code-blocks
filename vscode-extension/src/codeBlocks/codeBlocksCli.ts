@@ -12,9 +12,12 @@ type MethodCall =
       params: MoveBlockArgs;
     };
 
-export async function getBlockTrees(args: GetSubtreesArgs): Promise<JsonResult<GetSubtreesResponse>> {
+export async function getBlockTrees(
+  bin: string,
+  args: GetSubtreesArgs
+): Promise<JsonResult<GetSubtreesResponse>> {
   return new Promise(async (resolve, reject) => {
-    const cli = spawn("code-blocks-cli");
+    const cli = spawn(bin);
     const rl = createInterface(cli.stdout);
 
     rl.on("line", (line) => {
@@ -35,9 +38,9 @@ export async function getBlockTrees(args: GetSubtreesArgs): Promise<JsonResult<G
   });
 }
 
-export async function moveBlock(args: MoveBlockArgs): Promise<JsonResult<MoveBlockResponse>> {
+export async function moveBlock(bin: string, args: MoveBlockArgs): Promise<JsonResult<MoveBlockResponse>> {
   return new Promise(async (resolve, reject) => {
-    const cli = spawn("code-blocks-cli");
+    const cli = spawn(bin);
     const rl = createInterface(cli.stdout);
 
     rl.on("line", (line) => {

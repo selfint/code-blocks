@@ -4,6 +4,7 @@ import { getUri } from "./utilities/getUri";
 import { getBlockTrees, moveBlock } from "./codeBlocks/codeBlocksCli";
 import {
   BlockLocation,
+  GetSubtreesArgs,
   GetSubtreesResponse,
   JsonResult,
   MoveBlockArgs,
@@ -12,6 +13,7 @@ import {
 import { getQueryStrings } from "./codeBlocks/queries";
 import { SUPPORTED_LANGUAGES } from "./codeBlocks/types";
 import { MoveCommand, UpdateMessage } from "./messages";
+import { ensureInstalled } from "./codeBlocks/installer";
 
 function getDocLang(document: vscode.TextDocument): string {
   let lang = document.languageId;
@@ -25,6 +27,8 @@ function getDocLang(document: vscode.TextDocument): string {
 
 export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider {
   public static readonly viewType = "codeBlocks.editor";
+
+  private binPath: string | undefined = undefined;
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
@@ -44,6 +48,12 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     //@ts-expect-error
     if (!SUPPORTED_LANGUAGES.includes(getDocLang(document))) {
       vscode.window.showErrorMessage(`Opened file in unsupported language: ${document.languageId}`);
+      return;
+    }
+
+    this.binPath = await ensureInstalled(this.context.extensionPath);
+    if (this.binPath === undefined) {
+      vscode.window.showErrorMessage("Server not installed");
       return;
     }
 
@@ -82,13 +92,15 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     let response: JsonResult<GetSubtreesResponse>;
 
     try {
-      response = await getBlockTrees({
+      const getSubtreeArgs: GetSubtreesArgs = {
         text: content,
         // @ts-expect-error
         queries: getQueryStrings(getDocLang(document)),
         // @ts-expect-error
         language: getDocLang(document),
-      });
+      };
+
+      response = await getBlockTrees(this.binPath!, getSubtreeArgs);
     } catch (error) {
       vscode.window.showErrorMessage(JSON.stringify(error));
       return;
@@ -126,7 +138,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     let response: JsonResult<MoveBlockResponse>;
 
     try {
-      response = await moveBlock(moveArgs);
+      response = await moveBlock(this.binPath!, moveArgs);
     } catch (error) {
       vscode.window.showErrorMessage(JSON.stringify(error));
       return;
