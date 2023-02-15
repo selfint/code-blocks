@@ -4,6 +4,7 @@ import { getUri } from "./utilities/getUri";
 import { getBlockTrees, moveBlock } from "./codeBlocks/codeBlocksCli";
 import {
   BlockLocation,
+  GetSubtreesArgs,
   GetSubtreesResponse,
   JsonResult,
   MoveBlockArgs,
@@ -27,6 +28,8 @@ function getDocLang(document: vscode.TextDocument): string {
 export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider {
   public static readonly viewType = "codeBlocks.editor";
 
+  private binPath: string | undefined = undefined;
+
   constructor(private readonly context: vscode.ExtensionContext) {}
 
   async handleMessage(document: vscode.TextDocument, message: MoveCommand): Promise<void> {
@@ -48,9 +51,10 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
       return;
     }
 
-    const serverInstalled = await ensureInstalled();
-    if (!serverInstalled) {
-      vscode.window.showErrorMessage("Failed to install server");
+    this.binPath = await ensureInstalled(this.context.extensionPath);
+    if (this.binPath === undefined) {
+      vscode.window.showErrorMessage("Server not installed");
+      return;
     }
 
     // Setup initial content for the webview
@@ -88,13 +92,15 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     let response: JsonResult<GetSubtreesResponse>;
 
     try {
-      response = await getBlockTrees({
+      const getSubtreeArgs: GetSubtreesArgs = {
         text: content,
         // @ts-expect-error
         queries: getQueryStrings(getDocLang(document)),
         // @ts-expect-error
         language: getDocLang(document),
-      });
+      };
+
+      response = await getBlockTrees(this.binPath!, getSubtreeArgs);
     } catch (error) {
       vscode.window.showErrorMessage(JSON.stringify(error));
       return;
@@ -132,7 +138,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     let response: JsonResult<MoveBlockResponse>;
 
     try {
-      response = await moveBlock(moveArgs);
+      response = await moveBlock(this.binPath!, moveArgs);
     } catch (error) {
       vscode.window.showErrorMessage(JSON.stringify(error));
       return;
