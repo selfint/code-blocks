@@ -110,7 +110,12 @@ async function installViaRelease(): Promise<boolean> {
         return false;
       }
 
-      await download(uri, downloadTarget, reportProgress);
+      try {
+        await download(uri, downloadTarget, reportProgress);
+      } catch (e) {
+        vscode.window.showErrorMessage(JSON.stringify(e));
+        return false;
+      }
 
       progress.report({
         message: "installing",
