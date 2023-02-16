@@ -5,11 +5,45 @@ import * as os from "os";
 import * as path from "path";
 import * as fs from "fs";
 import { promises as asyncFs } from "fs";
-import { download } from "../installer/lldb_vscode_copy/lldb_vscode_installer_utils";
+import { download } from "./lldb_vscode_copy/lldb_vscode_installer_utils";
 
 const BINARY = "code-blocks-cli";
 const CARGO_INSTALL_CMD = "cargo install code-blocks-server --features=cli";
 const RELEASE_URL = "https://github.com/selfint/code-blocks/releases/download/code-blocks-server-v0.2.0/";
+
+export async function ensureInstalled(extensionPath: string): Promise<string | undefined> {
+  const installationPath = await getInstallationPath(extensionPath);
+  if (installationPath !== undefined) {
+    return installationPath;
+  }
+
+  type Selection = "Install from release" | "Install with cargo";
+  let options: Selection[] = [];
+  if (getSupportedPlatform() !== undefined) {
+    options.push("Install from release");
+  }
+
+  if (which.sync("cargo", { nothrow: true }) !== null) {
+    options.push("Install with cargo");
+  }
+
+  const selected = await vscode.window.showErrorMessage(`${BINARY} is not in PATH`, ...options);
+  if (selected === undefined) {
+    return undefined;
+  }
+
+  switch (selected) {
+    case "Install from release":
+      await installViaRelease(extensionPath);
+      break;
+
+    case "Install with cargo":
+      await installViaCargo();
+      break;
+  }
+
+  return await getInstallationPath(extensionPath);
+}
 
 async function getInstallationPath(extensionPath: string): Promise<string | undefined> {
   async function ensureExecutable(binPath: string) {
@@ -51,40 +85,6 @@ async function getInstallationPath(extensionPath: string): Promise<string | unde
   } else {
     return undefined;
   }
-}
-
-export async function ensureInstalled(extensionPath: string): Promise<string | undefined> {
-  const installationPath = await getInstallationPath(extensionPath);
-  if (installationPath !== undefined) {
-    return installationPath;
-  }
-
-  type Selection = "Install from release" | "Install with cargo";
-  let options: Selection[] = [];
-  if (getSupportedPlatform() !== undefined) {
-    options.push("Install from release");
-  }
-
-  if (which.sync("cargo", { nothrow: true }) !== null) {
-    options.push("Install with cargo");
-  }
-
-  const selected = await vscode.window.showErrorMessage(`${BINARY} is not in PATH`, ...options);
-  if (selected === undefined) {
-    return undefined;
-  }
-
-  switch (selected) {
-    case "Install from release":
-      await installViaRelease(extensionPath);
-      break;
-
-    case "Install with cargo":
-      await installViaCargo();
-      break;
-  }
-
-  return await getInstallationPath(extensionPath);
 }
 
 type SupportedTriple =
