@@ -13,7 +13,7 @@ import {
 import { getQueryStrings } from "./codeBlocks/queries";
 import { SUPPORTED_LANGUAGES } from "./codeBlocks/types";
 import { MoveCommand, UpdateMessage } from "./messages";
-import { ensureInstalled } from "./codeBlocks/installer";
+import { ensureInstalled } from "./codeBlocks/installer/installer";
 
 function getDocLang(document: vscode.TextDocument): string {
   let lang = document.languageId;

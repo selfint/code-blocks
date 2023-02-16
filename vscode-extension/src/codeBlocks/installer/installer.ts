@@ -5,47 +5,40 @@ import * as os from "os";
 import * as path from "path";
 import * as fs from "fs";
 import { promises as asyncFs } from "fs";
-import { download } from "../installer/lldb_vscode_copy/lldb_vscode_installer_utils";
+import { download } from "./lldb_vscode_copy/lldb_vscode_installer_utils";
 
 const BINARY = "code-blocks-cli";
 const CARGO_INSTALL_CMD = "cargo install code-blocks-server --features=cli";
 const RELEASE_URL = "https://github.com/selfint/code-blocks/releases/download/code-blocks-server-v0.2.0/";
 
-async function getInstallationPath(extensionPath: string): Promise<string | undefined> {
+async function getInstallationPath(extensionBinPath: string): Promise<string | undefined> {
   async function ensureExecutable(binPath: string) {
     console.log(`ensuring ${binPath} executable`);
-    await new Promise<void>((resolve, _) => {
-      try {
-        fs.access(binPath, 1, (err) => {
-          if (err) {
-            console.log(`path ${binPath} isn't executable, changing permissions`);
-            fs.chmodSync(binPath, 0o755);
-          }
-          resolve();
-        });
-      } catch (e) {
-        console.log(`Got exception: ${e}`);
+    const EXECUTE_PERM = 1;
+    fs.access(binPath, EXECUTE_PERM, (err) => {
+      if (err) {
+        console.log(`path ${binPath} isn't executable, changing permissions`);
+        fs.chmodSync(binPath, 0o755);
       }
     });
 
-    console.log(`checking now ${binPath} is executable`);
-    fs.access(binPath, 1, (e) => {
+    fs.access(binPath, EXECUTE_PERM, (e) => {
       if (e) {
-        console.error(`path ${binPath} isn't executable!`);
+        console.error(`${binPath} isn't executable!`);
       } else {
-        console.log(`path ${binPath} is executable`);
+        console.log(`${binPath} is executable`);
       }
     });
   }
 
+  const binPath = path.join(extensionBinPath, BINARY);
+  const inExtensionBinDir = fs.existsSync(binPath);
+
   const inPath = which.sync(BINARY, { nothrow: true });
 
-  const extensionBinPath = path.join(extensionPath, "bin", BINARY);
-  const inExtensionBinDir = fs.existsSync(extensionBinPath);
-
   if (inExtensionBinDir) {
-    await ensureExecutable(extensionBinPath);
-    return extensionBinPath;
+    await ensureExecutable(binPath);
+    return binPath;
   } else if (inPath !== null) {
     return inPath;
   } else {
