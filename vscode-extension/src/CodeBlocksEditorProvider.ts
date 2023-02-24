@@ -13,7 +13,7 @@ import {
 import { getQueryStrings } from "./codeBlocks/queries";
 import { SUPPORTED_LANGUAGES } from "./codeBlocks/types";
 import { MoveCommand, UpdateMessage } from "./messages";
-import { ensureInstalled } from "./codeBlocks/installer/installer";
+import { ensureCliInstalled } from "./codeBlocks/installer/installer";
 
 function getDocLang(document: vscode.TextDocument): string {
   let lang = document.languageId;
@@ -52,7 +52,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
       return;
     }
 
-    this.binPath = await ensureInstalled(this.context.extensionPath);
+    this.binPath = await ensureCliInstalled(this.context.extensionPath);
     if (this.binPath === undefined) {
       vscode.window.showErrorMessage("Server not installed");
       return;

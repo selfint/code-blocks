@@ -11,7 +11,7 @@ const BINARY = "code-blocks-cli";
 const CARGO_INSTALL_CMD = "cargo install code-blocks-server --features=cli";
 const RELEASE_URL = "https://github.com/selfint/code-blocks/releases/download/code-blocks-server-v0.2.0/";
 
-export async function ensureInstalled(extensionPath: string): Promise<string | undefined> {
+export async function ensureCliInstalled(extensionPath: string): Promise<string | undefined> {
   const installationPath = await getInstallationPath(extensionPath);
   if (installationPath !== undefined) {
     return installationPath;
