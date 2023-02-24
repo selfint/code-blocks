@@ -10,21 +10,11 @@ import {
   MoveBlockArgs,
   MoveBlockResponse,
   SupportedLanguage,
+  SUPPORTED_LANGUAGES,
 } from "./codeBlocks/types";
 import { getQueryStrings } from "./codeBlocks/queries";
-import { SUPPORTED_LANGUAGES } from "./codeBlocks/types";
 import { MoveCommand, UpdateMessage } from "./messages";
 import { ensureCliInstalled } from "./codeBlocks/installer/installer";
-
-function getDocLang(document: vscode.TextDocument): string {
-  let lang = document.languageId;
-
-  if (lang === "typescriptreact") {
-    lang = "tsx";
-  }
-
-  return lang;
-}
 
 export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider {
   public static readonly viewType = "codeBlocks.editor";
@@ -48,15 +38,13 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     webviewPanel: vscode.WebviewPanel,
     _token: vscode.CancellationToken
   ): Promise<void> {
-    const docLang = getDocLang(document);
-
     //@ts-expect-error
-    if (!SUPPORTED_LANGUAGES.includes(docLang)) {
+    if (!SUPPORTED_LANGUAGES.includes(document.languageId)) {
       vscode.window.showErrorMessage(`Opened file in unsupported language: ${document.languageId}`);
       return;
     } else {
       //@ts-expect-error
-      this.docLang = docLang;
+      this.docLang = document.languageId;
     }
 
     this.binPath = await ensureCliInstalled(this.context.extensionPath);
