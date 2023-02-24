@@ -9,6 +9,7 @@ import {
   JsonResult,
   MoveBlockArgs,
   MoveBlockResponse,
+  SupportedLanguage,
 } from "./codeBlocks/types";
 import { getQueryStrings } from "./codeBlocks/queries";
 import { SUPPORTED_LANGUAGES } from "./codeBlocks/types";
@@ -30,6 +31,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
   public static readonly extensionBinDir = "bin";
 
   private binPath: string | undefined = undefined;
+  private docLang: SupportedLanguage | undefined = undefined;
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
@@ -46,10 +48,15 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     webviewPanel: vscode.WebviewPanel,
     _token: vscode.CancellationToken
   ): Promise<void> {
+    const docLang = getDocLang(document);
+
     //@ts-expect-error
-    if (!SUPPORTED_LANGUAGES.includes(getDocLang(document))) {
+    if (!SUPPORTED_LANGUAGES.includes(docLang)) {
       vscode.window.showErrorMessage(`Opened file in unsupported language: ${document.languageId}`);
       return;
+    } else {
+      //@ts-expect-error
+      this.docLang = docLang;
     }
 
     this.binPath = await ensureCliInstalled(this.context.extensionPath);
@@ -69,24 +76,6 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     await this.updateWebview(document, webviewPanel);
   }
 
-  private subscribeToDocEvents(webviewPanel: vscode.WebviewPanel, document: vscode.TextDocument) {
-    const didReceiveMessageSubscription = webviewPanel.webview.onDidReceiveMessage(
-      async (message: MoveCommand) => this.handleMessage(document, message),
-      undefined
-    );
-
-    const didChangeTextDocumentSubscription = vscode.workspace.onDidChangeTextDocument(async (e) => {
-      if (e.document.uri.toString() === document.uri.toString()) {
-        await this.updateWebview(e.document, webviewPanel);
-      }
-    });
-
-    webviewPanel.onDidDispose(() => {
-      didChangeTextDocumentSubscription.dispose();
-      didReceiveMessageSubscription.dispose();
-    });
-  }
-
   private async updateWebview(document: vscode.TextDocument, webviewPanel: vscode.WebviewPanel) {
     const content = document.getText();
 
@@ -95,15 +84,13 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     try {
       const getSubtreeArgs: GetSubtreesArgs = {
         text: content,
-        // @ts-expect-error
-        queries: getQueryStrings(getDocLang(document)),
-        // @ts-expect-error
-        language: getDocLang(document),
+        queries: getQueryStrings(this.docLang!),
+        language: this.docLang!,
       };
 
       response = await getBlockTrees(this.binPath!, getSubtreeArgs);
     } catch (error) {
-      vscode.window.showErrorMessage(JSON.stringify(error));
+      vscode.window.showErrorMessage(`Failed to get blocks: ${JSON.stringify(error)}`);
       return;
     }
 
@@ -120,6 +107,24 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
         vscode.window.showErrorMessage(`Failed to get blocks: ${response.result}`);
         break;
     }
+  }
+
+  private subscribeToDocEvents(webviewPanel: vscode.WebviewPanel, document: vscode.TextDocument) {
+    const didReceiveMessageSubscription = webviewPanel.webview.onDidReceiveMessage(
+      async (message: MoveCommand) => this.handleMessage(document, message),
+      undefined
+    );
+
+    const didChangeTextDocumentSubscription = vscode.workspace.onDidChangeTextDocument(async (e) => {
+      if (e.document.uri.toString() === document.uri.toString()) {
+        await this.updateWebview(e.document, webviewPanel);
+      }
+    });
+
+    webviewPanel.onDidDispose(() => {
+      didChangeTextDocumentSubscription.dispose();
+      didReceiveMessageSubscription.dispose();
+    });
   }
 
   private async handleMoveCommand(
@@ -161,9 +166,6 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     }
   }
 
-  /**
-   * Get the static html used for the editor webviews.
-   */
   private getHtmlForWebview(webview: vscode.Webview): string {
     // The CSS file from the Svelte build output
     const stylesUri = getUri(webview, this.context.extensionUri, [
