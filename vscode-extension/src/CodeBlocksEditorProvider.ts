@@ -33,18 +33,31 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     }
   }
 
+  lanuageIdToSupportedLangauge(languageId: string): SupportedLanguage | undefined {
+    if (languageId === "typescriptreact") {
+      return "tsx";
+    } else if (
+      //@ts-expect-error
+      SUPPORTED_LANGUAGES.includes(document.languageId)
+    ) {
+      //@ts-expect-error
+      return languageId;
+    } else {
+      return undefined;
+    }
+  }
+
   public async resolveCustomTextEditor(
     document: vscode.TextDocument,
     webviewPanel: vscode.WebviewPanel,
     _token: vscode.CancellationToken
   ): Promise<void> {
-    //@ts-expect-error
-    if (!SUPPORTED_LANGUAGES.includes(document.languageId)) {
-      vscode.window.showErrorMessage(`Opened file in unsupported language: ${document.languageId}`);
+    this.docLang = this.lanuageIdToSupportedLangauge(document.languageId);
+    if (this.docLang === undefined) {
+      vscode.window.showErrorMessage(
+        `Opened file in unsupported language: '${document.languageId}' (supported languages: ${SUPPORTED_LANGUAGES})`
+      );
       return;
-    } else {
-      //@ts-expect-error
-      this.docLang = document.languageId;
     }
 
     this.binPath = await ensureCliInstalled(this.context.extensionPath);

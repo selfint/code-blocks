@@ -40,5 +40,5 @@ export type JsonResult<T> =
       result: string;
     };
 
-export const SUPPORTED_LANGUAGES = ["rust", "typescript", "tsx", "typescriptreact", "svelte"] as const;
+export const SUPPORTED_LANGUAGES = ["rust", "typescript", "tsx", "svelte"] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
