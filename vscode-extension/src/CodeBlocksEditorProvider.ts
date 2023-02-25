@@ -5,7 +5,7 @@ import { getUri } from "./utilities/getUri";
 import { SupportedLanguage } from "./codeBlocks/types";
 import { MoveCommand } from "./messages";
 import { getOrInstallCli } from "./codeBlocks/installer/installer";
-import * as uiBridge from "./uiBridge";
+import * as uiBridge from "./core";
 
 const vscodeLangIdToSupportedLanguage: Map<string, SupportedLanguage> = new Map([
   ["svelte", "svelte"],
