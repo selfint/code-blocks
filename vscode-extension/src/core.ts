@@ -10,6 +10,35 @@ import {
 } from "./codeBlocks/types";
 import { getQueryStrings } from "./codeBlocks/queries";
 import { MoveCommand, UpdateMessage } from "./messages";
+import { getUri } from "./utilities/getUri";
+import { getNonce } from "./utilities/getNonce";
+
+export function initWebview(webview: vscode.Webview, extensionUri: vscode.Uri): void {
+  const stylesUri = getUri(webview, extensionUri, ["webview-ui", "public", "build", "bundle.css"]);
+  const scriptUri = getUri(webview, extensionUri, ["webview-ui", "public", "build", "bundle.js"]);
+
+  const nonce = getNonce();
+
+  webview.options = {
+    enableScripts: true,
+  };
+
+  webview.html = /*html*/ `
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <title>Code Blocks editor</title>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+          <link rel="stylesheet" type="text/css" href="${stylesUri}">
+          <script defer nonce="${nonce}" src="${scriptUri}"></script>
+        </head>
+        <body>
+        </body>
+      </html>
+    `;
+}
 
 export async function updateUiBlocks(
   document: vscode.TextDocument,
@@ -23,6 +52,8 @@ export async function updateUiBlocks(
     queries: getQueryStrings(docLang),
     language: docLang,
   };
+
+  console.log(JSON.stringify(getSubtreeArgs));
 
   let response: JsonResult<GetSubtreesResponse>;
 

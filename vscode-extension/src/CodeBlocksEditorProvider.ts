@@ -1,7 +1,5 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { getNonce } from "./utilities/getNonce";
-import { getUri } from "./utilities/getUri";
 import { SupportedLanguage } from "./codeBlocks/types";
 import { MoveCommand } from "./messages";
 import { getOrInstallCli } from "./codeBlocks/installer/installer";
@@ -50,50 +48,11 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
       return;
     }
 
-    this.initWebview(webviewPanel.webview);
+    core.initWebview(webviewPanel.webview, this.context.extensionUri);
 
     this.subscribeToDocEvents(webviewPanel, document);
 
     await core.updateUiBlocks(document, webviewPanel, this.docLang!, this.binPath!);
-  }
-
-  private initWebview(webview: vscode.Webview): void {
-    // The CSS file from the Svelte build output
-    const stylesUri = getUri(webview, this.context.extensionUri, [
-      "webview-ui",
-      "public",
-      "build",
-      "bundle.css",
-    ]);
-    // The JS file from the Svelte build output
-    const scriptUri = getUri(webview, this.context.extensionUri, [
-      "webview-ui",
-      "public",
-      "build",
-      "bundle.js",
-    ]);
-
-    const nonce = getNonce();
-
-    webview.options = {
-      enableScripts: true,
-    };
-
-    webview.html = /*html*/ `
-      <!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <title>Code Blocks editor</title>
-          <meta charset="UTF-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
-          <link rel="stylesheet" type="text/css" href="${stylesUri}">
-          <script defer nonce="${nonce}" src="${scriptUri}"></script>
-        </head>
-        <body>
-        </body>
-      </html>
-    `;
   }
 
   private subscribeToDocEvents(webviewPanel: vscode.WebviewPanel, document: vscode.TextDocument): void {
