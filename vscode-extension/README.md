@@ -33,11 +33,11 @@ Next up:
 
 ### TypeScript + JSX
 
-![example](./assets/Code-Blocks-demo-9.gif)
+![example](./assets/Code-Blocks-Demo-9.gif)
 
 ### Svelte
 
-![example](./assets/Code-Blocks-demo-10.gif)
+![example](./assets/Code-Blocks-Demo-10.gif)
 
 ### Rust
 
