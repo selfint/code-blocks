@@ -47,7 +47,7 @@ async function getExecutableBinString(extensionBinDirPath: string): Promise<stri
   }
 }
 
-async function installCli(binDirPath: string) {
+async function installCli(binDirPath: string): Promise<void> {
   const installationMethod = await getInstallationMethod();
 
   switch (installationMethod) {
