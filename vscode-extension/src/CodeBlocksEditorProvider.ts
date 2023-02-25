@@ -173,7 +173,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     try {
       response = await moveBlock(this.binPath!, moveArgs);
     } catch (error) {
-      vscode.window.showErrorMessage(JSON.stringify(error));
+      vscode.window.showErrorMessage(`Failed to move block: ${JSON.stringify(error)}`);
       return;
     }
 
@@ -191,41 +191,5 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
         vscode.window.showErrorMessage(`Failed to move block: ${response.result}`);
         break;
     }
-  }
-
-  private getHtmlForWebview(webview: vscode.Webview): string {
-    // The CSS file from the Svelte build output
-    const stylesUri = getUri(webview, this.context.extensionUri, [
-      "webview-ui",
-      "public",
-      "build",
-      "bundle.css",
-    ]);
-
-    // The JS file from the Svelte build output
-    const scriptUri = getUri(webview, this.context.extensionUri, [
-      "webview-ui",
-      "public",
-      "build",
-      "bundle.js",
-    ]);
-
-    const nonce = getNonce();
-
-    return /*html*/ `
-      <!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <title>Hello World</title>
-          <meta charset="UTF-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
-          <link rel="stylesheet" type="text/css" href="${stylesUri}">
-          <script defer nonce="${nonce}" src="${scriptUri}"></script>
-        </head>
-        <body>
-        </body>
-      </html>
-    `;
   }
 }
