@@ -1,11 +1,8 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { getNonce } from "./utilities/getNonce";
-import { getUri } from "./utilities/getUri";
 import { SupportedLanguage } from "./codeBlocks/types";
-import { MoveCommand } from "./messages";
 import { getOrInstallCli } from "./codeBlocks/installer/installer";
-import * as core from "./core";
+import { CodeBlocksEditor } from "./CodeBlocksEditor";
 
 const vscodeLangIdToSupportedLanguage: Map<string, SupportedLanguage> = new Map([
   ["svelte", "svelte"],
@@ -19,15 +16,8 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
   public static readonly extensionBinDir = "bin";
   private extensionBinDirPath: string;
 
-  private binPath: string | undefined = undefined;
-  private docLang: SupportedLanguage | undefined = undefined;
-
   constructor(private readonly context: vscode.ExtensionContext) {
     this.extensionBinDirPath = path.join(context.extensionPath, CodeBlocksEditorProvider.extensionBinDir);
-  }
-
-  async handleMessage(document: vscode.TextDocument, message: MoveCommand): Promise<void> {
-    await core.moveBlock(message, document, this.docLang!, this.binPath!);
   }
 
   public async resolveCustomTextEditor(
@@ -35,8 +25,8 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     webviewPanel: vscode.WebviewPanel,
     _token: vscode.CancellationToken
   ): Promise<void> {
-    this.docLang = vscodeLangIdToSupportedLanguage.get(document.languageId);
-    if (this.docLang === undefined) {
+    const docLang = vscodeLangIdToSupportedLanguage.get(document.languageId);
+    if (docLang === undefined) {
       const langs = Array.from(vscodeLangIdToSupportedLanguage.keys());
       vscode.window.showErrorMessage(
         `Opened file in unsupported language: '${document.languageId}' (supported languages: ${langs})`
@@ -44,73 +34,12 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
       return;
     }
 
-    this.binPath = await getOrInstallCli(this.extensionBinDirPath);
-    if (this.binPath === undefined) {
+    const codeBlocksCliPath = await getOrInstallCli(this.extensionBinDirPath);
+    if (codeBlocksCliPath === undefined) {
       vscode.window.showErrorMessage("Server not installed");
       return;
     }
 
-    this.initWebview(webviewPanel.webview);
-
-    this.subscribeToDocEvents(webviewPanel, document);
-
-    await core.updateUiBlocks(document, webviewPanel, this.docLang!, this.binPath!);
-  }
-
-  private initWebview(webview: vscode.Webview): void {
-    // The CSS file from the Svelte build output
-    const stylesUri = getUri(webview, this.context.extensionUri, [
-      "webview-ui",
-      "public",
-      "build",
-      "bundle.css",
-    ]);
-    // The JS file from the Svelte build output
-    const scriptUri = getUri(webview, this.context.extensionUri, [
-      "webview-ui",
-      "public",
-      "build",
-      "bundle.js",
-    ]);
-
-    const nonce = getNonce();
-
-    webview.options = {
-      enableScripts: true,
-    };
-
-    webview.html = /*html*/ `
-      <!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <title>Code Blocks editor</title>
-          <meta charset="UTF-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
-          <link rel="stylesheet" type="text/css" href="${stylesUri}">
-          <script defer nonce="${nonce}" src="${scriptUri}"></script>
-        </head>
-        <body>
-        </body>
-      </html>
-    `;
-  }
-
-  private subscribeToDocEvents(webviewPanel: vscode.WebviewPanel, document: vscode.TextDocument): void {
-    const didReceiveMessageSubscription = webviewPanel.webview.onDidReceiveMessage(
-      async (message: MoveCommand) => this.handleMessage(document, message),
-      undefined
-    );
-
-    const didChangeTextDocumentSubscription = vscode.workspace.onDidChangeTextDocument(async (e) => {
-      if (e.document.uri.toString() === document.uri.toString()) {
-        await core.updateUiBlocks(document, webviewPanel, this.docLang!, this.binPath!);
-      }
-    });
-
-    webviewPanel.onDidDispose(() => {
-      didChangeTextDocumentSubscription.dispose();
-      didReceiveMessageSubscription.dispose();
-    });
+    new CodeBlocksEditor(this.context, document, webviewPanel, docLang, codeBlocksCliPath);
   }
 }

@@ -11,11 +11,11 @@ import {
 import { getQueryStrings } from "./codeBlocks/queries";
 import { MoveCommand, UpdateMessage } from "./messages";
 
-export async function updateUiBlocks(
+export async function drawBlocks(
+  codeBlocksCliPath: string,
+  webview: vscode.Webview,
   document: vscode.TextDocument,
-  webviewPanel: vscode.WebviewPanel,
-  docLang: SupportedLanguage,
-  codeBlocksCliBinPath: string
+  docLang: SupportedLanguage
 ): Promise<void> {
   const text = document.getText();
   const getSubtreeArgs: GetSubtreesArgs = {
@@ -24,10 +24,12 @@ export async function updateUiBlocks(
     language: docLang,
   };
 
+  console.log(`Get subtrees args: ${JSON.stringify(getSubtreeArgs.language)}`);
+
   let response: JsonResult<GetSubtreesResponse>;
 
   try {
-    response = await codeBlocksCliClient.getSubtrees(codeBlocksCliBinPath, getSubtreeArgs);
+    response = await codeBlocksCliClient.getSubtrees(codeBlocksCliPath, getSubtreeArgs);
   } catch (error) {
     vscode.window.showErrorMessage(`Failed to get blocks: ${JSON.stringify(error)}`);
     return;
@@ -35,7 +37,7 @@ export async function updateUiBlocks(
 
   switch (response.status) {
     case "ok":
-      webviewPanel.webview.postMessage({
+      webview.postMessage({
         type: "update",
         text: text,
         blockTrees: response.result,
@@ -50,9 +52,9 @@ export async function updateUiBlocks(
 
 export async function moveBlock(
   msg: MoveCommand,
+  codeBlocksCliPath: string,
   document: vscode.TextDocument,
-  docLang: SupportedLanguage,
-  codeBlocksCliBinPath: string
+  docLang: SupportedLanguage
 ): Promise<void> {
   const moveArgs: MoveBlockArgs = {
     text: document.getText(),
@@ -65,7 +67,7 @@ export async function moveBlock(
   let response: JsonResult<MoveBlockResponse>;
 
   try {
-    response = await codeBlocksCliClient.moveBlock(codeBlocksCliBinPath, moveArgs);
+    response = await codeBlocksCliClient.moveBlock(codeBlocksCliPath, moveArgs);
   } catch (error) {
     vscode.window.showErrorMessage(`Failed to move block: ${JSON.stringify(error)}`);
     return;
