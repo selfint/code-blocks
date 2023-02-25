@@ -10,41 +10,12 @@ import {
 } from "./codeBlocks/types";
 import { getQueryStrings } from "./codeBlocks/queries";
 import { MoveCommand, UpdateMessage } from "./messages";
-import { getUri } from "./utilities/getUri";
-import { getNonce } from "./utilities/getNonce";
 
-export function initWebview(webview: vscode.Webview, extensionUri: vscode.Uri): void {
-  const stylesUri = getUri(webview, extensionUri, ["webview-ui", "public", "build", "bundle.css"]);
-  const scriptUri = getUri(webview, extensionUri, ["webview-ui", "public", "build", "bundle.js"]);
-
-  const nonce = getNonce();
-
-  webview.options = {
-    enableScripts: true,
-  };
-
-  webview.html = /*html*/ `
-      <!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <title>Code Blocks editor</title>
-          <meta charset="UTF-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
-          <link rel="stylesheet" type="text/css" href="${stylesUri}">
-          <script defer nonce="${nonce}" src="${scriptUri}"></script>
-        </head>
-        <body>
-        </body>
-      </html>
-    `;
-}
-
-export async function updateUiBlocks(
+export async function drawBlocks(
+  codeBlocksCliPath: string,
+  webview: vscode.Webview,
   document: vscode.TextDocument,
-  webviewPanel: vscode.WebviewPanel,
-  docLang: SupportedLanguage,
-  codeBlocksCliBinPath: string
+  docLang: SupportedLanguage
 ): Promise<void> {
   const text = document.getText();
   const getSubtreeArgs: GetSubtreesArgs = {
@@ -53,12 +24,12 @@ export async function updateUiBlocks(
     language: docLang,
   };
 
-  console.log(JSON.stringify(getSubtreeArgs));
+  console.log(`Get subtrees args: ${JSON.stringify(getSubtreeArgs.language)}`);
 
   let response: JsonResult<GetSubtreesResponse>;
 
   try {
-    response = await codeBlocksCliClient.getSubtrees(codeBlocksCliBinPath, getSubtreeArgs);
+    response = await codeBlocksCliClient.getSubtrees(codeBlocksCliPath, getSubtreeArgs);
   } catch (error) {
     vscode.window.showErrorMessage(`Failed to get blocks: ${JSON.stringify(error)}`);
     return;
@@ -66,7 +37,7 @@ export async function updateUiBlocks(
 
   switch (response.status) {
     case "ok":
-      webviewPanel.webview.postMessage({
+      webview.postMessage({
         type: "update",
         text: text,
         blockTrees: response.result,
@@ -81,9 +52,9 @@ export async function updateUiBlocks(
 
 export async function moveBlock(
   msg: MoveCommand,
+  codeBlocksCliPath: string,
   document: vscode.TextDocument,
-  docLang: SupportedLanguage,
-  codeBlocksCliBinPath: string
+  docLang: SupportedLanguage
 ): Promise<void> {
   const moveArgs: MoveBlockArgs = {
     text: document.getText(),
@@ -96,7 +67,7 @@ export async function moveBlock(
   let response: JsonResult<MoveBlockResponse>;
 
   try {
-    response = await codeBlocksCliClient.moveBlock(codeBlocksCliBinPath, moveArgs);
+    response = await codeBlocksCliClient.moveBlock(codeBlocksCliPath, moveArgs);
   } catch (error) {
     vscode.window.showErrorMessage(`Failed to move block: ${JSON.stringify(error)}`);
     return;
