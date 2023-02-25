@@ -1,5 +1,9 @@
 import * as vscode from "vscode";
 import * as os from "os";
+import * as path from "path";
+import { promises as asyncFs } from "fs";
+import { download } from "./lldb_vscode_copy/lldb_vscode_installer_utils";
+import * as releaseUtils from "./releaseUtils";
 
 const RELEASE_URL = "https://github.com/selfint/code-blocks/releases/download/code-blocks-server-v0.2.0/";
 
@@ -49,4 +53,59 @@ export function platformIsSupported(): boolean {
   console.log(`Got platform: ${platform} arch: ${arch}`);
 
   return supportedPlatforms.has(`${platform}-${arch}`);
+}
+
+export async function installViaRelease(
+  extensionBinDirPath: string,
+  bin: string,
+  permissions: number
+): Promise<boolean> {
+  return await vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      cancellable: false,
+      title: "Downloading code-blocks-cli from release",
+    },
+    async (progress) => {
+      let lastPercentage = 0;
+      let reportProgress = (downloaded: number, contentLength: number) => {
+        let percentage = Math.round((downloaded / contentLength) * 100);
+        progress.report({
+          message: `${percentage}%`,
+          increment: percentage - lastPercentage,
+        });
+        lastPercentage = percentage;
+      };
+
+      let downloadTarget = path.join(os.tmpdir(), "code-blocks-cli");
+      const uri = releaseUtils.getPlatfromBinaryUri();
+      if (uri === undefined) {
+        vscode.window.showErrorMessage(`Unsupported os/arch: ${os.platform()}-${os.arch()}`);
+        return false;
+      }
+
+      try {
+        await download(uri, downloadTarget, reportProgress);
+      } catch (e) {
+        vscode.window.showErrorMessage(JSON.stringify(e));
+        return false;
+      }
+
+      progress.report({
+        message: "installing",
+        increment: 100 - lastPercentage,
+      });
+
+      await asyncFs.mkdir(path.join(extensionBinDirPath));
+      const finalPath = path.join(extensionBinDirPath, bin);
+
+      await asyncFs.copyFile(downloadTarget, finalPath);
+      await asyncFs.unlink(downloadTarget);
+      await asyncFs.chmod(finalPath, permissions);
+
+      console.log(`Installed ${bin} to ${finalPath}`);
+
+      return true;
+    }
+  );
 }
