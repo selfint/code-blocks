@@ -16,18 +16,17 @@ export async function updateUiBlocks(
   webviewPanel: vscode.WebviewPanel,
   docLang: SupportedLanguage,
   codeBlocksCliBinPath: string
-) {
-  const content = document.getText();
+): Promise<void> {
+  const text = document.getText();
+  const getSubtreeArgs: GetSubtreesArgs = {
+    text: text,
+    queries: getQueryStrings(docLang),
+    language: docLang,
+  };
 
   let response: JsonResult<GetSubtreesResponse>;
 
   try {
-    const getSubtreeArgs: GetSubtreesArgs = {
-      text: content,
-      queries: getQueryStrings(docLang),
-      language: docLang,
-    };
-
     response = await codeBlocksCliClient.getSubtrees(codeBlocksCliBinPath, getSubtreeArgs);
   } catch (error) {
     vscode.window.showErrorMessage(`Failed to get blocks: ${JSON.stringify(error)}`);
@@ -38,7 +37,7 @@ export async function updateUiBlocks(
     case "ok":
       webviewPanel.webview.postMessage({
         type: "update",
-        text: content,
+        text: text,
         blockTrees: response.result,
       } as UpdateMessage);
       break;
