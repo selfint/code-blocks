@@ -6,10 +6,10 @@ import * as path from "path";
 import * as fs from "fs";
 import { promises as asyncFs } from "fs";
 import { download } from "./lldb_vscode_copy/lldb_vscode_installer_utils";
+import * as releaseUtils from "./releaseUtils";
 
 const BINARY = "code-blocks-cli";
 const CARGO_INSTALL_CMD = "cargo install code-blocks-server --features=cli";
-const RELEASE_URL = "https://github.com/selfint/code-blocks/releases/download/code-blocks-server-v0.2.0/";
 
 export async function ensureCliInstalled(extensionPath: string): Promise<string | undefined> {
   const installationPath = await getInstallationPath(extensionPath);
@@ -19,7 +19,7 @@ export async function ensureCliInstalled(extensionPath: string): Promise<string 
 
   type Selection = "Install from release" | "Install with cargo";
   let options: Selection[] = [];
-  if (getSupportedPlatform() !== undefined) {
+  if (releaseUtils.platformIsSupported()) {
     options.push("Install from release");
   }
 
@@ -87,50 +87,6 @@ async function getInstallationPath(extensionPath: string): Promise<string | unde
   }
 }
 
-type SupportedTriple =
-  | "x86_64-unknown-linux-gnu"
-  | "x86_64-apple-darwin"
-  | "aarch64-apple-darwin"
-  | "x86_64-pc-windows-msvc";
-
-type PlatfromInfo = {
-  triple: SupportedTriple;
-  ext: string | undefined;
-};
-
-const supportedPlatforms = new Map<string, PlatfromInfo>([
-  ["linux-x86_64", { triple: "x86_64-unknown-linux-gnu", ext: undefined }],
-  ["darwin-x86_64", { triple: "x86_64-apple-darwin", ext: undefined }],
-  ["darwin-arm64", { triple: "aarch64-apple-darwin", ext: undefined }],
-  ["win32-x86_64", { triple: "x86_64-pc-windows-msvc", ext: ".exe" }],
-]);
-
-function getPlatfromBinaryUrl(): vscode.Uri | undefined {
-  const info = getSupportedPlatform();
-  if (info === undefined) {
-    return undefined;
-  }
-
-  let url = RELEASE_URL + info.triple + "-code-blocks-cli";
-  if (info.ext !== undefined) {
-    url += info.ext;
-  }
-
-  const uri = vscode.Uri.parse(url);
-  console.log(url);
-  console.log(uri);
-
-  return uri;
-}
-
-function getSupportedPlatform(): PlatfromInfo | undefined {
-  const platform = os.platform();
-  const arch = os.arch();
-  console.log(`Got platform: ${platform} arch: ${arch}`);
-
-  return supportedPlatforms.get(`${platform}-${arch}`);
-}
-
 async function installViaRelease(extensionPath: string): Promise<boolean> {
   return await vscode.window.withProgress(
     {
@@ -150,7 +106,7 @@ async function installViaRelease(extensionPath: string): Promise<boolean> {
       };
 
       let downloadTarget = path.join(os.tmpdir(), "code-blocks-cli");
-      const uri = getPlatfromBinaryUrl();
+      const uri = releaseUtils.getPlatfromBinaryUri();
       if (uri === undefined) {
         vscode.window.showErrorMessage(`Unsupported os/arch: ${os.platform()}-${os.arch()}`);
         return false;

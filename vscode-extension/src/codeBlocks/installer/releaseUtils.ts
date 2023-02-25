@@ -21,7 +21,7 @@ export const supportedPlatforms = new Map<string, PlatfromInfo>([
   ["win32-x86_64", { triple: "x86_64-pc-windows-msvc", ext: ".exe" }],
 ]);
 
-export function getPlatfromBinaryUrl(): vscode.Uri | undefined {
+export function getPlatfromBinaryUri(): vscode.Uri | undefined {
   const platform = os.platform();
   const arch = os.arch();
   console.log(`Got platform: ${platform} arch: ${arch}`);
@@ -38,11 +38,11 @@ export function getPlatfromBinaryUrl(): vscode.Uri | undefined {
   }
 
   const uri = vscode.Uri.parse(url);
-  console.log(url);
-  console.log(uri);
+  console.log(`Platform binary release uri: ${uri}`);
 
   return uri;
 }
+
 export function platformIsSupported(): boolean {
   const platform = os.platform();
   const arch = os.arch();
