@@ -6,7 +6,8 @@ function reopenWithCodeBocksEditor() {
     [key: string]: any;
     uri: Uri | undefined;
   };
-  if (activeTabInput.uri) {
+
+  if (activeTabInput.uri !== undefined) {
     commands.executeCommand("vscode.openWith", activeTabInput.uri, "codeBlocks.editor");
   }
 }

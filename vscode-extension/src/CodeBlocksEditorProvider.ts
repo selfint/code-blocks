@@ -10,7 +10,6 @@ import {
   MoveBlockArgs,
   MoveBlockResponse,
   SupportedLanguage,
-  SUPPORTED_LANGUAGES,
 } from "./codeBlocks/types";
 import { getQueryStrings } from "./codeBlocks/queries";
 import { MoveCommand, UpdateMessage } from "./messages";
@@ -202,6 +201,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
       "build",
       "bundle.css",
     ]);
+
     // The JS file from the Svelte build output
     const scriptUri = getUri(webview, this.context.extensionUri, [
       "webview-ui",
