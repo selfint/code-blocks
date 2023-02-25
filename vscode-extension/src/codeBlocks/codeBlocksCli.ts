@@ -12,51 +12,54 @@ type MethodCall =
       params: MoveBlockArgs;
     };
 
+async function passInputToBinAndGetNextLine(bin: string, input: string): Promise<string> {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const cli = spawn(bin);
+      const rl = createInterface(cli.stdout);
+
+      rl.on("line", (line) => {
+        resolve(line);
+      });
+
+      cli.stdin.write(input + "\n");
+    } catch (e) {
+      reject(e);
+    }
+  });
+}
+
 export async function getBlockTrees(
   bin: string,
   args: GetSubtreesArgs
 ): Promise<JsonResult<GetSubtreesResponse>> {
-  return new Promise(async (resolve, reject) => {
-    const cli = spawn(bin);
-    const rl = createInterface(cli.stdout);
+  const methodCall: MethodCall = {
+    method: "getSubtrees",
+    params: args,
+  };
 
-    rl.on("line", (line) => {
-      const parsed = JSON.parse(line);
-      if (parsed !== undefined) {
-        resolve(parsed);
-      } else {
-        reject(`Failed to parse line: ${line}`);
-      }
-    });
+  const response = await passInputToBinAndGetNextLine(bin, JSON.stringify(methodCall));
+  const parsedResponse = JSON.parse(response);
 
-    const methodCall: MethodCall = {
-      method: "getSubtrees",
-      params: args,
-    };
-
-    cli.stdin.write(JSON.stringify(methodCall) + "\n");
-  });
+  if (parsedResponse !== undefined) {
+    return parsedResponse;
+  } else {
+    throw new Error(`Failed to parse response: ${response}`);
+  }
 }
 
 export async function moveBlock(bin: string, args: MoveBlockArgs): Promise<JsonResult<MoveBlockResponse>> {
-  return new Promise(async (resolve, reject) => {
-    const cli = spawn(bin);
-    const rl = createInterface(cli.stdout);
+  const methodCall: MethodCall = {
+    method: "moveBlock",
+    params: args,
+  };
 
-    rl.on("line", (line) => {
-      const parsed = JSON.parse(line);
-      if (parsed !== undefined) {
-        resolve(parsed);
-      } else {
-        reject(`Failed to parse line: ${line}`);
-      }
-    });
+  const response = await passInputToBinAndGetNextLine(bin, JSON.stringify(methodCall));
+  const parsedResponse = JSON.parse(response);
 
-    const methodCall: MethodCall = {
-      method: "moveBlock",
-      params: args,
-    };
-
-    cli.stdin.write(JSON.stringify(methodCall) + "\n");
-  });
+  if (parsedResponse !== undefined) {
+    return parsedResponse;
+  } else {
+    throw new Error(`Failed to parse response: ${response}`);
+  }
 }
