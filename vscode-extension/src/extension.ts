@@ -12,6 +12,18 @@ function reopenWithCodeBocksEditor(): void {
   }
 }
 
+function openCodeBlocksEditorToTheSide(): void {
+  const activeTabInput = window.tabGroups.activeTabGroup.activeTab?.input as {
+    [key: string]: any;
+    uri: Uri | undefined;
+  };
+
+  if (activeTabInput.uri !== undefined) {
+    commands.executeCommand("vscode.openWith", activeTabInput.uri, "codeBlocks.editor");
+    commands.executeCommand("workbench.action.moveEditorToNextGroup");
+  }
+}
+
 export function activate(context: ExtensionContext): void {
   context.subscriptions.push(
     window.registerCustomEditorProvider(
@@ -21,4 +33,7 @@ export function activate(context: ExtensionContext): void {
   );
 
   context.subscriptions.push(commands.registerCommand("codeBlocks.open", reopenWithCodeBocksEditor));
+  context.subscriptions.push(
+    commands.registerCommand("codeBlocks.openToTheSide", openCodeBlocksEditorToTheSide)
+  );
 }
