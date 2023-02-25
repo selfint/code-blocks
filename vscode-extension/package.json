@@ -17,7 +17,7 @@
     "Other"
   ],
   "activationEvents": [],
-  "main": "./out/extension.js",
+  "main": "./dist/extension.js",
   "contributes": {
     "customEditors": [
       {
@@ -55,10 +55,13 @@
     "install:all": "yarn install && cd webview-ui && yarn install",
     "start:webview": "cd webview-ui && yarn run dev",
     "build:webview": "cd webview-ui && yarn run build",
-    "vscode:prepublish": "yarn run compile",
+    "vscode:prepublish": "yarn run esbuild-base --minify",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "yarn run compile && yarn run lint",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
+    "esbuild": "yarn run esbuild-base --sourcemap",
+    "esbuild-watch": "yarn run esbuild-base --sourcemap --watch",
     "lint": "eslint src --ext ts"
   },
   "devDependencies": {
@@ -68,6 +71,7 @@
     "@types/which": "^2.0.1",
     "@typescript-eslint/eslint-plugin": "^4.14.1",
     "@typescript-eslint/parser": "^4.14.1",
+    "esbuild": "^0.17.10",
     "eslint": "^7.19.0",
     "glob": "^7.1.6",
     "prettier": "^2.2.1",

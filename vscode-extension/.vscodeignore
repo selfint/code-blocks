@@ -13,12 +13,13 @@ src/**
 
 # Ignore all webview-ui files except the build directory
 webview-ui/src/**
-webview-ui/public/**
 webview-ui/scripts/**
 webview-ui/index.html
 webview-ui/README.md
 webview-ui/package.json
 webview-ui/package-lock.json
+webview-ui/yarn.lock
+webview-ui/rollup.config.js
 webview-ui/node_modules/**
 
 # Ignore Misc
@@ -30,3 +31,10 @@ vsc-extension-quickstart.md
 **/.eslintrc.json
 **/*.map
 **/*.ts
+
+node_modules
+out/
+src/
+tsconfig.json
+webpack.config.js
+.*
