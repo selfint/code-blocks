@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import * as path from "path";
 import { getNonce } from "./utilities/getNonce";
 import { getUri } from "./utilities/getUri";
 import { getBlockTrees, moveBlock } from "./codeBlocks/codeBlocksCli";
@@ -25,11 +26,14 @@ const vscodeLangIdToSupportedLanguage: Map<string, SupportedLanguage> = new Map(
 export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider {
   public static readonly viewType = "codeBlocks.editor";
   public static readonly extensionBinDir = "bin";
+  private extensionBinDirPath: string;
 
   private binPath: string | undefined = undefined;
   private docLang: SupportedLanguage | undefined = undefined;
 
-  constructor(private readonly context: vscode.ExtensionContext) {}
+  constructor(private readonly context: vscode.ExtensionContext) {
+    this.extensionBinDirPath = path.join(context.extensionPath, CodeBlocksEditorProvider.extensionBinDir);
+  }
 
   async handleMessage(document: vscode.TextDocument, message: MoveCommand): Promise<void> {
     switch (message.command) {
@@ -53,7 +57,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
       return;
     }
 
-    this.binPath = await ensureCliInstalled(this.context.extensionPath);
+    this.binPath = await ensureCliInstalled(this.extensionBinDirPath);
     if (this.binPath === undefined) {
       vscode.window.showErrorMessage("Server not installed");
       return;

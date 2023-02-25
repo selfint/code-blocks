@@ -11,8 +11,8 @@ import * as releaseUtils from "./releaseUtils";
 const BINARY = "code-blocks-cli";
 const CARGO_INSTALL_CMD = "cargo install code-blocks-server --features=cli";
 
-export async function ensureCliInstalled(extensionPath: string): Promise<string | undefined> {
-  const installationPath = await getInstallationPath(extensionPath);
+export async function ensureCliInstalled(binDirPath: string): Promise<string | undefined> {
+  const installationPath = await getInstallationPath(binDirPath);
   if (installationPath !== undefined) {
     return installationPath;
   }
@@ -41,7 +41,7 @@ export async function ensureCliInstalled(extensionPath: string): Promise<string 
 
   switch (selected) {
     case "Install from release":
-      await installViaRelease(extensionPath);
+      await installViaRelease(binDirPath);
       break;
 
     case "Install with cargo":
@@ -49,10 +49,10 @@ export async function ensureCliInstalled(extensionPath: string): Promise<string 
       break;
   }
 
-  return await getInstallationPath(extensionPath);
+  return await getInstallationPath(binDirPath);
 }
 
-async function getInstallationPath(extensionPath: string): Promise<string | undefined> {
+async function getInstallationPath(extensionBinDirPath: string): Promise<string | undefined> {
   async function ensureExecutable(binPath: string) {
     console.log(`ensuring ${binPath} executable`);
     await new Promise<void>((resolve, _) => {
@@ -81,12 +81,12 @@ async function getInstallationPath(extensionPath: string): Promise<string | unde
 
   const inPath = which.sync(BINARY, { nothrow: true });
 
-  const extensionBinPath = path.join(extensionPath, "bin", BINARY);
-  const inExtensionBinDir = fs.existsSync(extensionBinPath);
+  const localBinPath = path.join(extensionBinDirPath, BINARY);
+  const inExtensionBinDir = fs.existsSync(localBinPath);
 
   if (inExtensionBinDir) {
-    await ensureExecutable(extensionBinPath);
-    return extensionBinPath;
+    await ensureExecutable(localBinPath);
+    return localBinPath;
   } else if (inPath !== null) {
     return inPath;
   } else {
@@ -94,7 +94,7 @@ async function getInstallationPath(extensionPath: string): Promise<string | unde
   }
 }
 
-async function installViaRelease(extensionPath: string): Promise<boolean> {
+async function installViaRelease(extensionBinDirPath: string): Promise<boolean> {
   return await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
@@ -131,13 +131,14 @@ async function installViaRelease(extensionPath: string): Promise<boolean> {
         increment: 100 - lastPercentage,
       });
 
-      await asyncFs.mkdir(path.join(extensionPath, "bin"));
-      const finalPath = path.join(extensionPath, "bin", BINARY);
+      await asyncFs.mkdir(path.join(extensionBinDirPath));
+      const finalPath = path.join(extensionBinDirPath, BINARY);
+
       await asyncFs.copyFile(downloadTarget, finalPath);
       await asyncFs.unlink(downloadTarget);
-      await asyncFs.chmod(finalPath, 0o7777);
+      await asyncFs.chmod(finalPath, 0o755);
 
-      console.log(finalPath);
+      console.log(`Installed ${BINARY} to ${finalPath}`);
 
       return true;
     }
