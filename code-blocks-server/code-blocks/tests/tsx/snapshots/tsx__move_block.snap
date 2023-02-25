@@ -1,0 +1,20 @@
+---
+source: code-blocks/tests/tsx/main.rs
+expression: "code_blocks::move_block(src_block, dst_item,\n        r#\"\n    export default function App() {\n        return (\n            <>\n              <button>\n          {/* ^src */}\n                Choose file\n              </button>!!! stuff in here is also part of the syntax tree !!!\n              <button>\n          {/* ^dst */}\n                Write file\n              </button>!!! stuff in here is also part of the syntax tree !!!\n            </>\n          );\n    }\n\"#).unwrap()"
+---
+
+    export default function App() {
+        return (
+            <>
+              !!! stuff in here is also part of the syntax tree !!!
+              <button>
+          {/* ^dst */}
+                Write file
+              </button><button>
+          {/* ^src */}
+                Choose file
+              </button>!!! stuff in here is also part of the syntax tree !!!
+            </>
+          );
+    }
+
