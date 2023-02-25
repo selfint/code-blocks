@@ -68,7 +68,7 @@ export async function installViaRelease(
     },
     async (progress) => {
       let lastPercentage = 0;
-      let reportProgress = (downloaded: number, contentLength: number) => {
+      let reportProgress = (downloaded: number, contentLength: number): void => {
         let percentage = Math.round((downloaded / contentLength) * 100);
         progress.report({
           message: `${percentage}%`,

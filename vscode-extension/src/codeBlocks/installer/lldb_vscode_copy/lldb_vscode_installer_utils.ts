@@ -15,14 +15,14 @@ export async function download(
   srcUrl: vscode.Uri,
   destPath: string,
   progress?: (downloaded: number, contentLength: number) => void
-) {
+): Promise<void> {
   let url = srcUrl.toString(true);
   for (let i = 0; i < maxRedirects; ++i) {
     let response = await get(url);
     if (response.statusCode! >= 300 && response.statusCode! < 400 && response.headers.location) {
       url = response.headers.location;
     } else {
-      return new Promise(async (resolve, reject) => {
+      return new Promise<void>(async (resolve, reject) => {
         if (response.statusCode! < 200 || response.statusCode! >= 300) {
           reject(new Error(`HTTP status ${response.statusCode} : ${response.statusMessage}`));
         }
