@@ -57,7 +57,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     await uiBridge.updateUiBlocks(document, webviewPanel, this.docLang!, this.binPath!);
   }
 
-  private initWebview(webview: vscode.Webview) {
+  private initWebview(webview: vscode.Webview): void {
     // The CSS file from the Svelte build output
     const stylesUri = getUri(webview, this.context.extensionUri, [
       "webview-ui",
@@ -96,7 +96,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     `;
   }
 
-  private subscribeToDocEvents(webviewPanel: vscode.WebviewPanel, document: vscode.TextDocument) {
+  private subscribeToDocEvents(webviewPanel: vscode.WebviewPanel, document: vscode.TextDocument): void {
     const didReceiveMessageSubscription = webviewPanel.webview.onDidReceiveMessage(
       async (message: MoveCommand) => this.handleMessage(document, message),
       undefined
