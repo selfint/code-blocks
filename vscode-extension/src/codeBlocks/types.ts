@@ -30,6 +30,16 @@ export type MoveBlockArgs = {
 
 export type MoveBlockResponse = string;
 
+export type MethodCall =
+  | {
+      method: "getSubtrees";
+      params: GetSubtreesArgs;
+    }
+  | {
+      method: "moveBlock";
+      params: MoveBlockArgs;
+    };
+
 export type JsonResult<T> =
   | {
       status: "ok";

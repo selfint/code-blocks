@@ -1,16 +1,13 @@
 import { spawn } from "child_process";
-import { GetSubtreesArgs, MoveBlockArgs, MoveBlockResponse, GetSubtreesResponse, JsonResult } from "./types";
+import {
+  GetSubtreesArgs,
+  MoveBlockArgs,
+  MoveBlockResponse,
+  GetSubtreesResponse,
+  JsonResult,
+  MethodCall,
+} from "./types";
 import { createInterface } from "readline";
-
-type MethodCall =
-  | {
-      method: "getSubtrees";
-      params: GetSubtreesArgs;
-    }
-  | {
-      method: "moveBlock";
-      params: MoveBlockArgs;
-    };
 
 async function passInputToBinAndGetNextLine(bin: string, input: string): Promise<string> {
   return new Promise(async (resolve, reject) => {
