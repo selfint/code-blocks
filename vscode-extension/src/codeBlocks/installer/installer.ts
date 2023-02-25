@@ -14,7 +14,7 @@ const INSTALLED_PERM =
   fs.constants.S_IROTH |
   fs.constants.S_IXOTH;
 
-export async function ensureCliInstalled(binDirPath: string): Promise<string | undefined> {
+export async function getOrInstallCli(binDirPath: string): Promise<string | undefined> {
   const installationPath = await getExecutableBinString(binDirPath);
 
   if (installationPath !== undefined) {

@@ -14,7 +14,7 @@ import {
 } from "./codeBlocks/types";
 import { getQueryStrings } from "./codeBlocks/queries";
 import { MoveCommand, UpdateMessage } from "./messages";
-import { ensureCliInstalled } from "./codeBlocks/installer/installer";
+import { getOrInstallCli } from "./codeBlocks/installer/installer";
 
 const vscodeLangIdToSupportedLanguage: Map<string, SupportedLanguage> = new Map([
   ["svelte", "svelte"],
@@ -57,7 +57,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
       return;
     }
 
-    this.binPath = await ensureCliInstalled(this.extensionBinDirPath);
+    this.binPath = await getOrInstallCli(this.extensionBinDirPath);
     if (this.binPath === undefined) {
       vscode.window.showErrorMessage("Server not installed");
       return;
