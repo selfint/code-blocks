@@ -2,6 +2,10 @@
   "name": "code-blocks",
   "displayName": "Code blocks",
   "description": "An extension for manipulating your code's syntax tree.",
+  "repository": {
+    "url": "https://github.com/selfint/code-blocks",
+    "directory": "vscode-extension"
+  },
   "version": "0.2.0",
   "private": true,
   "license": "MIT",
