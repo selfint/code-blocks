@@ -9,8 +9,6 @@ export function getQueryStrings(lang: SupportedLanguage): string[] {
       return gueryStrings["typescript"];
     case "tsx":
       return [...gueryStrings["typescript"], ...gueryStrings["tsx"]];
-    case "typescriptreact":
-      return getQueryStrings("tsx");
     case "svelte":
       return gueryStrings["svelte"];
   }

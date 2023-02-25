@@ -16,6 +16,13 @@ import { getQueryStrings } from "./codeBlocks/queries";
 import { MoveCommand, UpdateMessage } from "./messages";
 import { ensureCliInstalled } from "./codeBlocks/installer/installer";
 
+const vscodeLangIdToSupportedLanguage: Map<string, SupportedLanguage> = new Map([
+  ["svelte", "svelte"],
+  ["typescript", "typescript"],
+  ["typescriptreact", "tsx"],
+  ["rust", "rust"],
+]);
+
 export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider {
   public static readonly viewType = "codeBlocks.editor";
   public static readonly extensionBinDir = "bin";
@@ -33,29 +40,16 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     }
   }
 
-  lanuageIdToSupportedLangauge(languageId: string): SupportedLanguage | undefined {
-    if (languageId === "typescriptreact") {
-      return "tsx";
-    } else if (
-      //@ts-expect-error
-      SUPPORTED_LANGUAGES.includes(document.languageId)
-    ) {
-      //@ts-expect-error
-      return languageId;
-    } else {
-      return undefined;
-    }
-  }
-
   public async resolveCustomTextEditor(
     document: vscode.TextDocument,
     webviewPanel: vscode.WebviewPanel,
     _token: vscode.CancellationToken
   ): Promise<void> {
-    this.docLang = this.lanuageIdToSupportedLangauge(document.languageId);
+    this.docLang = vscodeLangIdToSupportedLanguage.get(document.languageId);
     if (this.docLang === undefined) {
+      const langs = Array.from(vscodeLangIdToSupportedLanguage.keys());
       vscode.window.showErrorMessage(
-        `Opened file in unsupported language: '${document.languageId}' (supported languages: ${SUPPORTED_LANGUAGES})`
+        `Opened file in unsupported language: '${document.languageId}' (supported languages: ${langs})`
       );
       return;
     }
@@ -171,10 +165,8 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
       text: document.getText(),
       srcBlock: args.src,
       dstBlock: args.dst,
-      //@ts-expect-error
-      queries: getQueryStrings(document.languageId),
-      //@ts-expect-error
-      language: getDocLang(document),
+      queries: getQueryStrings(this.docLang!),
+      language: this.docLang!,
     };
 
     let response: JsonResult<MoveBlockResponse>;
