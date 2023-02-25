@@ -39,6 +39,10 @@
       {
         "command": "codeBlocks.open",
         "title": "Code Blocks: Open active file in Code Blocks editor"
+      },
+      {
+        "command": "codeBlocks.openToTheSide",
+        "title": "Code Blocks: Open active file in Code Blocks editor to the side"
       }
     ]
   },
