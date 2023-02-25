@@ -5,7 +5,7 @@ import { getUri } from "./utilities/getUri";
 import { SupportedLanguage } from "./codeBlocks/types";
 import { MoveCommand } from "./messages";
 import { getOrInstallCli } from "./codeBlocks/installer/installer";
-import { moveBlock, updateUiBlocks } from "./uiBridge";
+import * as uiBridge from "./uiBridge";
 
 const vscodeLangIdToSupportedLanguage: Map<string, SupportedLanguage> = new Map([
   ["svelte", "svelte"],
@@ -27,7 +27,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
   }
 
   async handleMessage(document: vscode.TextDocument, message: MoveCommand): Promise<void> {
-    await moveBlock(message, document, this.docLang!, this.binPath!);
+    await uiBridge.moveBlock(message, document, this.docLang!, this.binPath!);
   }
 
   public async resolveCustomTextEditor(
@@ -54,7 +54,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
 
     this.subscribeToDocEvents(webviewPanel, document);
 
-    await updateUiBlocks(document, webviewPanel, this.docLang!, this.binPath!);
+    await uiBridge.updateUiBlocks(document, webviewPanel, this.docLang!, this.binPath!);
   }
 
   private initWebview(webview: vscode.Webview) {
@@ -104,7 +104,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
 
     const didChangeTextDocumentSubscription = vscode.workspace.onDidChangeTextDocument(async (e) => {
       if (e.document.uri.toString() === document.uri.toString()) {
-        await updateUiBlocks(document, webviewPanel, this.docLang!, this.binPath!);
+        await uiBridge.updateUiBlocks(document, webviewPanel, this.docLang!, this.binPath!);
       }
     });
 
