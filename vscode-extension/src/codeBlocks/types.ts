@@ -30,6 +30,16 @@ export type MoveBlockArgs = {
 
 export type MoveBlockResponse = string;
 
+export type MethodCall =
+  | {
+      method: "getSubtrees";
+      params: GetSubtreesArgs;
+    }
+  | {
+      method: "moveBlock";
+      params: MoveBlockArgs;
+    };
+
 export type JsonResult<T> =
   | {
       status: "ok";
@@ -40,5 +50,5 @@ export type JsonResult<T> =
       result: string;
     };
 
-export const SUPPORTED_LANGUAGES = ["rust", "typescript", "tsx", "typescriptreact", "svelte"] as const;
+export const SUPPORTED_LANGUAGES = ["rust", "typescript", "tsx", "svelte"] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
