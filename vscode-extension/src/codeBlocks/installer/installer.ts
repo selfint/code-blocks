@@ -27,6 +27,13 @@ export async function ensureCliInstalled(extensionPath: string): Promise<string 
     options.push("Install with cargo");
   }
 
+  if (options.length === 0) {
+    await vscode.window.showErrorMessage(
+      `Cargo isn't installed on unsupported system ${os.platform()}-${os.arch()}, try installing cargo`
+    );
+    return undefined;
+  }
+
   const selected = await vscode.window.showErrorMessage(`${BINARY} is not in PATH`, ...options);
   if (selected === undefined) {
     return undefined;
