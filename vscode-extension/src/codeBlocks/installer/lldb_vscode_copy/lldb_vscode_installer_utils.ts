@@ -4,7 +4,7 @@ import * as https from "https";
 import * as http from "http";
 
 const maxRedirects = 10;
-export function get(url: string | URL): Promise<http.IncomingMessage> {
+function get(url: string | URL): Promise<http.IncomingMessage> {
   return new Promise<http.IncomingMessage>((resolve, reject) => {
     let request = https.get(url, resolve);
     request.on("error", reject);
