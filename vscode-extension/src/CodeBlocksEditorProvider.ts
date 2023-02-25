@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import { getNonce } from "./utilities/getNonce";
 import { getUri } from "./utilities/getUri";
-import { getBlockTrees, moveBlock } from "./codeBlocks/codeBlocksCli";
+import * as codeBlocksCliClient from "./codeBlocks/codeBlocksCliClient";
 import {
   BlockLocation,
   GetSubtreesArgs,
@@ -121,7 +121,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
         language: this.docLang!,
       };
 
-      response = await getBlockTrees(this.binPath!, getSubtreeArgs);
+      response = await codeBlocksCliClient.getSubtrees(this.binPath!, getSubtreeArgs);
     } catch (error) {
       vscode.window.showErrorMessage(`Failed to get blocks: ${JSON.stringify(error)}`);
       return;
@@ -175,7 +175,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     let response: JsonResult<MoveBlockResponse>;
 
     try {
-      response = await moveBlock(this.binPath!, moveArgs);
+      response = await codeBlocksCliClient.moveBlock(this.binPath!, moveArgs);
     } catch (error) {
       vscode.window.showErrorMessage(`Failed to move block: ${JSON.stringify(error)}`);
       return;
