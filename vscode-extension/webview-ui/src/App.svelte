@@ -35,25 +35,28 @@
   }
 </script>
 
-<main>
-  {#if blockTrees === undefined || blockTrees.length === 0}
-    <div>No blocks available.</div>
-  {:else}
-    <div>
-      {text.substring(0, blockTrees[0].block.startByte)}
-      {#each blockTrees as tree}
-        <Tree {text} {tree} onClick={handleBlockClicked} {selectedBlock} />
-      {/each}
-      {text.substring(blockTrees[blockTrees.length - 1].block.endByte, text.length)}
-    </div>
-  {/if}
-</main>
+{#if blockTrees === undefined || blockTrees.length === 0}
+  <div>No blocks available.</div>
+{:else}
+  <div class="block">
+    {text.substring(0, blockTrees[0].block.startByte)}
+    {#each blockTrees as tree}
+      <Tree {text} {tree} onClick={handleBlockClicked} {selectedBlock} />
+    {/each}
+    {text.substring(blockTrees[blockTrees.length - 1].block.endByte, text.length)}
+  </div>
+{/if}
 
 <style>
-  main {
-    color: var(--vscode-editor-foreground);
+  :global(.block) {
+    border-color: var(--vscode-editorIndentGuide-background);
+    border-style: solid;
+    border-width: 1px;
     font-family: var(--vscode-font-family);
     font-size: var(--vscode-font-size);
     font-weight: var(--vscode-font-weight);
+    margin: 5px;
+    padding: 5px;
+    text-align: left;
   }
 </style>

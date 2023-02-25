@@ -29,44 +29,28 @@
   }
 </script>
 
-<main>
-  <div
-    class="block"
-    style="color: {foregroundColor}; background-color: {backgroundColor}"
-    on:click|stopPropagation|preventDefault={() => onClick(tree.block)}
-    on:keypress|stopPropagation|preventDefault={() => onClick(tree.block)}
-  >
-    {#if tree.children.length !== 0}
-      <div>
-        {textSlice(tree.block.startByte, tree.children[0].block.startByte)}
-      </div>
-      {#each tree.children as childTree, i}
-        <svelte:self {text} tree={childTree} {onClick} {selectedBlock} />
-        {#if i !== tree.children.length - 1}
-          <div>
-            {textSlice(tree.children[i].block.endByte, tree.children[i + 1].block.startByte)}
-          </div>
-        {/if}
-      {/each}
-      <div>
-        {textSlice(tree.children.at(-1).block.endByte, tree.block.endByte)}
-      </div>
-    {:else}
-      {textSlice(tree.block.startByte, tree.block.endByte)}
-    {/if}
-  </div>
-</main>
-
-<style>
-  .block {
-    border-color: var(--vscode-editorIndentGuide-background);
-    border-style: solid;
-    border-width: 1px;
-    font-family: var(--vscode-font-family);
-    font-size: var(--vscode-font-size);
-    font-weight: var(--vscode-font-weight);
-    margin: 5px;
-    padding: 5px;
-    text-align: left;
-  }
-</style>
+<div
+  class="block"
+  style="color: {foregroundColor}; background-color: {backgroundColor}"
+  on:click|stopPropagation|preventDefault={() => onClick(tree.block)}
+  on:keypress|stopPropagation|preventDefault={() => onClick(tree.block)}
+>
+  {#if tree.children.length !== 0}
+    <div>
+      {textSlice(tree.block.startByte, tree.children[0].block.startByte)}
+    </div>
+    {#each tree.children as childTree, i}
+      <svelte:self {text} tree={childTree} {onClick} {selectedBlock} />
+      {#if i !== tree.children.length - 1}
+        <div>
+          {textSlice(tree.children[i].block.endByte, tree.children[i + 1].block.startByte)}
+        </div>
+      {/if}
+    {/each}
+    <div>
+      {textSlice(tree.children.at(-1).block.endByte, tree.block.endByte)}
+    </div>
+  {:else}
+    {textSlice(tree.block.startByte, tree.block.endByte)}
+  {/if}
+</div>
