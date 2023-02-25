@@ -8,7 +8,7 @@ import * as cargoUtils from "./cargoUtils";
 
 const BINARY = "code-blocks-cli";
 const INSTALLED_PERM =
-  fs.constants.S_IRWXO |
+  fs.constants.S_IRWXU |
   fs.constants.S_IRGRP |
   fs.constants.S_IXGRP |
   fs.constants.S_IROTH |

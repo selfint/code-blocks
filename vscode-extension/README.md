@@ -53,7 +53,7 @@ Next up:
 
 Download the .vsix file from the latest Release, and install it in Visual Studio Code.
 
-After opening a file with the Code Blocks Editor, the `code-blocks-cli` will need be downloaded
+After opening a file with the Code Blocks Editor, the `code-blocks-cli` will need to be downloaded
 by the method of your choosing (using `cargo` or downloading from the latest release).
 
 That's it!
