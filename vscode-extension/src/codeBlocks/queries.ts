@@ -1,15 +1,17 @@
 import { SupportedLanguage } from "./types";
-import gueryStrings from "./queryStrings.json";
+import queryStrings from "./queryStrings.json";
 
 export function getQueryStrings(lang: SupportedLanguage): string[] {
   switch (lang) {
     case "rust":
-      return gueryStrings["rust"];
+      return queryStrings["rust"];
     case "typescript":
-      return gueryStrings["typescript"];
+      return queryStrings["typescript"];
     case "tsx":
-      return [...gueryStrings["typescript"], ...gueryStrings["tsx"]];
+      return [...queryStrings["typescript"], ...queryStrings["tsx"]];
     case "svelte":
-      return gueryStrings["svelte"];
+      return queryStrings["svelte"];
+    case "python":
+      return queryStrings["python"];
   }
 }

@@ -13,6 +13,7 @@ pub enum SupportedLanguage {
     TypeScript,
     TSX,
     Svelte,
+    Python,
 }
 
 impl SupportedLanguage {
@@ -22,6 +23,7 @@ impl SupportedLanguage {
             SupportedLanguage::TypeScript => tree_sitter_typescript::language_typescript(),
             SupportedLanguage::TSX => tree_sitter_typescript::language_tsx(),
             SupportedLanguage::Svelte => tree_sitter_svelte::language(),
+            SupportedLanguage::Python => tree_sitter_python::language(),
         }
     }
 }

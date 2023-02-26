@@ -9,6 +9,7 @@ const vscodeLangIdToSupportedLanguage: Map<string, SupportedLanguage> = new Map(
   ["typescript", "typescript"],
   ["typescriptreact", "tsx"],
   ["rust", "rust"],
+  ["python", "python"],
 ]);
 
 export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider {

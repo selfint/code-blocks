@@ -8,7 +8,7 @@
     "directory": "vscode-extension",
     "type": "git"
   },
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "license": "MIT",
   "engines": {
@@ -46,6 +46,9 @@
           },
           {
             "filenamePattern": "*.svelte"
+          },
+          {
+            "filenamePattern": "*.py"
           }
         ],
         "priority": "option"

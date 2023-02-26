@@ -1,0 +1,13 @@
+---
+source: code-blocks/tests/python/main.rs
+expression: blocks
+---
+- "@decor1\n    @decor2\n    class A:\n        ..."
+- "class A:\n        ..."
+- "class C:\n        \"\"\"class docstring\"\"\"\n    \n        def __init__(self):\n            pass\n    \n        @staticmethod()\n        def foo():\n            \"\"\"method docstring\"\"\"\n            \n        def bar():\n            ..."
+- "def __init__(self):\n            pass"
+- "@staticmethod()\n        def foo():\n            \"\"\"method docstring\"\"\""
+- "def foo():\n            \"\"\"method docstring\"\"\""
+- "def bar():\n            ..."
+- "def func():\n        ..."
+

@@ -9,22 +9,31 @@ use tree_sitter::Parser;
 use tree_sitter::Point;
 use tree_sitter::Query;
 
-fn copy_item_above<'tree>(
+fn copy_target_item<'tree>(
     ident: &str,
     text: &str,
     trees: &Vec<BlockTree<'tree>>,
+    lang: SupportedLanguage,
 ) -> Option<Block<'tree>> {
-    let pos = text
-        .lines()
-        .enumerate()
-        .find_map(|(row, line)| line.find(ident).map(|col| Point::new(row - 1, col)))?;
+    let (prefixed_ident, row_offset, col_offset) = match lang {
+        SupportedLanguage::Python => ("V".to_string() + ident, 1, -1),
+        _ => ("^".to_string() + ident, -1, 0),
+    };
+
+    let pos = text.lines().enumerate().find_map(|(row, line)| {
+        line.find(&prefixed_ident).map(|col| {
+            Point::new(
+                (row as i32 + row_offset) as usize,
+                (col as i32 + col_offset) as usize,
+            )
+        })
+    })?;
 
     for tree in trees {
         if tree.block.tail().unwrap().start_position() == pos {
             return Some(tree.block.clone());
         }
-
-        if let Some(node) = copy_item_above(ident, text, &tree.children) {
+        if let Some(node) = copy_target_item(ident, text, &tree.children, lang) {
             return Some(node);
         }
     }
@@ -127,6 +136,11 @@ fn get_query_strings(lang: SupportedLanguage) -> Vec<String> {
         ],
         SupportedLanguage::TSX => get_query_strings(SupportedLanguage::TypeScript),
         SupportedLanguage::Svelte => todo!(),
+        SupportedLanguage::Python => vec![
+            "(class_definition) @item".to_string(),
+            "(function_definition) @item".to_string(),
+            "(decorated_definition) @item".to_string(),
+        ],
     }
 }
 
@@ -184,6 +198,36 @@ export default function baz2() {}
             "#
         .to_string()
     }));
+
+    insta::assert_debug_snapshot!(code_blocks_server::get_subtrees(GetSubtreesArgs {
+        queries: get_query_strings(SupportedLanguage::Python),
+        language: SupportedLanguage::Python,
+        text: r#"
+        @decor1
+        @decor2
+        class A:
+            ...
+           
+        class C:
+            """class docstring"""
+        
+            def __init__(self):
+                pass
+        
+            #Vsrc
+            @staticmethod()
+            def foo():
+                """method docstring"""
+                
+            #Vdst
+            def bar():
+                ...
+                
+        def func():
+            ...
+            "#
+        .to_string()
+    }));
 }
 
 macro_rules! check {
@@ -193,9 +237,10 @@ macro_rules! check {
         let tree = parser.parse($text, None).unwrap();
 
         let items = get_query_subtrees(&get_queries($lang), &tree, $text);
-        let src_block = copy_item_above("^src", $text, &items).unwrap();
-        let dst_block = copy_item_above("^dst", $text, &items);
-        let fail_block = copy_item_above("^fail", $text, &items);
+        let src_block = copy_target_item("src", $text, &items, $lang)
+            .unwrap_or_else(|| panic!("failed to find src block in: {}", $text));
+        let dst_block = copy_target_item("dst", $text, &items, $lang);
+        let fail_block = copy_target_item("fail", $text, &items, $lang);
 
         if let Some(dst_block) = dst_block {
             insta::assert_display_snapshot!(code_blocks_server::move_block(MoveBlockArgs {
@@ -502,5 +547,148 @@ function baz() {}
         foo() {}
     }
     "#
+    );
+}
+
+#[test]
+fn test_move_item_python() {
+    check!(
+        SupportedLanguage::Python,
+        r#"
+        #Vsrc
+        @decor1
+        @decor2
+        class A:
+            ...
+           
+        #Vdst
+        class C:
+            """class docstring"""
+        
+            def __init__(self):
+                pass
+        
+            @staticmethod()
+            def foo():
+                """method docstring"""
+                
+            def bar():
+                ...
+                
+        def func():
+            ...
+"#
+    );
+
+    check!(
+        SupportedLanguage::Python,
+        r#"
+        #Vsrc
+        @decor1
+        @decor2
+        class A:
+            ...
+           
+        class C:
+            """class docstring"""
+        
+            #Vfail
+            def __init__(self):
+                pass
+        
+            @staticmethod()
+            def foo():
+                """method docstring"""
+                
+            def bar():
+                ...
+                
+        def func():
+            ...
+"#
+    );
+
+    check!(
+        SupportedLanguage::Python,
+        r#"
+        @decor1
+        @decor2
+        class A:
+            ...
+           
+        class C:
+            """class docstring"""
+        
+            #Vsrc
+            def __init__(self):
+                pass
+        
+            #Vdst
+            @staticmethod()
+            def foo():
+                """method docstring"""
+                
+            def bar():
+                ...
+                
+        def func():
+            ...
+"#
+    );
+
+    check!(
+        SupportedLanguage::Python,
+        r#"
+        @decor1
+        @decor2
+        class A:
+            ...
+           
+        class C:
+            """class docstring"""
+        
+            def __init__(self):
+                pass
+        
+            #Vsrc
+            @staticmethod()
+            def foo():
+                """method docstring"""
+                
+            def bar():
+                ...
+                
+        #Vfail
+        def func():
+            ...
+"#
+    );
+
+    check!(
+        SupportedLanguage::Python,
+        r#"
+        @decor1
+        @decor2
+        class A:
+            ...
+           
+        class C:
+            """class docstring"""
+        
+            def __init__(self):
+                pass
+        
+            #Vsrc
+            @staticmethod()
+            def foo():
+                """method docstring"""
+                
+            #Vdst
+            def bar():
+                ...
+                
+        def func():
+            ...
+"#
     );
 }

@@ -1,0 +1,28 @@
+---
+source: code-blocks/tests/python/main.rs
+expression: "code_blocks::move_block(src_block, dst_item,\n        r#\"\n        #Vsrc\n        @decor1\n        @decor2\n        class A:\n            ...\n           \n        #Vdst\n        class C:\n            \"\"\"class docstring\"\"\"\n        \n            def __init__(self):\n                pass\n        \n            @staticmethod()\n            def foo():\n                \"\"\"method docstring\"\"\"\n                \n            def bar():\n                ...\n                \n        def func():\n            ...\n\"#).unwrap()"
+---
+
+        #Vsrc
+        #Vdst
+        class C:
+            """class docstring"""
+        
+            def __init__(self):
+                pass
+        
+            @staticmethod()
+            def foo():
+                """method docstring"""
+                
+            def bar():
+                ...
+                
+        @decor1
+        @decor2
+        class A:
+            ...
+                
+        def func():
+            ...
+

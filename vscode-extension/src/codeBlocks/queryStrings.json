@@ -18,5 +18,6 @@
     "( (comment)* @header . (if_statement) @item)",
     "( (comment)* @header . (style_element) @item)",
     "( (comment)* @header . (script_element) @item)"
-  ]
+  ],
+  "python": ["(class_definition) @item", "(function_definition) @item", "(decorated_definition) @item"]
 }
