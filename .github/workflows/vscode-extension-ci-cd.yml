@@ -49,6 +49,8 @@ jobs:
         run: npm i -g @vscode/vsce
       - name: Install extension dependencies
         run: yarn run install:all
+      - name: Build webview
+        run: yarn run build:webview
       - name: Build extension
         run: vsce package --yarn --baseImagesUrl https://raw.githubusercontent.com/selfint/code-blocks/${{ github.ref_name }}/vscode-extension 
       - name: Release
