@@ -50,7 +50,7 @@ jobs:
       - name: Install extension dependencies
         run: yarn run install:all
       - name: Build extension
-        run: vsce package --yarn
+        run: vsce package --yarn --baseImagesUrl https://raw.githubusercontent.com/selfint/code-blocks/${{ github.ref_name }}/vscode-extension 
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
