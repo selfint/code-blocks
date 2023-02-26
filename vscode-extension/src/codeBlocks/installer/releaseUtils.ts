@@ -77,7 +77,7 @@ export async function installViaRelease(
         lastPercentage = percentage;
       };
 
-      let downloadTarget = path.join(os.tmpdir(), "code-blocks-cli");
+      let downloadTarget = path.join(os.tmpdir(), bin);
       const uri = releaseUtils.getPlatfromBinaryUri();
       if (uri === undefined) {
         vscode.window.showErrorMessage(`Unsupported os/arch: ${os.platform()}-${os.arch()}`);
@@ -96,7 +96,7 @@ export async function installViaRelease(
         increment: 100 - lastPercentage,
       });
 
-      await asyncFs.mkdir(path.join(extensionBinDirPath));
+      await asyncFs.mkdir(extensionBinDirPath, { recursive: true });
       const finalPath = path.join(extensionBinDirPath, bin);
 
       await asyncFs.copyFile(downloadTarget, finalPath);
