@@ -1,6 +1,6 @@
 [package]
 name = "code-blocks-server"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 authors = ["Tom Selfin selfint@gmail.com"]
 description = "A tool to re-order your code"
@@ -27,6 +27,7 @@ tree-sitter = "0.20.9"
 tree-sitter-rust = "0.20.3"
 tree-sitter-svelte = "0.10.2"
 tree-sitter-typescript = "0.20.2"
+tree-sitter-python = "0.20.2"
 
 [dev-dependencies]
 insta = { version = "1.26.0", features = ["json"] }
