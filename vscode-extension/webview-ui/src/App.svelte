@@ -73,7 +73,9 @@
     font-family: var(--vscode-font-family);
     font-size: var(--vscode-font-size);
     font-weight: var(--vscode-font-weight);
-    margin: 5px;
+    margin-top: 5px;
+    margin-left: 5px;
+    margin-bottom: 5px;
     padding: 5px;
     text-align: left;
   }
