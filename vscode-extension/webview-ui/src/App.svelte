@@ -33,6 +33,19 @@
       selectedBlock = undefined;
     }
   }
+
+  const sliceLengthLimit = 100;
+  function textSlice(start: number, end: number): string {
+    if (end - start < sliceLengthLimit) {
+      return text.substring(start, end);
+    } else {
+      return (
+        text.substring(start, start + sliceLengthLimit / 2) +
+        "..." +
+        text.substring(end - sliceLengthLimit / 2, end)
+      );
+    }
+  }
 </script>
 
 {#if blockTrees === undefined || blockTrees.length === 0}
@@ -40,10 +53,15 @@
 {:else}
   <div class="block">
     {text.substring(0, blockTrees[0].block.startByte)}
-    {#each blockTrees as tree}
+    {#each blockTrees as tree, i}
       <Tree {text} {tree} onClick={handleBlockClicked} {selectedBlock} />
+      {#if i !== blockTrees.length - 1}
+        <div>
+          {textSlice(tree.block.endByte, blockTrees[i + 1].block.startByte)}
+        </div>
+      {/if}
     {/each}
-    {text.substring(blockTrees[blockTrees.length - 1].block.endByte, text.length)}
+    {text.substring(blockTrees.at(-1).block.endByte, text.length)}
   </div>
 {/if}
 
