@@ -19,10 +19,10 @@ For now, these are the languages with queries and compiled grammars:
 - [x] TypeScript
 - [x] TypeScript + JSX
 - [x] Svelte
+- [x] Python
 
 Next up:
 
-- [ ] Python
 - [ ] Java
 - [ ] C#
 - [ ] C
@@ -48,6 +48,10 @@ Next up:
 #### Code blocks not moving blocks between scopes
 
 ![example](./assets/Code-Blocks-Demo-7.gif)
+
+### Python
+
+![example](./assets/Code-Blocks-Demo-11.gif)
 
 ## Usage
 
