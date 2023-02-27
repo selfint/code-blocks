@@ -73,7 +73,7 @@ impl LanguageProvider {
             LanguageProvider::Standard {
                 language,
                 parser: _,
-            } => Query::new(*language, source).context("failed to build language"),
+            } => Ok(Query::new(*language, source)?),
             LanguageProvider::Dynamic { parser } => parser.build_query(source),
         }
     }
