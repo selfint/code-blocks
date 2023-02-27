@@ -39,9 +39,11 @@ impl ParserInstaller {
 
         build_parser(install_dir).context("failed to build test parser")?;
 
-        dbg!(std::fs::read_dir(
-            install_dir.join("target").join("release"),
-        ));
+        dbg!(
+            std::fs::read_dir(install_dir.join("target").join("release"),)
+                .unwrap()
+                .collect::<Vec<_>>()
+        );
 
         self.load_language(install_dir)
             .context("failed to load dynamic test parser")
