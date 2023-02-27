@@ -92,6 +92,8 @@ jobs:
       #     version: ${{ matrix.target }}
       - name: Build release binary
         run: cd code-blocks-server && cargo build --release --target ${{ matrix.target }} --all-features
+      - name: Test release binary
+        run: cd code-blocks-server && cargo test --release --target ${{ matrix.target }} --all-features
       - name: Upload release binary
         uses: actions/upload-artifact@v3
         with:
