@@ -1,6 +1,6 @@
 use libloading::Library;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use tree_sitter::{Language, Parser, Query, Tree};
 
 /// A [tree_sitter::Parser] object using a [tree_sitter::Language] object
@@ -41,6 +41,6 @@ impl DynamicParser {
     }
 
     pub fn build_query(&self, source: &str) -> Result<Query> {
-        Query::new(self.language, source).context("failed to build query")
+        Ok(Query::new(self.language, source)?)
     }
 }
