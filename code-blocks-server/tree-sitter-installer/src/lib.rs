@@ -65,8 +65,11 @@ impl ParserInstaller {
 
         unsafe {
             let lib = libloading::Library::new(lib_path)?;
+            dbg!(&lib);
             let func: libloading::Symbol<unsafe extern "C" fn() -> Language> =
                 lib.get(self.symbol)?;
+
+            dbg!(&func);
 
             Ok(func())
         }
