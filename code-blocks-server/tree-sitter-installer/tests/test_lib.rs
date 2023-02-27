@@ -1,11 +1,5 @@
 use tree_sitter_installer::*;
 
-const LOCAL_TREESITTER_RUST: ParserInstaller = ParserInstaller {
-    download_cmd: "git clone ./tests/tree-sitter-rust",
-    symbol: b"language",
-    name: "tree_sitter_rust",
-};
-
 #[test]
 fn test_install_lang() {
     let target_dir = tempfile::tempdir()
@@ -14,7 +8,8 @@ fn test_install_lang() {
         .join("test_install_lang")
         .join("test-parser");
 
-    let mut parser = LOCAL_TREESITTER_RUST
+    let installer = SupportedParser::Rust.get_installer();
+    let mut parser = installer
         .install_parser(&target_dir)
         .expect("failed to install lang");
 
@@ -24,7 +19,7 @@ fn test_install_lang() {
 
     insta::assert_snapshot!(tree.unwrap().root_node().to_sexp(), @"(source_file (function_item name: (identifier) parameters: (parameters) body: (block)))");
 
-    let mut parser = LOCAL_TREESITTER_RUST
+    let mut parser = installer
         .load_parser(&target_dir)
         .expect("failed to load dynamic language");
 
