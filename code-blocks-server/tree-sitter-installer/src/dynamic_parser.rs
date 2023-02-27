@@ -46,15 +46,3 @@ impl DynamicParser {
         })
     }
 }
-
-impl Drop for DynamicParser {
-    fn drop(&mut self) {
-        println!("Dropping dynamic parser");
-        // println!("Dropping parser");
-        // drop(self.parser);
-        // println!("Dropping lang");
-        // drop(self._lang);
-        // println!("Dropping lib");
-        // drop(self._lib);
-    }
-}
