@@ -15,7 +15,7 @@ fn test_install_lang() {
         .join("test-parser");
 
     let mut parser = LOCAL_TREESITTER_RUST
-        .install_language(&target_dir)
+        .install_parser(&target_dir)
         .expect("failed to install lang");
 
     let src = "fn main() {}";
@@ -25,7 +25,7 @@ fn test_install_lang() {
     insta::assert_snapshot!(tree.unwrap().root_node().to_sexp(), @"(source_file (function_item name: (identifier) parameters: (parameters) body: (block)))");
 
     let mut parser = LOCAL_TREESITTER_RUST
-        .load_language(&target_dir)
+        .load_parser(&target_dir)
         .expect("failed to load dynamic language");
 
     let tree = parser.parse(src, None);

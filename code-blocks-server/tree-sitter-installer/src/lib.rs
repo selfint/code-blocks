@@ -25,21 +25,23 @@ impl SupportedLanguage {
     }
 }
 
-/// [tree_sitter::Language] object loaded at runtime using [libloading].
+/// A [tree_sitter::Parser] object using a [tree_sitter::Language] object
+/// loaded at runtime using [libloading].
 ///
 /// # Safety
 /// This struct contains the [libloading::Library] object, from which the [tree_sitter::Language]
 /// object is created. If this struct is [Drop]ped, using the lang property will causing a
 /// segfault, since it will no longer be in memory.
 ///
-/// That is why the only way to get the lang is using the get_lang method, which takes a reference
-///
+/// That is why the only way to parse using the dynamically loaded Language object, is using
+/// this struct's parse method.
 pub struct DynamicParser {
     _lib: Library,
     parser: Parser,
 }
 
 impl DynamicParser {
+    /// Wrapper method around [tree_sitter::Parser]'s parse method.
     pub fn parse(&mut self, text: impl AsRef<[u8]>, old_tree: Option<&Tree>) -> Option<Tree> {
         self.parser.parse(text, old_tree)
     }
@@ -56,7 +58,7 @@ impl ParserInstaller {
         get_compiled_lib_path(self.name, install_dir).exists()
     }
 
-    pub fn install_language(&self, install_dir: &Path) -> Result<DynamicParser> {
+    pub fn install_parser(&self, install_dir: &Path) -> Result<DynamicParser> {
         download_parser(self.download_cmd, install_dir)
             .context("failed to download test parser")?;
 
@@ -64,11 +66,11 @@ impl ParserInstaller {
 
         build_parser(install_dir).context("failed to build test parser")?;
 
-        self.load_language(install_dir)
+        self.load_parser(install_dir)
             .context("failed to load dynamic test parser")
     }
 
-    pub fn load_language(&self, install_dir: &Path) -> Result<DynamicParser> {
+    pub fn load_parser(&self, install_dir: &Path) -> Result<DynamicParser> {
         let lib_path = get_compiled_lib_path(self.name, install_dir);
 
         dbg!(&lib_path);
