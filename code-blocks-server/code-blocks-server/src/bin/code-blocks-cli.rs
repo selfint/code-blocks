@@ -185,7 +185,7 @@ mod tests {
         @r###"
         {
           "status": "error",
-          "result": "unknown variant `bad language`, expected one of `rust`, `typescript`, `tsx`, `svelte`, `python` at line 9 column 38"
+          "result": "unknown variant `bad language`, expected one of `rust`, `typescript`, `tsx`, `svelte`, `python`, `supporteddynamic`, `dynamic` at line 9 column 38"
         }
         "###);
     }
@@ -413,7 +413,7 @@ mod tests {
             @r###"
         {
           "status": "error",
-          "result": "unknown variant `bad language`, expected one of `rust`, `typescript`, `tsx`, `svelte`, `python` at line 9 column 42"
+          "result": "unknown variant `bad language`, expected one of `rust`, `typescript`, `tsx`, `svelte`, `python`, `supporteddynamic`, `dynamic` at line 9 column 42"
         }
         "###
         );
