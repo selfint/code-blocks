@@ -44,19 +44,13 @@ impl ParserInstaller {
         build_parser(install_dir).context("failed to build test parser")?;
 
         dbg!(
-            std::fs::read_dir(install_dir.join("target").join("release"),)
+            std::fs::read_dir(install_dir.join("target").join("release"))
                 .unwrap()
                 .collect::<Vec<_>>()
         );
 
         dbg!(std::str::from_utf8(
-            &std::fs::read(
-                install_dir
-                    .join("target")
-                    .join("release")
-                    .join(get_compiled_lib_path(self.name, install_dir)),
-            )
-            .unwrap()
+            &std::fs::read(get_compiled_lib_path(self.name, install_dir)).unwrap()
         )
         .unwrap());
 
