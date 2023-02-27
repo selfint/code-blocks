@@ -35,7 +35,7 @@ impl ParserInstaller {
         download_parser(self.download_cmd, install_dir)
             .context("failed to download test parser")?;
 
-        fixup_parser_rust_src(install_dir).context("failed to fixup test parser rust src")?;
+        disable_language_fn_mangle(install_dir).context("failed to disable language fn mangle")?;
 
         build_parser(install_dir).context("failed to build test parser")?;
 
@@ -44,6 +44,14 @@ impl ParserInstaller {
                 .unwrap()
                 .collect::<Vec<_>>()
         );
+
+        dbg!(std::fs::read(
+            install_dir
+                .join("target")
+                .join("release")
+                .join(get_compiled_lib_path(self.name, install_dir)),
+        )
+        .unwrap());
 
         self.load_language(install_dir)
             .context("failed to load dynamic test parser")
@@ -78,7 +86,7 @@ fn download_parser(download_cmd: &str, target_dir: &Path) -> Result<ExitStatus> 
         .context("failed to run download cmd")
 }
 
-fn fixup_parser_rust_src(parser_dir: &Path) -> Result<()> {
+fn disable_language_fn_mangle(parser_dir: &Path) -> Result<()> {
     let lib_file = parser_dir.join("bindings").join("rust").join("lib.rs");
     let lib_file_buf = std::fs::read(&lib_file).expect("failed to read lib.rs file");
     let lib_file_src = std::str::from_utf8(&lib_file_buf).expect("failed to decode lib.rs content");
