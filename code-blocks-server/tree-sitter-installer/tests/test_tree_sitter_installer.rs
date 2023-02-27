@@ -1,7 +1,7 @@
 use tree_sitter_installer::*;
 
 #[test]
-fn test_install_lang() {
+fn test_install_and_load_parser() {
     let target_dir = tempfile::tempdir()
         .expect("failed to get tempdir")
         .into_path()
@@ -9,6 +9,7 @@ fn test_install_lang() {
         .join("test-parser");
 
     let installer = SupportedParser::Rust.get_installer();
+
     let mut parser = installer
         .install_parser(&target_dir)
         .expect("failed to install lang");
