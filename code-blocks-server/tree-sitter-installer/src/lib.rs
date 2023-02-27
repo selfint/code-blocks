@@ -50,7 +50,7 @@ impl ParserInstaller {
         );
 
         dbg!(std::str::from_utf8(
-            &std::fs::read(get_compiled_lib_path(self.name, install_dir)).unwrap()
+            &std::fs::read(install_dir.join("bindings").join("rust").join("lib.rs")).unwrap()
         )
         .unwrap());
 
