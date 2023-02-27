@@ -39,21 +39,30 @@ impl ParserInstaller {
 
         build_parser(install_dir).context("failed to build test parser")?;
 
+        dbg!(std::fs::read_dir(
+            install_dir.join("target").join("release"),
+        ));
+
         self.load_language(install_dir)
             .context("failed to load dynamic test parser")
     }
 
     pub fn load_language(&self, install_dir: &Path) -> Result<Language> {
+        let lib_path = get_compiled_lib_path(self.name, install_dir);
+
+        dbg!(&lib_path);
+
         unsafe {
-            let lib = libloading::Library::new(get_compiled_lib_path(self.name, install_dir))?;
+            let lib = libloading::Library::new(lib_path)?;
             let func: libloading::Symbol<unsafe extern "C" fn() -> Language> =
                 lib.get(self.symbol)?;
+
             Ok(func())
         }
     }
 }
 
-fn download_parser(download_cmd: &str, target_dir: &Path) -> Result<ExitStatus, std::io::Error> {
+fn download_parser(download_cmd: &str, target_dir: &Path) -> Result<ExitStatus> {
     let cmd = download_cmd.split_ascii_whitespace().next().unwrap();
     let args: Vec<_> = download_cmd.split_ascii_whitespace().skip(1).collect();
 
@@ -64,9 +73,10 @@ fn download_parser(download_cmd: &str, target_dir: &Path) -> Result<ExitStatus, 
         .spawn()
         .expect("failed to download parser")
         .wait()
+        .context("failed to run download cmd")
 }
 
-fn fixup_parser_rust_src(parser_dir: &Path) -> Result<(), std::io::Error> {
+fn fixup_parser_rust_src(parser_dir: &Path) -> Result<()> {
     let lib_file = parser_dir.join("bindings").join("rust").join("lib.rs");
     let lib_file_buf = std::fs::read(&lib_file).expect("failed to read lib.rs file");
     let lib_file_src = std::str::from_utf8(&lib_file_buf).expect("failed to decode lib.rs content");
@@ -83,10 +93,10 @@ fn fixup_parser_rust_src(parser_dir: &Path) -> Result<(), std::io::Error> {
         new_lib_file_src.insert_str(loc, "#[no_mangle]\n")
     }
 
-    std::fs::write(lib_file, new_lib_file_src)
+    std::fs::write(lib_file, new_lib_file_src).context("failed to write new lib file src")
 }
 
-fn build_parser(parser_dir: &Path) -> Result<ExitStatus, std::io::Error> {
+fn build_parser(parser_dir: &Path) -> Result<ExitStatus> {
     let cmd = BUILD_CMD.split_ascii_whitespace().next().unwrap();
     let args: Vec<_> = BUILD_CMD.split_ascii_whitespace().skip(1).collect();
 
@@ -96,6 +106,7 @@ fn build_parser(parser_dir: &Path) -> Result<ExitStatus, std::io::Error> {
         .spawn()
         .expect("failed to build parser")
         .wait()
+        .context("failed to run build cmd")
 }
 
 fn get_compiled_lib_path(name: &str, parser_dir: &Path) -> PathBuf {
