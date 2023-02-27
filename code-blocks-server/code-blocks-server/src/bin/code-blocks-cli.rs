@@ -53,6 +53,8 @@ fn handle_line(line: &str) -> Result<Value> {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use code_blocks_server::{BlockLocation, SupportedLanguage};
 
     use super::*;
@@ -74,6 +76,74 @@ mod tests {
             ],
             "text": "fn main() {}\nfn foo() {}",
             "language": "rust"
+          }
+        }
+        "###
+        );
+    }
+
+    use code_blocks_server::SupportedDynamicLanguage;
+
+    #[test]
+    fn show_get_subtrees_request_supported_dynamic() {
+        insta::assert_json_snapshot!(
+            MethodCall::GetSubtrees(GetSubtreesArgs {
+                queries: vec!["(function_item) @ident".to_string()],
+                text: "fn main() {}\nfn foo() {}".to_string(),
+                language: SupportedLanguage::SupportedDynamic {
+                  language: SupportedDynamicLanguage::Rust,
+                  install_dir: PathBuf::from("full_path_to_install_dir")
+                },
+            }),
+            @r###"
+        {
+          "method": "getSubtrees",
+          "params": {
+            "queries": [
+              "(function_item) @ident"
+            ],
+            "text": "fn main() {}\nfn foo() {}",
+            "language": {
+              "supporteddynamic": {
+                "language": "rust",
+                "install_dir": "full_path_to_install_dir"
+              }
+            }
+          }
+        }
+        "###
+        );
+    }
+
+    #[test]
+    fn show_get_subtrees_request_dynamic() {
+        insta::assert_json_snapshot!(
+            MethodCall::GetSubtrees(GetSubtreesArgs {
+                queries: vec!["(function_item) @ident".to_string()],
+                text: "fn main() {}\nfn foo() {}".to_string(),
+                language: SupportedLanguage::Dynamic {
+                  download_cmd: "git clone https://github.com/tree-sitter/tree-sitter-rust".to_string(),
+                  symbol: "language".to_string(),
+                  name: "tree_sitter_rust".to_string(),
+                  install_dir:PathBuf::from("full_path_to_install_dir"),
+                },
+            }),
+            @r###"
+        {
+          "method": "getSubtrees",
+          "params": {
+            "queries": [
+              "(function_item) @ident"
+            ],
+            "text": "fn main() {}\nfn foo() {}",
+            "language": {
+              "dynamic": {
+                "download_cmd": "git clone https://github.com/tree-sitter/tree-sitter-rust",
+                "symbol": "language",
+                "name": "tree_sitter_rust",
+                "install_dir": "full_path_to_install_dir"
+              }
+            }
           }
         }
         "###
