@@ -11,15 +11,15 @@ const BUILD_CMD: &str = "cargo rustc --crate-type=dylib --release";
 
 pub struct ParserInstaller {
     /// cmd to run to download repo
-    pub download_cmd: &'static str,
+    pub download_cmd: String,
     /// name of the function that returns the [tree_sitter::Language] object (usually "language")
-    pub symbol: &'static [u8],
+    pub symbol: Vec<u8>,
     /// name of the compiled library (without prefix/suffix like lib... or .so)
-    pub name: &'static str,
+    pub name: String,
 }
 
 impl ParserInstaller {
-    pub fn new(download_cmd: &'static str, symbol: &'static [u8], name: &'static str) -> Self {
+    pub fn new(download_cmd: String, symbol: Vec<u8>, name: String) -> Self {
         Self {
             download_cmd,
             symbol,
@@ -28,11 +28,11 @@ impl ParserInstaller {
     }
 
     pub fn is_installed_at(&self, install_dir: &Path) -> bool {
-        get_compiled_lib_path(self.name, install_dir).exists()
+        get_compiled_lib_path(&self.name, install_dir).exists()
     }
 
     pub fn install_parser(&self, install_dir: &Path) -> Result<DynamicParser> {
-        download_parser(self.download_cmd, install_dir)
+        download_parser(&self.download_cmd, install_dir)
             .context("failed to download test parser")?;
 
         disable_language_fn_mangle(install_dir).context("failed to disable language fn mangle")?;
@@ -44,12 +44,12 @@ impl ParserInstaller {
     }
 
     pub fn load_parser(&self, install_dir: &Path) -> Result<DynamicParser> {
-        let lib_path = get_compiled_lib_path(self.name, install_dir);
+        let lib_path = get_compiled_lib_path(&self.name, install_dir);
 
         unsafe {
             let lib = libloading::Library::new(lib_path)?;
             let func: libloading::Symbol<unsafe extern "C" fn() -> Language> =
-                lib.get(self.symbol)?;
+                lib.get(&self.symbol)?;
 
             let lang = func();
 

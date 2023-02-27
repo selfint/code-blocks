@@ -10,9 +10,9 @@ fn main() {}
 "#;
 
     let installer = ParserInstaller {
-        download_cmd: "git clone https://github.com/tree-sitter/tree-sitter-rust",
-        symbol: b"language",
-        name: "tree_sitter_rust",
+        download_cmd: "git clone https://github.com/tree-sitter/tree-sitter-rust".to_string(),
+        symbol: b"language".to_vec(),
+        name: "tree_sitter_rust".to_string(),
     };
 
     let mut parser = installer
