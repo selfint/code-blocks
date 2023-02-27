@@ -68,7 +68,13 @@ fn test_build_parser() {
 
     dbg!(std::fs::read_dir(&release_dir).unwrap().collect::<Vec<_>>());
 
-    let expected_dylib_file_path = release_dir.join("libtree_sitter_rust.dylib");
+    let expected_dylib_file_path = release_dir.join(format!(
+        "{}tree_sitter_rust{}",
+        std::env::consts::DLL_PREFIX,
+        std::env::consts::DLL_SUFFIX
+    ));
+
+    dbg!(expected_dylib_file_path.to_str());
 
     assert!(expected_dylib_file_path.exists());
 }
