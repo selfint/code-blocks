@@ -13,21 +13,48 @@ use tree_sitter::{Language, Parser, Tree};
 ///
 /// That is why the only way to parse using the dynamically loaded Language object, is using
 /// this struct's parse method.
+///
+/// ## Drop
+/// When dropping this struct, the Library need to be dropped last. That is why the order
+/// of the fields is parser, lang, lib. Changing this order will result in a segfault.
 pub struct DynamicParser {
-    _lib: Library,
     parser: Parser,
+    _lang: Language,
+    _lib: Library,
 }
 
 impl DynamicParser {
     /// Wrapper method around [tree_sitter::Parser]'s parse method.
     pub fn parse(&mut self, text: impl AsRef<[u8]>, old_tree: Option<&Tree>) -> Option<Tree> {
-        self.parser.parse(text, old_tree)
+        println!("Calling parse");
+
+        let tree = self.parser.parse(text, old_tree);
+
+        println!("Called parse");
+
+        tree
     }
 
     pub fn new(lib: Library, lang: Language) -> Result<Self> {
         let mut parser = Parser::new();
         parser.set_language(lang)?;
 
-        Ok(Self { _lib: lib, parser })
+        Ok(Self {
+            _lib: lib,
+            _lang: lang,
+            parser,
+        })
+    }
+}
+
+impl Drop for DynamicParser {
+    fn drop(&mut self) {
+        println!("Dropping dynamic parser");
+        // println!("Dropping parser");
+        // drop(self.parser);
+        // println!("Dropping lang");
+        // drop(self._lang);
+        // println!("Dropping lib");
+        // drop(self._lib);
     }
 }
