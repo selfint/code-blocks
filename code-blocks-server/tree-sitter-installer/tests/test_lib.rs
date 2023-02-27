@@ -98,10 +98,11 @@ fn test_load_dynamic_parser() {
 
     build_parser(&target_dir).expect("failed to build test parser");
 
-    let dylib_path = target_dir
-        .join("target")
-        .join("release")
-        .join("libtree_sitter_rust.dylib");
+    let dylib_path = target_dir.join(format!(
+        "{}tree_sitter_rust{}",
+        std::env::consts::DLL_PREFIX,
+        std::env::consts::DLL_SUFFIX
+    ));
 
     let lang =
         get_dynamic_language(&dylib_path, info.symbol).expect("failed to load dynamic test parser");

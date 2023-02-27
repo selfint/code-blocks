@@ -99,10 +99,11 @@ pub fn install_lang(info: &ParserInfo, parser_dir: &Path) -> Result<Language> {
 
     build_parser(parser_dir).context("failed to build test parser")?;
 
-    let dylib_path = parser_dir
-        .join("target")
-        .join("release")
-        .join("libtree_sitter_rust.dylib");
+    let dylib_path = parser_dir.join(format!(
+        "{}tree_sitter_rust{}",
+        std::env::consts::DLL_PREFIX,
+        std::env::consts::DLL_SUFFIX
+    ));
 
     // TODO: convert to properly use anyhow error handling
     let lang = get_dynamic_language(&dylib_path, info.symbol);
