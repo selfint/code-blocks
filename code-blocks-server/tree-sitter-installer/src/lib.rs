@@ -77,7 +77,10 @@ impl ParserInstaller {
 }
 
 fn download_parser(download_cmd: &str, target_dir: &Path) -> Result<ExitStatus> {
-    let cmd = download_cmd.split_ascii_whitespace().next().unwrap();
+    let cmd = download_cmd
+        .split_ascii_whitespace()
+        .next()
+        .context("got empty download command")?;
     let args: Vec<_> = download_cmd.split_ascii_whitespace().skip(1).collect();
 
     // download parser
@@ -85,15 +88,16 @@ fn download_parser(download_cmd: &str, target_dir: &Path) -> Result<ExitStatus> 
         .args(args)
         .arg(target_dir)
         .spawn()
-        .expect("failed to download parser")
+        .context("failed to download parser")?
         .wait()
         .context("failed to run download cmd")
 }
 
 fn disable_language_fn_mangle(parser_dir: &Path) -> Result<()> {
     let lib_file = parser_dir.join("bindings").join("rust").join("lib.rs");
-    let lib_file_buf = std::fs::read(&lib_file).expect("failed to read lib.rs file");
-    let lib_file_src = std::str::from_utf8(&lib_file_buf).expect("failed to decode lib.rs content");
+    let lib_file_buf = std::fs::read(&lib_file).context("failed to read lib.rs file")?;
+    let lib_file_src =
+        std::str::from_utf8(&lib_file_buf).context("failed to decode lib.rs content")?;
 
     let pattern = "pub fn language";
     let no_mangle_fn_locations = lib_file_src
@@ -118,7 +122,7 @@ fn build_parser(parser_dir: &Path) -> Result<ExitStatus> {
         .args(args)
         .current_dir(parser_dir)
         .spawn()
-        .expect("failed to build parser")
+        .context("failed to build parser")?
         .wait()
         .context("failed to run build cmd")
 }
