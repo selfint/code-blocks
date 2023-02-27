@@ -24,7 +24,7 @@ impl SupportedParser {
             Self::TSX => ParserInstaller {
                 download_cmd: "git clone https://github.com/tree-sitter/tree-sitter-typescript",
                 symbol: b"language_tsx",
-                name: "tree_sitter_tsx",
+                name: "tree_sitter_typescript",
             },
             Self::Svelte => ParserInstaller {
                 download_cmd: "git clone https://github.com/Himujjal/tree-sitter-svelte",
