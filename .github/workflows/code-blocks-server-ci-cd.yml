@@ -52,6 +52,7 @@ jobs:
             rest-artifact: code-blocks-server/target/x86_64-unknown-linux-gnu/release/code-blocks-rest
             cli-artifact: code-blocks-server/target/x86_64-unknown-linux-gnu/release/code-blocks-cli
             os: ubuntu-latest
+            include-ignored: --include-ignored
           # - target: aarch64-unknown-linux-gnu
           #   artifact: code-blocks-server/target/aarch64-unknown-linux-gnu/release/code-blocks-rest
           #   os: ubuntu-latest
@@ -60,15 +61,18 @@ jobs:
             rest-artifact: code-blocks-server/target/x86_64-apple-darwin/release/code-blocks-rest
             cli-artifact: code-blocks-server/target/x86_64-apple-darwin/release/code-blocks-cli
             os: macos-latest
+            include-ignored: --include-ignored
           - target: aarch64-apple-darwin
             rest-artifact: code-blocks-server/target/aarch64-apple-darwin/release/code-blocks-rest
             cli-artifact: code-blocks-server/target/aarch64-apple-darwin/release/code-blocks-cli
             os: macos-latest
+            include-ignored: "" # testing dynamic parsers won't work when cross-compiling
 
           - target: x86_64-pc-windows-msvc
             rest-artifact: code-blocks-server\target\x86_64-pc-windows-msvc\release\code-blocks-rest.exe
             cli-artifact: code-blocks-server\target\x86_64-pc-windows-msvc\release\code-blocks-cli.exe
             os: windows-latest
+            include-ignored: --include-ignored
           # - target: aarch64-pc-windows-msv
           #   artifact: code-blocks-server\target\aarch64-pc-windows-msvc\release\code-blocks-rest.exe
           #   os: windows-latest
@@ -95,7 +99,7 @@ jobs:
       - name: Build release binary
         run: cd code-blocks-server && cargo build --release --target ${{ matrix.target }} --all-features
       - name: Test release binary
-        run: cd code-blocks-server && cargo test --release --target ${{ matrix.target }} --all-features --verbose -- --nocapture --include-ignored
+        run: cd code-blocks-server && cargo test --release --target ${{ matrix.target }} --all-features --verbose -- --nocapture ${{ matrix.include-ignored }}
       - name: Upload release binary
         uses: actions/upload-artifact@v3
         with:
