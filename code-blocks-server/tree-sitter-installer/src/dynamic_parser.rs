@@ -16,10 +16,9 @@ use tree_sitter::{Language, Parser, Tree};
 ///
 /// ## Drop
 /// When dropping this struct, the Library need to be dropped last. That is why the order
-/// of the fields is parser, lang, lib. Changing this order will result in a segfault.
+/// of the fields is parser, lib. Changing this order will result in a segfault.
 pub struct DynamicParser {
     parser: Parser,
-    _lang: Language,
     _lib: Library,
 }
 
@@ -33,10 +32,6 @@ impl DynamicParser {
         let mut parser = Parser::new();
         parser.set_language(lang)?;
 
-        Ok(Self {
-            _lib: lib,
-            _lang: lang,
-            parser,
-        })
+        Ok(Self { _lib: lib, parser })
     }
 }
