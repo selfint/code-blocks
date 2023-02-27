@@ -26,13 +26,7 @@ pub struct DynamicParser {
 impl DynamicParser {
     /// Wrapper method around [tree_sitter::Parser]'s parse method.
     pub fn parse(&mut self, text: impl AsRef<[u8]>, old_tree: Option<&Tree>) -> Option<Tree> {
-        println!("Calling parse");
-
-        let tree = self.parser.parse(text, old_tree);
-
-        println!("Called parse");
-
-        tree
+        self.parser.parse(text, old_tree)
     }
 
     pub fn new(lib: Library, lang: Language) -> Result<Self> {
