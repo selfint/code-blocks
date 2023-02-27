@@ -106,7 +106,7 @@ mod tests {
             "language": {
               "supporteddynamic": {
                 "language": "rust",
-                "install_dir": "full_path_to_install_dir"
+                "installDir": "full_path_to_install_dir"
               }
             }
           }
@@ -138,10 +138,10 @@ mod tests {
             "text": "fn main() {}\nfn foo() {}",
             "language": {
               "dynamic": {
-                "download_cmd": "git clone https://github.com/tree-sitter/tree-sitter-rust",
+                "downloadCmd": "git clone https://github.com/tree-sitter/tree-sitter-rust",
                 "symbol": "language",
                 "name": "tree_sitter_rust",
-                "install_dir": "full_path_to_install_dir"
+                "installDir": "full_path_to_install_dir"
               }
             }
           }

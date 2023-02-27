@@ -40,10 +40,12 @@ pub enum SupportedLanguage {
     TSX,
     Svelte,
     Python,
+    #[serde(rename_all = "camelCase")]
     SupportedDynamic {
         language: SupportedDynamicLanguage,
         install_dir: PathBuf,
     },
+    #[serde(rename_all = "camelCase")]
     Dynamic {
         download_cmd: String,
         symbol: String,
