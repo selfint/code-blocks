@@ -8,14 +8,6 @@ use tree_sitter::Language;
 
 pub const BUILD_CMD: &str = "cargo rustc --crate-type=dylib --release";
 
-pub fn call_dynamic(dylib_path: &str) -> Result<Language, Box<dyn std::error::Error>> {
-    unsafe {
-        let lib = libloading::Library::new(dylib_path)?;
-        let func: libloading::Symbol<unsafe extern "C" fn() -> Language> = lib.get(b"language")?;
-        Ok(func())
-    }
-}
-
 pub enum SupportedParser {
     Rust,
 }
