@@ -2,6 +2,11 @@ use tree_sitter_installer::*;
 
 use tree_sitter::Parser;
 
+const LOCAL_TREESITTER_RUST: ParserInfo = ParserInfo {
+    download_cmd: "git clone ./tests/tree-sitter-rust",
+    symbol: b"language",
+};
+
 #[test]
 fn test_download_parser() {
     let target_dir = tempfile::tempdir()
@@ -10,12 +15,7 @@ fn test_download_parser() {
         .join("test_download_parser")
         .join("test-parser");
 
-    let info = ParserInfo {
-        download_cmd: "git clone ./tests/tree-sitter-rust",
-        symbol: b"language",
-    };
-
-    download_parser(&info, &target_dir).expect("failed to download test parser");
+    download_parser(&LOCAL_TREESITTER_RUST, &target_dir).expect("failed to download test parser");
 
     assert!(target_dir.exists());
 }
@@ -28,12 +28,7 @@ fn test_fixup_parser_rust_src() {
         .join("test_fixup_parser_rust_src")
         .join("test-parser");
 
-    let info = ParserInfo {
-        download_cmd: "git clone ./tests/tree-sitter-rust",
-        symbol: b"language",
-    };
-
-    download_parser(&info, &target_dir).expect("failed to download test parser");
+    download_parser(&LOCAL_TREESITTER_RUST, &target_dir).expect("failed to download test parser");
 
     fixup_parser_rust_src(&target_dir).expect("failed to fixup parser rust src");
 
@@ -51,13 +46,6 @@ fn test_build_parser() {
         .into_path()
         .join("test_build_parser")
         .join("test-parser");
-
-    let info = ParserInfo {
-        download_cmd: "git clone ./tests/tree-sitter-rust",
-        symbol: b"language",
-    };
-
-    download_parser(&info, &target_dir).expect("failed to download test parser");
 
     fixup_parser_rust_src(&target_dir).expect("failed to fixup test parser rust src");
 
@@ -87,16 +75,14 @@ fn test_load_dynamic_parser() {
         .join("test_load_dynamic_parser")
         .join("test-parser");
 
-    let info = ParserInfo {
-        download_cmd: "git clone ./tests/tree-sitter-rust",
-        symbol: b"language",
-    };
-
-    download_parser(&info, &target_dir).expect("failed to download test parser");
-
     fixup_parser_rust_src(&target_dir).expect("failed to fixup test parser rust src");
 
     build_parser(&target_dir).expect("failed to build test parser");
+
+    let release_dir = target_dir.join("target").join("release");
+    assert!(release_dir.exists());
+
+    dbg!(std::fs::read_dir(&release_dir).unwrap().collect::<Vec<_>>());
 
     let dylib_path = target_dir.join(format!(
         "{}tree_sitter_rust{}",
@@ -104,8 +90,8 @@ fn test_load_dynamic_parser() {
         std::env::consts::DLL_SUFFIX
     ));
 
-    let lang =
-        get_dynamic_language(&dylib_path, info.symbol).expect("failed to load dynamic test parser");
+    let lang = get_dynamic_language(&dylib_path, LOCAL_TREESITTER_RUST.symbol)
+        .expect("failed to load dynamic test parser");
 
     let src = "fn main() {}";
 
@@ -125,12 +111,7 @@ fn test_install_lang() {
         .join("test_install_lang")
         .join("test-parser");
 
-    let info = ParserInfo {
-        download_cmd: "git clone ./tests/tree-sitter-rust",
-        symbol: b"language",
-    };
-
-    let lang = install_lang(&info, &target_dir).expect("failed to install lang");
+    let lang = install_lang(&LOCAL_TREESITTER_RUST, &target_dir).expect("failed to install lang");
 
     let src = "fn main() {}";
 
