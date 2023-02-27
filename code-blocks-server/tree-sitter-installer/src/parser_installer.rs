@@ -10,8 +10,11 @@ use tree_sitter::Language;
 const BUILD_CMD: &str = "cargo rustc --crate-type=dylib --release";
 
 pub struct ParserInstaller {
+    /// cmd to run to download repo
     pub download_cmd: &'static str,
+    /// name of the function that returns the [tree_sitter::Language] object (usually "language")
     pub symbol: &'static [u8],
+    /// name of the compiled library (without prefix/suffix like lib... or .so)
     pub name: &'static str,
 }
 
@@ -43,8 +46,6 @@ impl ParserInstaller {
     pub fn load_parser(&self, install_dir: &Path) -> Result<DynamicParser> {
         let lib_path = get_compiled_lib_path(self.name, install_dir);
 
-        dbg!(&lib_path);
-
         unsafe {
             let lib = libloading::Library::new(lib_path)?;
             let func: libloading::Symbol<unsafe extern "C" fn() -> Language> =
@@ -64,7 +65,6 @@ fn download_parser(download_cmd: &str, target_dir: &Path) -> Result<ExitStatus> 
         .context("got empty download command")?;
     let args: Vec<_> = download_cmd.split_ascii_whitespace().skip(1).collect();
 
-    // download parser
     Command::new(cmd)
         .args(args)
         .arg(target_dir)
