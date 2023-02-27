@@ -68,7 +68,7 @@ fn test_build_parser() {
 }
 
 #[test]
-fn test_load_dynamic_parser() {
+fn test_get_dynamic_language() {
     let target_dir = tempfile::tempdir()
         .expect("failed to get tempdir")
         .into_path()
