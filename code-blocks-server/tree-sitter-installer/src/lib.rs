@@ -31,6 +31,10 @@ pub struct ParserInstaller {
 }
 
 impl ParserInstaller {
+    pub fn is_installed_at(&self, install_dir: &Path) -> bool {
+        get_compiled_lib_path(self.name, install_dir).exists()
+    }
+
     pub fn install_language(&self, install_dir: &Path) -> Result<Language> {
         download_parser(self.download_cmd, install_dir)
             .context("failed to download test parser")?;
@@ -45,11 +49,14 @@ impl ParserInstaller {
                 .collect::<Vec<_>>()
         );
 
-        dbg!(std::fs::read(
-            install_dir
-                .join("target")
-                .join("release")
-                .join(get_compiled_lib_path(self.name, install_dir)),
+        dbg!(std::str::from_utf8(
+            &std::fs::read(
+                install_dir
+                    .join("target")
+                    .join("release")
+                    .join(get_compiled_lib_path(self.name, install_dir)),
+            )
+            .unwrap()
         )
         .unwrap());
 
