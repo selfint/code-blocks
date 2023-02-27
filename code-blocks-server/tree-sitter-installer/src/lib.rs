@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Context, Result};
 use std::{
-    path::{Path, PathBuf},
+    path::Path,
     process::{Command, ExitStatus},
 };
 
