@@ -37,6 +37,8 @@ jobs:
         run: cd code-blocks-server && cargo build --verbose --all-features
       - name: Test
         run: cd code-blocks-server && cargo test --verbose --all-features -- --nocapture
+      - name: Test ignored tests
+        run: cd code-blocks-server && cargo test --verbose --all-features -- --nocapture --ignored
 
   build:
     name: Build release binaries
@@ -93,7 +95,7 @@ jobs:
       - name: Build release binary
         run: cd code-blocks-server && cargo build --release --target ${{ matrix.target }} --all-features
       - name: Test release binary
-        run: cd code-blocks-server && cargo test --release --target ${{ matrix.target }} --all-features
+        run: cd code-blocks-server && cargo test --release --target ${{ matrix.target }} --all-features --verbose -- --nocapture --include-ignored
       - name: Upload release binary
         uses: actions/upload-artifact@v3
         with:
