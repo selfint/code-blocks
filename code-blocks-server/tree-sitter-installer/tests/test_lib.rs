@@ -63,10 +63,12 @@ fn test_build_parser() {
 
     build_parser(&target_dir).expect("failed to build test parser");
 
-    let expected_dylib_file_path = target_dir
-        .join("target")
-        .join("release")
-        .join("libtree_sitter_rust.dylib");
+    let release_dir = target_dir.join("target").join("release");
+    assert!(release_dir.exists());
+
+    dbg!(std::fs::read_dir(&release_dir).unwrap().collect::<Vec<_>>());
+
+    let expected_dylib_file_path = release_dir.join("libtree_sitter_rust.dylib");
 
     assert!(expected_dylib_file_path.exists());
 }
