@@ -8,20 +8,14 @@ use tree_sitter::Language;
 
 const BUILD_CMD: &str = "cargo rustc --crate-type=dylib --release";
 
-pub enum SupportedParser {
+pub enum SupportedLanguage {
     Rust,
 }
 
-pub struct ParserInfo {
-    pub download_cmd: &'static str,
-    pub symbol: &'static [u8],
-    pub name: &'static str,
-}
-
-impl SupportedParser {
-    pub fn get_parser_info(&self) -> ParserInfo {
+impl SupportedLanguage {
+    pub fn get_installer(&self) -> ParserInstaller {
         match self {
-            Self::Rust => ParserInfo {
+            Self::Rust => ParserInstaller {
                 download_cmd: "git clone https://github.com/tree-sitter/tree-sitter-rust",
                 symbol: b"language",
                 name: "tree_sitter_rust",
@@ -30,9 +24,38 @@ impl SupportedParser {
     }
 }
 
-fn download_parser(info: &ParserInfo, target_dir: &Path) -> Result<ExitStatus, std::io::Error> {
-    let cmd = info.download_cmd.split_ascii_whitespace().next().unwrap();
-    let args: Vec<_> = info.download_cmd.split_ascii_whitespace().skip(1).collect();
+pub struct ParserInstaller {
+    pub download_cmd: &'static str,
+    pub symbol: &'static [u8],
+    pub name: &'static str,
+}
+
+impl ParserInstaller {
+    pub fn install_language(&self, install_dir: &Path) -> Result<Language> {
+        download_parser(self.download_cmd, install_dir)
+            .context("failed to download test parser")?;
+
+        fixup_parser_rust_src(install_dir).context("failed to fixup test parser rust src")?;
+
+        build_parser(install_dir).context("failed to build test parser")?;
+
+        self.load_language(install_dir)
+            .context("failed to load dynamic test parser")
+    }
+
+    pub fn load_language(&self, install_dir: &Path) -> Result<Language> {
+        unsafe {
+            let lib = libloading::Library::new(get_compiled_lib_path(self.name, install_dir))?;
+            let func: libloading::Symbol<unsafe extern "C" fn() -> Language> =
+                lib.get(self.symbol)?;
+            Ok(func())
+        }
+    }
+}
+
+fn download_parser(download_cmd: &str, target_dir: &Path) -> Result<ExitStatus, std::io::Error> {
+    let cmd = download_cmd.split_ascii_whitespace().next().unwrap();
+    let args: Vec<_> = download_cmd.split_ascii_whitespace().skip(1).collect();
 
     // download parser
     Command::new(cmd)
@@ -75,29 +98,11 @@ fn build_parser(parser_dir: &Path) -> Result<ExitStatus, std::io::Error> {
         .wait()
 }
 
-pub fn get_dynamic_language(info: &ParserInfo, parser_dir: &Path) -> Result<Language> {
-    unsafe {
-        let lib = libloading::Library::new(get_compiled_lib_path(info, parser_dir))?;
-        let func: libloading::Symbol<unsafe extern "C" fn() -> Language> = lib.get(info.symbol)?;
-        Ok(func())
-    }
-}
-
-pub fn get_compiled_lib_path(info: &ParserInfo, parser_dir: &Path) -> PathBuf {
+fn get_compiled_lib_path(name: &str, parser_dir: &Path) -> PathBuf {
     parser_dir.join("target").join("release").join(format!(
         "{}{}{}",
         std::env::consts::DLL_PREFIX,
-        info.name,
+        name,
         std::env::consts::DLL_SUFFIX
     ))
-}
-
-pub fn install_lang(info: &ParserInfo, parser_dir: &Path) -> Result<Language> {
-    download_parser(info, parser_dir).context("failed to download test parser")?;
-
-    fixup_parser_rust_src(parser_dir).context("failed to fixup test parser rust src")?;
-
-    build_parser(parser_dir).context("failed to build test parser")?;
-
-    get_dynamic_language(info, parser_dir).context("failed to load dynamic test parser")
 }
