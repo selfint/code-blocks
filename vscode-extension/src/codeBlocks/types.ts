@@ -50,5 +50,31 @@ export type JsonResult<T> =
       result: string;
     };
 
-export const SUPPORTED_LANGUAGES = ["rust", "typescript", "tsx", "svelte", "python"] as const;
-export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
+export const SUPPORTED_DYNAMIC_LANGUAGES = ["rust", "typescript", "tsx", "svelte", "python"] as const;
+export type SupportedDynamicLanguage = (typeof SUPPORTED_DYNAMIC_LANGUAGES)[number];
+
+export type SupportedDynamic = {
+  supportedDynamic: {
+    language: SupportedDynamicLanguage;
+    installDir: string;
+  };
+};
+
+export type Dynamic = {
+  dynamic: {
+    downloadCmd: string;
+    symbol: string;
+    name: string;
+    installDir: string;
+  };
+};
+
+export const SUPPORTED_LANGUAGES = ["rust", "typescript", /* "tsx", */ "svelte", "python"] as const;
+export type SupportedLanguage =
+  | "rust"
+  | "typescript"
+  // | "tsx"
+  | "svelte"
+  | "python"
+  | SupportedDynamic
+  | Dynamic;
