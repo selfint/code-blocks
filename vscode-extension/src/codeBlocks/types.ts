@@ -15,7 +15,7 @@ export type BlockLocationTree = {
 export type GetSubtreesArgs = {
   queries: string[];
   text: string;
-  language: SupportedLanguage;
+  language: Dynamic;
 };
 
 export type GetSubtreesResponse = BlockLocationTree[];
@@ -23,7 +23,7 @@ export type GetSubtreesResponse = BlockLocationTree[];
 export type MoveBlockArgs = {
   queries: string[];
   text: string;
-  language: SupportedLanguage;
+  language: Dynamic;
   srcBlock: BlockLocation;
   dstBlock: BlockLocation;
 };
@@ -50,16 +50,6 @@ export type JsonResult<T> =
       result: string;
     };
 
-export const SUPPORTED_DYNAMIC_LANGUAGES = ["rust", "typescript", "tsx", "svelte", "python"] as const;
-export type SupportedDynamicLanguage = (typeof SUPPORTED_DYNAMIC_LANGUAGES)[number];
-
-export type SupportedDynamic = {
-  supporteddynamic: {
-    language: SupportedDynamicLanguage;
-    installDir: string;
-  };
-};
-
 export type Dynamic = {
   dynamic: {
     downloadCmd: string;
@@ -69,18 +59,10 @@ export type Dynamic = {
   };
 };
 
-export const SUPPORTED_LANGUAGES = [/*"rust",*/ "typescript", "tsx", "svelte", "python"] as const;
-export type SupportedLanguage =
-  | "rust"
-  | "typescript"
-  | "tsx"
-  | "svelte"
-  | "python"
-  | SupportedDynamic
-  | Dynamic;
-
 export type ParserInstaller = {
   downloadCmd: string;
   symbol: string;
   name: string;
 };
+
+export type Query = string;

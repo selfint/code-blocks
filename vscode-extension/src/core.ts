@@ -1,12 +1,13 @@
 import * as vscode from "vscode";
+import * as fs from "fs";
 import * as codeBlocksCliClient from "./codeBlocks/codeBlocksCliClient";
 import {
+  Dynamic,
   GetSubtreesArgs,
   GetSubtreesResponse,
   JsonResult,
   MoveBlockArgs,
   MoveBlockResponse,
-  SupportedLanguage,
 } from "./codeBlocks/types";
 import { MoveCommand, UpdateMessage } from "./messages";
 
@@ -14,7 +15,7 @@ export async function drawBlocks(
   codeBlocksCliPath: string,
   webview: vscode.Webview,
   document: vscode.TextDocument,
-  docLang: SupportedLanguage,
+  docLang: Dynamic,
   queries: string[]
 ): Promise<void> {
   const text = document.getText();
@@ -29,7 +30,18 @@ export async function drawBlocks(
   let response: JsonResult<GetSubtreesResponse>;
 
   try {
-    response = await codeBlocksCliClient.getSubtrees(codeBlocksCliPath, getSubtreeArgs);
+    if (fs.existsSync(docLang.dynamic.installDir)) {
+      response = await codeBlocksCliClient.getSubtrees(codeBlocksCliPath, getSubtreeArgs);
+    } else {
+      response = await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          cancellable: false,
+          title: `Installing ${docLang.dynamic.name}`,
+        },
+        async (_) => await codeBlocksCliClient.getSubtrees(codeBlocksCliPath, getSubtreeArgs)
+      );
+    }
   } catch (error) {
     vscode.window.showErrorMessage(`Failed to get blocks: ${JSON.stringify(error)}`);
     return;
@@ -54,7 +66,7 @@ export async function moveBlock(
   msg: MoveCommand,
   codeBlocksCliPath: string,
   document: vscode.TextDocument,
-  docLang: SupportedLanguage,
+  docLang: Dynamic,
   queries: string[]
 ): Promise<void> {
   const moveArgs: MoveBlockArgs = {
@@ -68,7 +80,18 @@ export async function moveBlock(
   let response: JsonResult<MoveBlockResponse>;
 
   try {
-    response = await codeBlocksCliClient.moveBlock(codeBlocksCliPath, moveArgs);
+    if (fs.existsSync(docLang.dynamic.installDir)) {
+      response = await codeBlocksCliClient.moveBlock(codeBlocksCliPath, moveArgs);
+    } else {
+      response = await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          cancellable: false,
+          title: `Installing ${docLang.dynamic.name}`,
+        },
+        async (_) => await codeBlocksCliClient.moveBlock(codeBlocksCliPath, moveArgs)
+      );
+    }
   } catch (error) {
     vscode.window.showErrorMessage(`Failed to move block: ${JSON.stringify(error)}`);
     return;

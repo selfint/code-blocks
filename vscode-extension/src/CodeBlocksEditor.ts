@@ -3,7 +3,7 @@ import { MoveCommand } from "./messages";
 import * as core from "./core";
 import { getUri } from "./utilities/getUri";
 import { getNonce } from "./utilities/getNonce";
-import { SupportedLanguage } from "./codeBlocks/types";
+import { Dynamic, Query } from "./codeBlocks/types";
 
 export class CodeBlocksEditor {
   constructor(
@@ -11,8 +11,8 @@ export class CodeBlocksEditor {
     private readonly document: vscode.TextDocument,
     private readonly webviewPanel: vscode.WebviewPanel,
     private readonly codeBlocksCliPath: string,
-    private readonly docLang: SupportedLanguage,
-    private readonly queries: string[]
+    private readonly docLang: Dynamic,
+    private readonly queries: Query[]
   ) {
     this.initWebview();
     this.subscribeToDocEvents();
