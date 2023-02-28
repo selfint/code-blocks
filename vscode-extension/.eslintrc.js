@@ -14,9 +14,6 @@ module.exports = {
   },
   plugins: ["@typescript-eslint"],
   root: true,
-  env: {
-    node: true,
-  },
   rules: {
     "@typescript-eslint/naming-convention": "warn",
     "@typescript-eslint/semi": "warn",
