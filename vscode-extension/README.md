@@ -6,6 +6,8 @@ This extension allows you to move your code as blocks, **_in any language_\***.
 
 ## Installation
 
+![installation video](./assets/Code-Blocks-Installation-Demo.gif)
+
 1. Download the .vsix file from the latest Release, and install it in Visual Studio Code.
 
 2. After opening a file with the Code Blocks Editor, the `code-blocks-cli` will need to be downloaded
