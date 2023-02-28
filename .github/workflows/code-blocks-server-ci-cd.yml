@@ -80,6 +80,7 @@ jobs:
         uses: Swatinem/rust-cache@v2.0.1
         with:
           prefix-key: "${{ matrix.target }}"
+          workspaces: "code-blocks-server"
       - name: Setup rust
         uses: actions-rs/toolchain@v1
         with:
