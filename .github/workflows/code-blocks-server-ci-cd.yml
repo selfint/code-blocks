@@ -26,7 +26,7 @@ jobs:
         with:
           submodules: true
       - name: Rust Cache
-        uses: Swatinem/rust-cache@v2.0.1
+        uses: Swatinem/rust-cache@v2
         with:
           workspaces: "code-blocks-server"
       - name: Setup rust
@@ -77,9 +77,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Rust Cache
-        uses: Swatinem/rust-cache@v2.0.1
+        uses: Swatinem/rust-cache@v2
         with:
           prefix-key: "${{ matrix.target }}"
+          workspaces: "code-blocks-server"
       - name: Setup rust
         uses: actions-rs/toolchain@v1
         with:
@@ -93,10 +94,12 @@ jobs:
       #     packages: gcc-aarch64-linux-gnu
       #     version: ${{ matrix.target }}
       - name: Build release binary
-        run: cd code-blocks-server && cargo build --release --target ${{ matrix.target }} --all-features
+        run: cargo build --release --target ${{ matrix.target }} --all-features
+        working-directory: code-blocks-server
       - name: Test release binary
-        if: startsWith(${{ matrix.target }}, 'x86_64')  # all test machines use x86_64
-        run: cd code-blocks-server && cargo test --release --target ${{ matrix.target }} --all-features --verbose -- --nocapture --include-ignored
+        if: startsWith(matrix.target, 'x86_64')
+        run: cargo test --release --target ${{ matrix.target }} --all-features --verbose -- --nocapture --include-ignored
+        working-directory: code-blocks-server
       - name: Upload release binary
         uses: actions/upload-artifact@v3
         with:
