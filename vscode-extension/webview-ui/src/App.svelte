@@ -34,15 +34,15 @@
     }
   }
 
-  const sliceLengthLimit = 100;
+  const sliceLengthLimit = 500;
   function textSlice(start: number, end: number): string {
     if (end - start < sliceLengthLimit) {
       return text.substring(start, end);
     } else {
       return (
-        text.substring(start, start + sliceLengthLimit / 2) +
+        text.substring(start, start + (sliceLengthLimit * 3) / 4) +
         "..." +
-        text.substring(end - sliceLengthLimit / 2, end)
+        text.substring(end - sliceLengthLimit / 4, end)
       );
     }
   }
