@@ -1,6 +1,5 @@
 import * as os from "os";
 import * as path from "path";
-import * as releaseUtils from "./releaseUtils";
 import * as vscode from "vscode";
 import { promises as asyncFs } from "fs";
 import { download } from "./lldb_vscode_copy/lldb_vscode_installer_utils";
@@ -78,7 +77,7 @@ export async function installViaRelease(
       };
 
       const downloadTarget = path.join(os.tmpdir(), bin);
-      const uri = releaseUtils.getPlatfromBinaryUri();
+      const uri = getPlatfromBinaryUri();
       if (uri === undefined) {
         await vscode.window.showErrorMessage(`Unsupported os/arch: ${os.platform()}-${os.arch()}`);
         return false;
