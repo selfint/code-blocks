@@ -8,19 +8,19 @@ import {
   MoveBlockResponse,
   SupportedLanguage,
 } from "./codeBlocks/types";
-import { getQueryStrings } from "./codeBlocks/queries";
 import { MoveCommand, UpdateMessage } from "./messages";
 
 export async function drawBlocks(
   codeBlocksCliPath: string,
   webview: vscode.Webview,
   document: vscode.TextDocument,
-  docLang: SupportedLanguage
+  docLang: SupportedLanguage,
+  queries: string[]
 ): Promise<void> {
   const text = document.getText();
   const getSubtreeArgs: GetSubtreesArgs = {
     text: text,
-    queries: getQueryStrings(docLang),
+    queries: queries,
     language: docLang,
   };
 
@@ -54,13 +54,14 @@ export async function moveBlock(
   msg: MoveCommand,
   codeBlocksCliPath: string,
   document: vscode.TextDocument,
-  docLang: SupportedLanguage
+  docLang: SupportedLanguage,
+  queries: string[]
 ): Promise<void> {
   const moveArgs: MoveBlockArgs = {
     text: document.getText(),
     srcBlock: msg.args.src,
     dstBlock: msg.args.dst,
-    queries: getQueryStrings(docLang),
+    queries: queries,
     language: docLang,
   };
 

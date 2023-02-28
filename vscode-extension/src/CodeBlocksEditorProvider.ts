@@ -1,108 +1,116 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import { promises as asyncFs } from "fs";
-import { SupportedDynamicLanguage, SupportedLanguage } from "./codeBlocks/types";
+import { ParserInstaller, SupportedDynamicLanguage, SupportedLanguage } from "./codeBlocks/types";
 import { getOrInstallCli } from "./codeBlocks/installer/installer";
 import { CodeBlocksEditor } from "./CodeBlocksEditor";
+import { getQueryStrings } from "./codeBlocks/queries";
 
 const vscodeLangIdToSupportedLanguage: Map<string, SupportedLanguage> = new Map([
   ["svelte", "svelte"],
   ["typescript", "typescript"],
   // ["typescriptreact", "tsx"],
-  ["rust", "rust"],
+  // ["rust", "rust"],
   ["python", "python"],
 ]);
 const vscodeLangIdToSupportedDynamicLanguage: Map<string, SupportedDynamicLanguage> = new Map([
   ["svelte", "svelte"],
   ["typescript", "typescript"],
   ["typescriptreact", "tsx"],
-  ["rust", "rust"],
+  // ["rust", "rust"],
   ["python", "python"],
 ]);
+
+export type CodeBlocksExtensionSettings = {
+  queries: Map<string, string[]>;
+  dynamicParsers: Map<string, ParserInstaller>;
+};
 
 export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider {
   public static readonly viewType = "codeBlocks.editor";
   public static readonly extensionBinDir = "bin";
   public static readonly parsersDir = "parsers";
+
   private extensionBinDirPath: string;
   private extensionParsersDirPath: string;
+  private extensionSettings: CodeBlocksExtensionSettings;
 
   constructor(private readonly context: vscode.ExtensionContext) {
     this.extensionBinDirPath = path.join(context.extensionPath, CodeBlocksEditorProvider.extensionBinDir);
     this.extensionParsersDirPath = path.join(context.extensionPath, CodeBlocksEditorProvider.parsersDir);
+
+    const settings = vscode.workspace.getConfiguration("codeBlocks");
+    const queries =
+      settings.get("queries") !== undefined ? new Map(Object.entries(settings.get("queries")!)) : new Map();
+    const dynamicParsers =
+      settings.get("dynamicParsers") !== undefined
+        ? new Map(Object.entries(settings.get("dynamicParsers")!))
+        : new Map();
+    this.extensionSettings = {
+      queries: queries,
+      dynamicParsers: dynamicParsers,
+    };
   }
 
-  async getDocLang(document: vscode.TextDocument): Promise<SupportedLanguage | undefined> {
-    const supportedLang = vscodeLangIdToSupportedLanguage.get(document.languageId);
+  async getDocLang(lang: string): Promise<[SupportedLanguage, string[]] | [undefined, undefined]> {
+    const supportedLang = vscodeLangIdToSupportedLanguage.get(lang);
     if (supportedLang !== undefined) {
       console.log(`using supported lang: ${supportedLang}`);
-      return supportedLang;
+      return [supportedLang, getQueryStrings(supportedLang)];
     }
 
-    const supportedDynamic = vscodeLangIdToSupportedDynamicLanguage.get(document.languageId);
+    const supportedDynamic = vscodeLangIdToSupportedDynamicLanguage.get(lang);
     if (supportedDynamic !== undefined) {
-      console.log(`using supported dynamic lang: ${supportedDynamic}`);
+      vscode.window.showInformationMessage(
+        `Using supported dynamic lang: ${supportedDynamic}, initial loading may take some time`
+      );
       const installDir = path.join(this.extensionParsersDirPath, supportedDynamic);
       await asyncFs.mkdir(installDir, { recursive: true });
-      return {
-        supportedDynamic: {
-          language: supportedDynamic,
-          installDir: installDir,
+      return [
+        {
+          supporteddynamic: {
+            language: supportedDynamic,
+            installDir: installDir,
+          },
         },
-      };
+        getQueryStrings(supportedDynamic),
+      ];
     }
 
-    console.log(`using dynamic lang`);
-
-    // get dynamic language attributes
     let langs = Array.from(vscodeLangIdToSupportedLanguage.keys());
     langs.push(...Array.from(vscodeLangIdToSupportedDynamicLanguage.keys()));
+    langs.push(...Array.from(this.extensionSettings.dynamicParsers.keys()));
 
-    const choice: "Try dynamic download" | "Ok" | undefined = await vscode.window.showErrorMessage(
-      `Opened file in unsupported language: '${document.languageId}'` +
-        ` (supported languages: ${Array.from(new Set(langs))})`,
-      "Try dynamic download",
-      "Ok"
-    );
-
-    if (choice !== "Try dynamic download") {
-      return undefined;
+    const parserInstaller = this.extensionSettings.dynamicParsers.get(lang);
+    if (parserInstaller === undefined) {
+      await vscode.window.showErrorMessage(
+        `Opened file in language without parser: '${lang}'. Try adding an` +
+          ` installation config in the 'codeBlocks.dynamicParsers' extension setting,` +
+          ` or using a supported language (supported languages: ${Array.from(new Set(langs))})`
+      );
+      return [undefined, undefined];
     }
 
-    const downloadCmd = await vscode.window.showInputBox({
-      title: "Download tree-sitter grammar repo command",
-      placeHolder: "git clone https://github.com/tree-sitter/tree-sitter-rust",
-    });
-    if (downloadCmd === undefined) {
-      return undefined;
+    const queries = this.extensionSettings.queries.get(lang);
+    if (queries === undefined) {
+      await vscode.window.showErrorMessage(
+        `Opened file in language without queries: '${lang}'. Try adding ` +
+          ` queries in the 'codeBlocks.queries' extension setting` +
+          ` or using a supported language (supported languages: ${Array.from(new Set(langs))})`
+      );
+      return [undefined, undefined];
     }
 
-    const symbol = await vscode.window.showInputBox({
-      title: "Name of function that returns the Language object (probably just 'language')",
-      placeHolder: "language",
-    });
-    if (symbol === undefined) {
-      return undefined;
-    }
-
-    const name = await vscode.window.showInputBox({
-      title: "Name of the library (probably tree_sitter_<lang>)",
-      placeHolder: "tree_sitter_rust",
-    });
-    if (name === undefined) {
-      return undefined;
-    }
-
-    const installDir = path.join(this.extensionParsersDirPath, name);
-    await asyncFs.mkdir(installDir, { recursive: true });
-    return {
-      dynamic: {
-        downloadCmd: downloadCmd,
-        symbol: symbol,
-        name: name,
-        installDir: installDir,
+    const installDir = path.join(this.extensionParsersDirPath, parserInstaller!.name);
+    return [
+      {
+        dynamic: {
+          ...parserInstaller,
+          installDir: installDir,
+        },
       },
-    };
+      queries,
+    ];
   }
 
   public async resolveCustomTextEditor(
@@ -110,12 +118,8 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     webviewPanel: vscode.WebviewPanel,
     _token: vscode.CancellationToken
   ): Promise<void> {
-    const docLang = await this.getDocLang(document);
-    if (docLang === undefined) {
-      const langs = Array.from(vscodeLangIdToSupportedLanguage.keys());
-      vscode.window.showErrorMessage(
-        `Opened file in unsupported language: '${document.languageId}' (supported languages: ${langs})`
-      );
+    const [docLang, queries] = await this.getDocLang(document.languageId);
+    if (docLang === undefined || queries === undefined) {
       return;
     }
 
@@ -125,6 +129,6 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
       return;
     }
 
-    new CodeBlocksEditor(this.context, document, webviewPanel, docLang, codeBlocksCliPath);
+    new CodeBlocksEditor(this.context, document, webviewPanel, codeBlocksCliPath, docLang, queries);
   }
 }

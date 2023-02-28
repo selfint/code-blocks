@@ -10,8 +10,9 @@ export class CodeBlocksEditor {
     private readonly context: vscode.ExtensionContext,
     private readonly document: vscode.TextDocument,
     private readonly webviewPanel: vscode.WebviewPanel,
+    private readonly codeBlocksCliPath: string,
     private readonly docLang: SupportedLanguage,
-    private readonly codeBlocksCliPath: string
+    private readonly queries: string[]
   ) {
     this.initWebview();
     this.subscribeToDocEvents();
@@ -21,11 +22,17 @@ export class CodeBlocksEditor {
   }
 
   private async drawBlocks(): Promise<void> {
-    await core.drawBlocks(this.codeBlocksCliPath, this.webviewPanel.webview, this.document, this.docLang);
+    await core.drawBlocks(
+      this.codeBlocksCliPath,
+      this.webviewPanel.webview,
+      this.document,
+      this.docLang,
+      this.queries
+    );
   }
 
   private async moveBlock(message: MoveCommand): Promise<void> {
-    await core.moveBlock(message, this.codeBlocksCliPath, this.document, this.docLang);
+    await core.moveBlock(message, this.codeBlocksCliPath, this.document, this.docLang, this.queries);
   }
 
   private initWebview(): void {

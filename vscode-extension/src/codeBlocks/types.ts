@@ -54,7 +54,7 @@ export const SUPPORTED_DYNAMIC_LANGUAGES = ["rust", "typescript", "tsx", "svelte
 export type SupportedDynamicLanguage = (typeof SUPPORTED_DYNAMIC_LANGUAGES)[number];
 
 export type SupportedDynamic = {
-  supportedDynamic: {
+  supporteddynamic: {
     language: SupportedDynamicLanguage;
     installDir: string;
   };
@@ -69,12 +69,18 @@ export type Dynamic = {
   };
 };
 
-export const SUPPORTED_LANGUAGES = ["rust", "typescript", /* "tsx", */ "svelte", "python"] as const;
+export const SUPPORTED_LANGUAGES = [/*"rust",*/ "typescript", "tsx", "svelte", "python"] as const;
 export type SupportedLanguage =
   | "rust"
   | "typescript"
-  // | "tsx"
+  | "tsx"
   | "svelte"
   | "python"
   | SupportedDynamic
   | Dynamic;
+
+export type ParserInstaller = {
+  downloadCmd: string;
+  symbol: string;
+  name: string;
+};
