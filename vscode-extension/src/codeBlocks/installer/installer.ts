@@ -39,7 +39,7 @@ async function getExecutableBinString(extensionBinDirPath: string): Promise<stri
     if (ensureExecutable(localBinPath)) {
       return localBinPath;
     } else {
-      vscode.window.showErrorMessage(`${BINARY} is installed at ${localBinPath} but not exectuable`);
+      await vscode.window.showErrorMessage(`${BINARY} is installed at ${localBinPath} but not exectuable`);
       return undefined;
     }
   } else {
@@ -66,7 +66,7 @@ async function installCli(binDirPath: string): Promise<void> {
 
 type InstallationMethod = "Install from release" | "Install with cargo";
 async function getInstallationMethod(): Promise<InstallationMethod | undefined> {
-  let options: InstallationMethod[] = [];
+  const options: InstallationMethod[] = [];
   if (releaseUtils.platformIsSupported()) {
     options.push("Install from release");
   }
@@ -95,7 +95,7 @@ function ensureExecutable(binPath: string): boolean {
       fs.chmodSync(binPath, INSTALLED_PERM);
       return true;
     } catch (e) {
-      console.error(`Failed to make path: '${path}' executable due to exception: ${e}`);
+      console.error(`Failed to make path: '${binPath}' executable due to exception: ${JSON.stringify(e)}`);
       return false;
     }
   }

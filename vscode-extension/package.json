@@ -161,13 +161,14 @@
     "@types/node": "^12.11.7",
     "@types/vscode": "^1.46.0",
     "@types/which": "^2.0.1",
-    "@typescript-eslint/eslint-plugin": "^4.14.1",
-    "@typescript-eslint/parser": "^4.14.1",
+    "@typescript-eslint/eslint-plugin": "^5.54.0",
+    "@typescript-eslint/parser": "^5.54.0",
     "esbuild": "^0.17.10",
-    "eslint": "^7.19.0",
+    "eslint": "^8.35.0",
+    "eslint-plugin-github": "^4.6.1",
     "glob": "^7.1.6",
     "prettier": "^2.2.1",
-    "typescript": "^4.1.3",
+    "typescript": "^4.9.5",
     "vscode-test": "^1.5.0"
   },
   "dependencies": {

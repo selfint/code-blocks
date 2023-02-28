@@ -42,7 +42,7 @@ export function getPlatfromBinaryUri(): vscode.Uri | undefined {
   }
 
   const uri = vscode.Uri.parse(url);
-  console.log(`Platform binary release uri: ${uri}`);
+  console.log(`Platform binary release uri: ${uri.toString()}`);
 
   return uri;
 }
@@ -68,8 +68,8 @@ export async function installViaRelease(
     },
     async (progress) => {
       let lastPercentage = 0;
-      let reportProgress = (downloaded: number, contentLength: number): void => {
-        let percentage = Math.round((downloaded / contentLength) * 100);
+      const reportProgress = (downloaded: number, contentLength: number): void => {
+        const percentage = Math.round((downloaded / contentLength) * 100);
         progress.report({
           message: `${percentage}%`,
           increment: percentage - lastPercentage,
@@ -77,17 +77,17 @@ export async function installViaRelease(
         lastPercentage = percentage;
       };
 
-      let downloadTarget = path.join(os.tmpdir(), bin);
+      const downloadTarget = path.join(os.tmpdir(), bin);
       const uri = releaseUtils.getPlatfromBinaryUri();
       if (uri === undefined) {
-        vscode.window.showErrorMessage(`Unsupported os/arch: ${os.platform()}-${os.arch()}`);
+        await vscode.window.showErrorMessage(`Unsupported os/arch: ${os.platform()}-${os.arch()}`);
         return false;
       }
 
       try {
         await download(uri, downloadTarget, reportProgress);
       } catch (e) {
-        vscode.window.showErrorMessage(JSON.stringify(e));
+        await vscode.window.showErrorMessage(JSON.stringify(e));
         return false;
       }
 

@@ -6,7 +6,7 @@ import * as vscode from "vscode";
 const maxRedirects = 10;
 function get(url: string | URL): Promise<http.IncomingMessage> {
   return new Promise<http.IncomingMessage>((resolve, reject) => {
-    let request = https.get(url, resolve);
+    const request = https.get(url, resolve);
     request.on("error", reject);
   });
 }
@@ -18,28 +18,37 @@ export async function download(
 ): Promise<void> {
   let url = srcUrl.toString(true);
   for (let i = 0; i < maxRedirects; ++i) {
-    let response = await get(url);
-    if (response.statusCode! >= 300 && response.statusCode! < 400 && response.headers.location) {
+    const response = await get(url);
+
+    if (response.statusCode === undefined) {
+      throw new Error("Request failed");
+    } else if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
       url = response.headers.location;
     } else {
-      return new Promise<void>(async (resolve, reject) => {
-        if (response.statusCode! < 200 || response.statusCode! >= 300) {
-          reject(new Error(`HTTP status ${response.statusCode} : ${response.statusMessage}`));
+      return new Promise<void>((resolve, reject) => {
+        if (response.statusCode === undefined) {
+          throw new Error("Request failed");
+        } else if (response.statusCode < 200 || response.statusCode >= 300) {
+          reject(new Error(`HTTP status ${response.statusCode} : ${response.statusMessage ?? "no message"}`));
         }
         if (response.headers["content-type"] !== "application/octet-stream") {
           reject(new Error("HTTP response does not contain an octet stream"));
         } else {
-          let stm = fs.createWriteStream(destPath, { mode: 0o600 });
-          let pipeStm = response.pipe(stm);
+          const stm = fs.createWriteStream(destPath, { mode: 0o600 });
+          const pipeStm = response.pipe(stm);
           if (progress) {
-            let contentLength = response.headers["content-length"]
+            const contentLength = response.headers["content-length"]
               ? Number.parseInt(response.headers["content-length"])
               : null;
-            let downloaded = 0;
-            response.on("data", (chunk) => {
-              downloaded += chunk.length;
-              progress(downloaded, contentLength!);
-            });
+
+            if (contentLength !== null) {
+              let downloaded = 0;
+              response.on("data", (chunk) => {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                downloaded += chunk.length;
+                progress(downloaded, contentLength);
+              });
+            }
           }
           pipeStm.on("finish", resolve);
           pipeStm.on("error", reject);

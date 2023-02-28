@@ -39,17 +39,17 @@ export async function drawBlocks(
           cancellable: false,
           title: `Installing ${docLang.dynamic.name}`,
         },
-        async (_) => await codeBlocksCliClient.getSubtrees(codeBlocksCliPath, getSubtreeArgs)
+        async () => await codeBlocksCliClient.getSubtrees(codeBlocksCliPath, getSubtreeArgs)
       );
     }
   } catch (error) {
-    vscode.window.showErrorMessage(`Failed to get blocks: ${JSON.stringify(error)}`);
+    await vscode.window.showErrorMessage(`Failed to get blocks: ${JSON.stringify(error)}`);
     return;
   }
 
   switch (response.status) {
     case "ok":
-      webview.postMessage({
+      await webview.postMessage({
         type: "update",
         text: text,
         blockTrees: response.result,
@@ -57,7 +57,7 @@ export async function drawBlocks(
       break;
 
     case "error":
-      vscode.window.showErrorMessage(`Failed to get blocks: ${response.result}`);
+      await vscode.window.showErrorMessage(`Failed to get blocks: ${response.result}`);
       break;
   }
 }
@@ -89,16 +89,16 @@ export async function moveBlock(
           cancellable: false,
           title: `Installing ${docLang.dynamic.name}`,
         },
-        async (_) => await codeBlocksCliClient.moveBlock(codeBlocksCliPath, moveArgs)
+        async () => await codeBlocksCliClient.moveBlock(codeBlocksCliPath, moveArgs)
       );
     }
   } catch (error) {
-    vscode.window.showErrorMessage(`Failed to move block: ${JSON.stringify(error)}`);
+    await vscode.window.showErrorMessage(`Failed to move block: ${JSON.stringify(error)}`);
     return;
   }
 
   switch (response.status) {
-    case "ok":
+    case "ok": {
       const newContent = response.result;
 
       const edit = new vscode.WorkspaceEdit();
@@ -106,9 +106,11 @@ export async function moveBlock(
 
       await vscode.workspace.applyEdit(edit);
       break;
+    }
 
-    case "error":
-      vscode.window.showErrorMessage(`Failed to move block: ${response.result}`);
+    case "error": {
+      await vscode.window.showErrorMessage(`Failed to move block: ${response.result}`);
       break;
+    }
   }
 }

@@ -4,25 +4,24 @@ import { exec } from "child_process";
 const CARGO_INSTALL_CMD = "cargo install code-blocks-server --features=cli --version 0.3.0";
 
 export async function installViaCargo(): Promise<void> {
-  return await vscode.window.withProgress(
+  const error = await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
       cancellable: false,
       title: "Installing code-blocks-cli with cargo",
     },
     async (progress) =>
-      await new Promise<void>((resolve, _) => {
+      await new Promise<string | undefined>((resolve) => {
         const cmd = exec(CARGO_INSTALL_CMD, (err, _, stderr) => {
           if (err !== null) {
-            vscode.window.showErrorMessage(`Failed to install: ${err}`);
+            const errString = JSON.stringify(err);
+            resolve(errString);
           } else if (!stderr.includes("Installed package")) {
-            vscode.window.showErrorMessage(`Failed to install: ${stderr}`);
+            resolve(stderr);
           }
-
-          resolve();
         });
 
-        cmd.stderr?.on("data", (data) => {
+        cmd.stderr?.on("data", (data: string) => {
           console.log(data);
           progress.report({
             message: data,
@@ -30,4 +29,8 @@ export async function installViaCargo(): Promise<void> {
         });
       })
   );
+
+  if (error !== undefined) {
+    await vscode.window.showErrorMessage(`Failed to install: ${error}`);
+  }
 }

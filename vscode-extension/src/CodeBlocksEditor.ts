@@ -18,7 +18,9 @@ export class CodeBlocksEditor {
     this.subscribeToDocEvents();
 
     // first draw of ui triggered manually
-    this.drawBlocks();
+    this.drawBlocks().catch((e) => {
+      throw new Error(`Failed to draw blocks: ${JSON.stringify(e)}`);
+    });
   }
 
   private async drawBlocks(): Promise<void> {
@@ -55,9 +57,11 @@ export class CodeBlocksEditor {
           <title>Code Blocks editor</title>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
-          <link rel="stylesheet" type="text/css" href="${stylesUri}">
-          <script defer nonce="${nonce}" src="${scriptUri}"></script>
+          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${
+            webview.cspSource
+          }; script-src 'nonce-${nonce}';">
+          <link rel="stylesheet" type="text/css" href="${stylesUri.toString()}">
+          <script defer nonce="${nonce}" src="${scriptUri.toString()}"></script>
         </head>
         <body>
         </body>
@@ -66,7 +70,7 @@ export class CodeBlocksEditor {
   }
 
   private subscribeToDocEvents(): void {
-    let disposables: vscode.Disposable[] = [];
+    const disposables: vscode.Disposable[] = [];
     const webviewPanel = this.webviewPanel;
 
     // handle messages from webview
@@ -98,6 +102,10 @@ export class CodeBlocksEditor {
       disposables
     );
 
-    webviewPanel.onDidDispose(() => disposables.forEach((d) => d.dispose()));
+    webviewPanel.onDidDispose(() =>
+      disposables.forEach((d) => {
+        d.dispose();
+      })
+    );
   }
 }

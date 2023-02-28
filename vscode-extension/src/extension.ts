@@ -1,26 +1,26 @@
 import { ExtensionContext, Uri, commands, window } from "vscode";
 import { CodeBlocksEditorProvider } from "./CodeBlocksEditorProvider";
 
-function reopenWithCodeBocksEditor(): void {
+async function reopenWithCodeBocksEditor(): Promise<void> {
   const activeTabInput = window.tabGroups.activeTabGroup.activeTab?.input as {
-    [key: string]: any;
+    [key: string]: unknown;
     uri: Uri | undefined;
   };
 
   if (activeTabInput.uri !== undefined) {
-    commands.executeCommand("vscode.openWith", activeTabInput.uri, "codeBlocks.editor");
+    await commands.executeCommand("vscode.openWith", activeTabInput.uri, "codeBlocks.editor");
   }
 }
 
-function openCodeBlocksEditorToTheSide(): void {
+async function openCodeBlocksEditorToTheSide(): Promise<void> {
   const activeTabInput = window.tabGroups.activeTabGroup.activeTab?.input as {
-    [key: string]: any;
+    [key: string]: unknown;
     uri: Uri | undefined;
   };
 
   if (activeTabInput.uri !== undefined) {
-    commands.executeCommand("vscode.openWith", activeTabInput.uri, "codeBlocks.editor");
-    commands.executeCommand("workbench.action.moveEditorToNextGroup");
+    await commands.executeCommand("vscode.openWith", activeTabInput.uri, "codeBlocks.editor");
+    await commands.executeCommand("workbench.action.moveEditorToNextGroup");
   }
 }
 

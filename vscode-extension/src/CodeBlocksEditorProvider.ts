@@ -26,21 +26,22 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     this.extensionBinDirPath = path.join(context.extensionPath, CodeBlocksEditorProvider.extensionBinDir);
     this.extensionParsersDirPath = path.join(context.extensionPath, CodeBlocksEditorProvider.parsersDir);
 
-    const settings = vscode.workspace.getConfiguration("codeBlocks");
-    const languageSupport =
-      settings.get("languageSupport") !== undefined
-        ? new Map(Object.entries(settings.get("languageSupport")!))
-        : new Map();
+    const languageSupport: Record<string, LanguageSupport> | undefined = vscode.workspace
+      .getConfiguration("codeBlocks")
+      .get("languageSupport");
+    if (languageSupport === undefined) {
+      throw new Error("Invalid languageSupport settings");
+    }
 
     this.extensionSettings = {
-      languageSupport: languageSupport,
+      languageSupport: new Map(Object.entries(languageSupport)),
     };
   }
 
   public async resolveCustomTextEditor(
     document: vscode.TextDocument,
-    webviewPanel: vscode.WebviewPanel,
-    _token: vscode.CancellationToken
+    webviewPanel: vscode.WebviewPanel
+    // token: vscode.CancellationToken
   ): Promise<void> {
     const languageSupport = this.extensionSettings.languageSupport.get(document.languageId);
     if (languageSupport === undefined) {

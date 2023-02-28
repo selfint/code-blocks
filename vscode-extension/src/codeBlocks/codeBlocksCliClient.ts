@@ -25,7 +25,7 @@ async function callCodeBlocksCli<Response>(
   methodCall: MethodCall
 ): Promise<JsonResult<Response>> {
   async function passInputToBinAndGetNextLine(bin: string, input: string): Promise<string> {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       try {
         const cli = spawn(bin);
         const rl = createInterface(cli.stdout);
@@ -42,7 +42,7 @@ async function callCodeBlocksCli<Response>(
   }
 
   const response = await passInputToBinAndGetNextLine(codeBlocksCliPath, JSON.stringify(methodCall));
-  const parsedResponse = JSON.parse(response);
+  const parsedResponse = JSON.parse(response) as JsonResult<Response> | undefined;
 
   if (parsedResponse !== undefined) {
     return parsedResponse;
