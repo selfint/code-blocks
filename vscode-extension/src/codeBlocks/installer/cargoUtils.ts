@@ -1,7 +1,7 @@
 import { exec } from "child_process";
 import * as vscode from "vscode";
 
-const CARGO_INSTALL_CMD = "cargo install code-blocks-server --features=cli";
+const CARGO_INSTALL_CMD = "cargo install code-blocks-server --features=cli --version 0.3.0";
 
 export async function installViaCargo(): Promise<void> {
   return await vscode.window.withProgress(
