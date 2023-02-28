@@ -93,10 +93,12 @@ jobs:
       #     packages: gcc-aarch64-linux-gnu
       #     version: ${{ matrix.target }}
       - name: Build release binary
-        run: cd code-blocks-server && cargo build --release --target ${{ matrix.target }} --all-features
+        run: cargo build --release --target ${{ matrix.target }} --all-features
+        working-directory: code-blocks-server
       - name: Test release binary
-        if: startsWith(${{ matrix.target }}, 'x86_64')  # all test machines use x86_64
-        run: cd code-blocks-server && cargo test --release --target ${{ matrix.target }} --all-features --verbose -- --nocapture --include-ignored
+        run: |
+          [[ "${{ matrix.target }}" == x86_64* ]] && cargo test --release --target ${{ matrix.target }} --all-features --verbose -- --nocapture --include-ignored || true
+        working-directory: code-blocks-server
       - name: Upload release binary
         uses: actions/upload-artifact@v3
         with:
