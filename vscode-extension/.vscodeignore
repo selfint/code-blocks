@@ -40,3 +40,5 @@ parsers/
 tsconfig.json
 webpack.config.js
 .*
+
+!out/extension.js
