@@ -36,19 +36,7 @@
         "displayName": "Code Blocks",
         "selector": [
           {
-            "filenamePattern": "*.ts"
-          },
-          {
-            "filenamePattern": "*.tsx"
-          },
-          {
-            "filenamePattern": "*.rs"
-          },
-          {
-            "filenamePattern": "*.svelte"
-          },
-          {
-            "filenamePattern": "*.py"
+            "filenamePattern": "*"
           }
         ],
         "priority": "option"
