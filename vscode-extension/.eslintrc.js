@@ -4,8 +4,6 @@ module.exports = {
     "plugin:@typescript-eslint/recommended",
     "plugin:@typescript-eslint/recommended-requiring-type-checking",
     "plugin:@typescript-eslint/strict",
-    // "plugin:github/recommended",
-    // "plugin:github/typescript",
   ],
   parser: "@typescript-eslint/parser",
   parserOptions: {
@@ -14,10 +12,7 @@ module.exports = {
     project: "tsconfig.json",
     tsconfigRootDir: __dirname,
   },
-  plugins: [
-    "@typescript-eslint",
-    // "github"
-  ],
+  plugins: ["@typescript-eslint"],
   root: true,
   env: {
     node: true,
