@@ -15,7 +15,9 @@
     "eqeqeq": "warn",
     "no-throw-literal": "warn",
     "semi": "off",
-    "@typescript-eslint/explicit-function-return-type": "warn"
+    "@typescript-eslint/explicit-function-return-type": "warn",
+    "no-duplicate-imports": "warn",
+    "sort-imports": "warn"
   },
   "ignorePatterns": [
     "webview-ui/**"

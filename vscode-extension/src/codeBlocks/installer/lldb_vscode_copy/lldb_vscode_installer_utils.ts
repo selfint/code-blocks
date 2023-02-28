@@ -1,7 +1,7 @@
-import * as vscode from "vscode";
 import * as fs from "fs";
-import * as https from "https";
 import * as http from "http";
+import * as https from "https";
+import * as vscode from "vscode";
 
 const maxRedirects = 10;
 function get(url: string | URL): Promise<http.IncomingMessage> {

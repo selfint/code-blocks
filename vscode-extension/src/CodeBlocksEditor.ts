@@ -1,9 +1,9 @@
-import * as vscode from "vscode";
-import { MoveCommand } from "./messages";
 import * as core from "./core";
-import { getUri } from "./utilities/getUri";
-import { getNonce } from "./utilities/getNonce";
+import * as vscode from "vscode";
 import { Dynamic, Query } from "./codeBlocks/types";
+import { MoveCommand } from "./messages";
+import { getNonce } from "./utilities/getNonce";
+import { getUri } from "./utilities/getUri";
 
 export class CodeBlocksEditor {
   constructor(

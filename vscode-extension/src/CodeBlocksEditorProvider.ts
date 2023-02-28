@@ -1,8 +1,8 @@
-import * as vscode from "vscode";
 import * as path from "path";
-import { ParserInstaller, Dynamic, Query } from "./codeBlocks/types";
-import { getOrInstallCli } from "./codeBlocks/installer/installer";
+import * as vscode from "vscode";
+import { ParserInstaller, Query } from "./codeBlocks/types";
 import { CodeBlocksEditor } from "./CodeBlocksEditor";
+import { getOrInstallCli } from "./codeBlocks/installer/installer";
 
 export type LanguageSupport = {
   parserInstaller: ParserInstaller;

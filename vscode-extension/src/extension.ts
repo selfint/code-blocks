@@ -1,4 +1,4 @@
-import { ExtensionContext, window, commands, Uri } from "vscode";
+import { ExtensionContext, Uri, commands, window } from "vscode";
 import { CodeBlocksEditorProvider } from "./CodeBlocksEditorProvider";
 
 function reopenWithCodeBocksEditor(): void {

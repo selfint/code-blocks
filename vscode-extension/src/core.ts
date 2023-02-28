@@ -1,6 +1,6 @@
-import * as vscode from "vscode";
-import * as fs from "fs";
 import * as codeBlocksCliClient from "./codeBlocks/codeBlocksCliClient";
+import * as fs from "fs";
+import * as vscode from "vscode";
 import {
   Dynamic,
   GetSubtreesArgs,

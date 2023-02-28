@@ -1,13 +1,13 @@
-import { spawn } from "child_process";
 import {
   GetSubtreesArgs,
-  MoveBlockArgs,
-  MoveBlockResponse,
   GetSubtreesResponse,
   JsonResult,
   MethodCall,
+  MoveBlockArgs,
+  MoveBlockResponse,
 } from "./types";
 import { createInterface } from "readline";
+import { spawn } from "child_process";
 
 export async function getSubtrees(
   bin: string,

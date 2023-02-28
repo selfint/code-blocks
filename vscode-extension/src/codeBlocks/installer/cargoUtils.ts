@@ -1,5 +1,5 @@
-import { exec } from "child_process";
 import * as vscode from "vscode";
+import { exec } from "child_process";
 
 const CARGO_INSTALL_CMD = "cargo install code-blocks-server --features=cli --version 0.3.0";
 

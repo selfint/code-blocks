@@ -1,9 +1,9 @@
-import * as vscode from "vscode";
 import * as os from "os";
 import * as path from "path";
+import * as releaseUtils from "./releaseUtils";
+import * as vscode from "vscode";
 import { promises as asyncFs } from "fs";
 import { download } from "./lldb_vscode_copy/lldb_vscode_installer_utils";
-import * as releaseUtils from "./releaseUtils";
 
 const RELEASE_URL = "https://github.com/selfint/code-blocks/releases/download/code-blocks-server-v0.3.0/";
 

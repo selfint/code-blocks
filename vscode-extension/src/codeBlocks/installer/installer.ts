@@ -1,10 +1,10 @@
-import * as vscode from "vscode";
-import which from "which";
+import * as cargoUtils from "./cargoUtils";
+import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
-import * as fs from "fs";
 import * as releaseUtils from "./releaseUtils";
-import * as cargoUtils from "./cargoUtils";
+import * as vscode from "vscode";
+import which from "which";
 
 const BINARY = "code-blocks-cli";
 const INSTALLED_PERM =
