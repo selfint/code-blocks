@@ -37,32 +37,23 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     };
   }
 
-  async getDocLangNQueries(lang: string): Promise<LanguageSupport | undefined> {
-    const languageSupport = this.extensionSettings.languageSupport.get(lang);
-    if (languageSupport === undefined) {
-      await vscode.window.showErrorMessage(
-        `Opened file in language without support: '${lang}'. Try adding ` +
-          ` support via the 'codeBlocks.languageSupport' extension setting`
-      );
-      return undefined;
-    }
-
-    return languageSupport;
-  }
-
   public async resolveCustomTextEditor(
     document: vscode.TextDocument,
     webviewPanel: vscode.WebviewPanel,
     _token: vscode.CancellationToken
   ): Promise<void> {
-    const languageSupport = await this.getDocLangNQueries(document.languageId);
+    const languageSupport = this.extensionSettings.languageSupport.get(document.languageId);
     if (languageSupport === undefined) {
+      await vscode.window.showErrorMessage(
+        `Opened file in language without support: '${document.languageId}'. Try adding ` +
+          ` support via the 'codeBlocks.languageSupport' extension setting`
+      );
       return;
     }
 
     const codeBlocksCliPath = await getOrInstallCli(this.extensionBinDirPath);
     if (codeBlocksCliPath === undefined) {
-      vscode.window.showErrorMessage("Server not installed");
+      await vscode.window.showErrorMessage("Server not installed");
       return;
     }
 
