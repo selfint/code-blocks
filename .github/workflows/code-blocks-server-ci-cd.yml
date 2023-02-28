@@ -96,8 +96,8 @@ jobs:
         run: cargo build --release --target ${{ matrix.target }} --all-features
         working-directory: code-blocks-server
       - name: Test release binary
-        run: |
-          [[ "${{ matrix.target }}" == x86_64* ]] && cargo test --release --target ${{ matrix.target }} --all-features --verbose -- --nocapture --include-ignored || true
+        if: startsWith(matrix.target, 'x86_64')
+        run: cargo test --release --target ${{ matrix.target }} --all-features --verbose -- --nocapture --include-ignored
         working-directory: code-blocks-server
       - name: Upload release binary
         uses: actions/upload-artifact@v3
