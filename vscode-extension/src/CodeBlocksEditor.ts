@@ -3,15 +3,16 @@ import { MoveCommand } from "./messages";
 import * as core from "./core";
 import { getUri } from "./utilities/getUri";
 import { getNonce } from "./utilities/getNonce";
-import { SupportedLanguage } from "./codeBlocks/types";
+import { Dynamic, Query } from "./codeBlocks/types";
 
 export class CodeBlocksEditor {
   constructor(
     private readonly context: vscode.ExtensionContext,
     private readonly document: vscode.TextDocument,
     private readonly webviewPanel: vscode.WebviewPanel,
-    private readonly docLang: SupportedLanguage,
-    private readonly codeBlocksCliPath: string
+    private readonly codeBlocksCliPath: string,
+    private readonly docLang: Dynamic,
+    private readonly queries: Query[]
   ) {
     this.initWebview();
     this.subscribeToDocEvents();
@@ -21,11 +22,17 @@ export class CodeBlocksEditor {
   }
 
   private async drawBlocks(): Promise<void> {
-    await core.drawBlocks(this.codeBlocksCliPath, this.webviewPanel.webview, this.document, this.docLang);
+    await core.drawBlocks(
+      this.codeBlocksCliPath,
+      this.webviewPanel.webview,
+      this.document,
+      this.docLang,
+      this.queries
+    );
   }
 
   private async moveBlock(message: MoveCommand): Promise<void> {
-    await core.moveBlock(message, this.codeBlocksCliPath, this.document, this.docLang);
+    await core.moveBlock(message, this.codeBlocksCliPath, this.document, this.docLang, this.queries);
   }
 
   private initWebview(): void {

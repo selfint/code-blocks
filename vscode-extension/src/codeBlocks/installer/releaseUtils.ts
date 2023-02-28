@@ -5,7 +5,7 @@ import { promises as asyncFs } from "fs";
 import { download } from "./lldb_vscode_copy/lldb_vscode_installer_utils";
 import * as releaseUtils from "./releaseUtils";
 
-const RELEASE_URL = "https://github.com/selfint/code-blocks/releases/download/code-blocks-server-v0.2.3/";
+const RELEASE_URL = "https://github.com/selfint/code-blocks/releases/download/code-blocks-server-v0.3.0/";
 
 export type SupportedTriple =
   | "x86_64-unknown-linux-gnu"

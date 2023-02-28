@@ -8,7 +8,7 @@
     "directory": "vscode-extension",
     "type": "git"
   },
-  "version": "0.2.3",
+  "version": "0.3.0",
   "private": true,
   "license": "MIT",
   "engines": {
@@ -28,7 +28,7 @@
   ],
   "preview": true,
   "activationEvents": [],
-  "main": "./dist/extension.js",
+  "main": "./out/extension.js",
   "contributes": {
     "customEditors": [
       {
@@ -63,7 +63,85 @@
         "command": "codeBlocks.openToTheSide",
         "title": "Code Blocks: Open active file in Code Blocks editor to the side"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "CodeBlocks",
+      "properties": {
+        "codeBlocks.languageSupport": {
+          "type": "object",
+          "default": {
+            "rust": {
+              "parserInstaller": {
+                "downloadCmd": "git clone https://github.com/tree-sitter/tree-sitter-rust",
+                "symbol": "language",
+                "name": "tree_sitter_rust"
+              },
+              "queries": [
+                "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (function_item) @item)",
+                "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (mod_item) @item)",
+                "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (struct_item) @item)",
+                "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (impl_item) @item)",
+                "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (enum_item) @item)"
+              ]
+            },
+            "typescript": {
+              "parserInstaller": {
+                "downloadCmd": "git clone https://github.com/tree-sitter/tree-sitter-typescript",
+                "symbol": "language_typescript",
+                "name": "tree_sitter_typescript"
+              },
+              "queries": [
+                "( (comment)* @header . (class_declaration) @item)",
+                "( (comment)* @header . (method_definition) @item)",
+                "( (comment)* @header . (function_declaration) @item)",
+                "( (comment)* @header . (export_statement) @item)"
+              ]
+            },
+            "typescriptreact": {
+              "parserInstaller": {
+                "downloadCmd": "git clone https://github.com/tree-sitter/tree-sitter-typescript",
+                "symbol": "language_tsx",
+                "name": "tree_sitter_typescript"
+              },
+              "queries": [
+                "( (comment)* @header . (class_declaration) @item)",
+                "( (comment)* @header . (method_definition) @item)",
+                "( (comment)* @header . (function_declaration) @item)",
+                "( (comment)* @header . (export_statement) @item)",
+                "(jsx_element) @item",
+                "(jsx_self_closing_element) @item"
+              ]
+            },
+            "svelte": {
+              "parserInstaller": {
+                "downloadCmd": "git clone https://github.com/Himujjal/tree-sitter-svelte",
+                "symbol": "language",
+                "name": "tree_sitter_svelte"
+              },
+              "queries": [
+                "( (comment)* @header . (element) @item)",
+                "( (comment)* @header . (each_statement) @item)",
+                "( (comment)* @header . (if_statement) @item)",
+                "( (comment)* @header . (style_element) @item)",
+                "( (comment)* @header . (script_element) @item)"
+              ]
+            },
+            "python": {
+              "parserInstaller": {
+                "downloadCmd": "git clone https://github.com/tree-sitter/tree-sitter-python",
+                "symbol": "language",
+                "name": "tree_sitter_python"
+              },
+              "queries": [
+                "(class_definition) @item",
+                "(function_definition) @item",
+                "(decorated_definition) @item"
+              ]
+            }
+          }
+        }
+      }
+    }
   },
   "scripts": {
     "install:all": "yarn install && cd webview-ui && yarn install",

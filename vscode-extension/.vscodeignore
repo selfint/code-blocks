@@ -36,6 +36,7 @@ node_modules/
 out/
 src/
 bin/
+parsers/
 tsconfig.json
 webpack.config.js
 .*
