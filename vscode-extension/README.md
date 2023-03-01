@@ -59,10 +59,10 @@ For now, these are the default configured languages:
 - [x] TypeScript + JSX (typescriptreact)
 - [x] Svelte
 - [x] Python
+- [x] Java
 
 Next up:
 
-- [ ] Java
 - [ ] C#
 - [ ] C
 - [ ] C++
