@@ -34,7 +34,7 @@
     }
   }
 
-  const sliceLengthLimit = 500;
+  const sliceLengthLimit = 100;
   function textSlice(start: number, end: number): string {
     if (end - start < sliceLengthLimit) {
       return text.substring(start, end);
@@ -48,17 +48,15 @@
   }
 </script>
 
-{#if blockTrees === undefined || blockTrees.length === 0}
+{#if blockTrees === undefined}
   <div>No blocks available.</div>
 {:else}
   <div class="block">
     {text.substring(0, blockTrees[0].block.startByte)}
     {#each blockTrees as tree, i}
-      <Tree {text} {tree} onClick={handleBlockClicked} {selectedBlock} />
+      <Tree {text} {tree} onClick={handleBlockClicked} {selectedBlock} {sliceLengthLimit} />
       {#if i !== blockTrees.length - 1}
-        <div>
-          {textSlice(tree.block.endByte, blockTrees[i + 1].block.startByte)}
-        </div>
+        {textSlice(tree.block.endByte, blockTrees[i + 1].block.startByte)}
       {/if}
     {/each}
     {text.substring(blockTrees.at(-1).block.endByte, text.length)}
@@ -70,6 +68,7 @@
     border-color: var(--vscode-editorIndentGuide-background);
     border-style: solid;
     border-width: 1px;
+    white-space: pre-wrap;
     font-family: var(--vscode-font-family);
     font-size: var(--vscode-font-size);
     font-weight: var(--vscode-font-weight);
