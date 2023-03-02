@@ -3,27 +3,36 @@ use code_blocks::Block;
 use code_blocks::BlockTree;
 use code_blocks_server::get_subtrees;
 use code_blocks_server::GetSubtreesArgs;
-use code_blocks_server::LanguageProvider;
 use code_blocks_server::MoveBlockArgs;
-use code_blocks_server::SupportedDynamicLanguage;
-use code_blocks_server::SupportedLanguage;
+use tree_sitter::Language;
+use tree_sitter::Parser;
 use tree_sitter::Point;
 use tree_sitter::Query;
+
+enum TestLanguage {
+    Rust,
+    TypeScript,
+    Python,
+}
+
+impl TestLanguage {
+    fn get_language(&self) -> Language {
+        match self {
+            TestLanguage::Rust => tree_sitter_rust::language(),
+            TestLanguage::TypeScript => tree_sitter_typescript::language_typescript(),
+            TestLanguage::Python => tree_sitter_python::language(),
+        }
+    }
+}
 
 fn copy_target_item<'tree>(
     ident: &str,
     text: &str,
     trees: &Vec<BlockTree<'tree>>,
-    lang: &SupportedLanguage,
+    lang: &TestLanguage,
 ) -> Option<Block<'tree>> {
     let (prefixed_ident, row_offset, col_offset) = match lang {
-        SupportedLanguage::Python => ("V".to_string() + ident, 1, -1),
-        SupportedLanguage::SupportedDynamic {
-            language,
-            install_dir: _,
-        } if matches!(language, SupportedDynamicLanguage::Python) => {
-            ("V".to_string() + ident, 1, -1)
-        }
+        TestLanguage::Python => ("V".to_string() + ident, 1, -1),
         _ => ("^".to_string() + ident, -1, 0),
     };
 
@@ -48,9 +57,9 @@ fn copy_target_item<'tree>(
     None
 }
 
-fn get_query_strings(lang: &SupportedLanguage) -> Vec<String> {
+fn get_query_strings(lang: &TestLanguage) -> Vec<String> {
     match lang {
-        SupportedLanguage::Rust => vec![
+        TestLanguage::Rust => vec![
             r#"
 (
     (
@@ -107,7 +116,7 @@ fn get_query_strings(lang: &SupportedLanguage) -> Vec<String> {
             .to_string(),
             r#"(impl_item) @item"#.to_string(),
         ],
-        SupportedLanguage::TypeScript => vec![
+        TestLanguage::TypeScript => vec![
             r#"
 (
     (comment)* @header
@@ -141,52 +150,27 @@ fn get_query_strings(lang: &SupportedLanguage) -> Vec<String> {
             "#
             .to_string(),
         ],
-        SupportedLanguage::TSX => get_query_strings(&SupportedLanguage::TypeScript),
-        SupportedLanguage::Python => vec![
+        TestLanguage::Python => vec![
             "(class_definition) @item".to_string(),
             "(function_definition) @item".to_string(),
             "(decorated_definition) @item".to_string(),
         ],
-        SupportedLanguage::SupportedDynamic {
-            language,
-            install_dir: _,
-        } if matches!(language, SupportedDynamicLanguage::Rust) => {
-            get_query_strings(&SupportedLanguage::Rust)
-        }
-        SupportedLanguage::SupportedDynamic {
-            language,
-            install_dir: _,
-        } if matches!(language, SupportedDynamicLanguage::Python) => {
-            get_query_strings(&SupportedLanguage::Python)
-        }
-        SupportedLanguage::SupportedDynamic {
-            language,
-            install_dir: _,
-        } if matches!(language, SupportedDynamicLanguage::TypeScript) => {
-            get_query_strings(&SupportedLanguage::TypeScript)
-        }
-        SupportedLanguage::Dynamic {
-            download_cmd: _,
-            symbol: _,
-            name,
-            install_dir: _,
-        } if name == "tree_sitter_rust" => get_query_strings(&SupportedLanguage::Rust),
-        _ => todo!(),
     }
 }
 
-fn get_queries(lang: &SupportedLanguage, provider: &LanguageProvider) -> Vec<Query> {
+fn get_queries(lang: &TestLanguage) -> Vec<Query> {
+    let language = lang.get_language();
     get_query_strings(lang)
         .iter()
-        .map(|source| provider.build_query(source).unwrap())
+        .map(|source| Query::new(language, source).unwrap())
         .collect()
 }
 
 #[test]
 fn test_get_subtrees() {
     insta::assert_debug_snapshot!(get_subtrees(GetSubtreesArgs {
-        queries: get_query_strings(&SupportedLanguage::Rust),
-        language: SupportedLanguage::Rust,
+        queries: get_query_strings(&TestLanguage::Rust),
+        language: TestLanguage::Rust.get_language(),
         text: r#"
 mod m {
     fn foo() {}
@@ -209,8 +193,8 @@ mod m {
     }));
 
     insta::assert_debug_snapshot!(code_blocks_server::get_subtrees(GetSubtreesArgs {
-        queries: get_query_strings(&SupportedLanguage::TypeScript),
-        language: SupportedLanguage::TypeScript,
+        queries: get_query_strings(&TestLanguage::TypeScript),
+        language: TestLanguage::TypeScript.get_language(),
         text: r#"
 class TsClass {
     constructor() {}
@@ -231,8 +215,8 @@ export default function baz2() {}
     }));
 
     insta::assert_debug_snapshot!(code_blocks_server::get_subtrees(GetSubtreesArgs {
-        queries: get_query_strings(&SupportedLanguage::Python),
-        language: SupportedLanguage::Python,
+        queries: get_query_strings(&TestLanguage::Python),
+        language: TestLanguage::Python.get_language(),
         text: r#"
         @decor1
         @decor2
@@ -264,10 +248,12 @@ export default function baz2() {}
 macro_rules! check {
     ($lang:expr, $text:literal) => {
         let lang = $lang;
-        let mut provider = lang.get_provider().unwrap();
-        let tree = provider.parse($text, None).unwrap();
+        let mut parser = Parser::new();
+        parser.set_language(lang.get_language()).unwrap();
 
-        let items = get_query_subtrees(&get_queries(&lang, &provider), &tree, $text);
+        let tree = parser.parse($text, None).unwrap();
+
+        let items = get_query_subtrees(&get_queries(&lang), &tree, $text);
         let src_block = copy_target_item("src", $text, &items, &lang)
             .unwrap_or_else(|| panic!("failed to find src block in: {}", $text));
         let dst_block = copy_target_item("dst", $text, &items, &lang);
@@ -277,7 +263,7 @@ macro_rules! check {
             insta::assert_display_snapshot!(code_blocks_server::move_block(MoveBlockArgs {
                 queries: get_query_strings(&lang),
                 text: $text.to_string(),
-                language: lang,
+                language: lang.get_language(),
                 src_block: src_block.into(),
                 dst_block: dst_block.into(),
             })
@@ -286,7 +272,7 @@ macro_rules! check {
             insta::assert_display_snapshot!(code_blocks_server::move_block(MoveBlockArgs {
                 queries: get_query_strings(&lang),
                 text: $text.to_string(),
-                language: lang,
+                language: lang.get_language(),
                 src_block: src_block.into(),
                 dst_block: fail_block.into(),
             },)
@@ -299,7 +285,7 @@ macro_rules! check {
 #[test]
 fn test_move_item_rs() {
     check!(
-        SupportedLanguage::Rust,
+        TestLanguage::Rust,
         r#"
     fn foo() {
  /* ^src */
@@ -314,7 +300,7 @@ fn test_move_item_rs() {
     );
 
     check!(
-        SupportedLanguage::Rust,
+        TestLanguage::Rust,
         r#"
 mod m {
     fn foo() {
@@ -333,7 +319,7 @@ fn baz() {}
     );
 
     check!(
-        SupportedLanguage::Rust,
+        TestLanguage::Rust,
         r#"
 mod m {
     fn foo() {}
@@ -347,7 +333,7 @@ fn baz() {}
     );
 
     check!(
-        SupportedLanguage::Rust,
+        TestLanguage::Rust,
         r#"
     mod m {
         fn foo() {}
@@ -360,7 +346,7 @@ fn baz() {}
     );
 
     check!(
-        SupportedLanguage::Rust,
+        TestLanguage::Rust,
         r#"
     mod m {
 /*  ^fail */
@@ -373,7 +359,7 @@ fn baz() {}
     );
 
     check!(
-        SupportedLanguage::Rust,
+        TestLanguage::Rust,
         r#"
     fn foo() {}
  /* ^dst */
@@ -386,7 +372,7 @@ fn baz() {}
     );
 
     check!(
-        SupportedLanguage::Rust,
+        TestLanguage::Rust,
         r#"
     mod m1 {
 /*  ^src */
@@ -405,7 +391,7 @@ fn baz() {}
     );
 
     check!(
-        SupportedLanguage::Rust,
+        TestLanguage::Rust,
         r#"
     mod m1 {
 /*  ^dst */
@@ -424,7 +410,7 @@ fn baz() {}
     );
 
     check!(
-        SupportedLanguage::Rust,
+        TestLanguage::Rust,
         r#"
     mod m1 {
         fn foo() {}
@@ -443,7 +429,7 @@ fn baz() {}
     );
 
     check!(
-        SupportedLanguage::Rust,
+        TestLanguage::Rust,
         r#"
     mod m1 {
 /*  ^dst */
@@ -469,7 +455,7 @@ fn baz() {}
 #[test]
 fn test_move_item_ts() {
     check!(
-        SupportedLanguage::TypeScript,
+        TestLanguage::TypeScript,
         r#"
 class TsClass {
     constructor() {}
@@ -489,7 +475,7 @@ function baz() {}
     );
 
     check!(
-        SupportedLanguage::TypeScript,
+        TestLanguage::TypeScript,
         r#"
 class TsClass {
     constructor() {}
@@ -511,7 +497,7 @@ function baz() {}
     );
 
     check!(
-        SupportedLanguage::TypeScript,
+        TestLanguage::TypeScript,
         r#"
     class TsClass {
         constructor() {}
@@ -533,7 +519,7 @@ function baz() {}
     );
 
     check!(
-        SupportedLanguage::TypeScript,
+        TestLanguage::TypeScript,
         r#"
     /**
     * class docs
@@ -555,7 +541,7 @@ function baz() {}
     );
 
     check!(
-        SupportedLanguage::TypeScript,
+        TestLanguage::TypeScript,
         r#"
     /**
     * class docs
@@ -584,7 +570,7 @@ function baz() {}
 #[test]
 fn test_move_item_python() {
     check!(
-        SupportedLanguage::Python,
+        TestLanguage::Python,
         r#"
         #Vsrc
         @decor1
@@ -612,7 +598,7 @@ fn test_move_item_python() {
     );
 
     check!(
-        SupportedLanguage::Python,
+        TestLanguage::Python,
         r#"
         #Vsrc
         @decor1
@@ -640,7 +626,7 @@ fn test_move_item_python() {
     );
 
     check!(
-        SupportedLanguage::Python,
+        TestLanguage::Python,
         r#"
         @decor1
         @decor2
@@ -668,7 +654,7 @@ fn test_move_item_python() {
     );
 
     check!(
-        SupportedLanguage::Python,
+        TestLanguage::Python,
         r#"
         @decor1
         @decor2
@@ -696,7 +682,7 @@ fn test_move_item_python() {
     );
 
     check!(
-        SupportedLanguage::Python,
+        TestLanguage::Python,
         r#"
         @decor1
         @decor2
@@ -715,65 +701,6 @@ fn test_move_item_python() {
                 """method docstring"""
                 
             #Vdst
-            def bar():
-                ...
-                
-        def func():
-            ...
-"#
-    );
-}
-
-#[test]
-#[ignore = "slow test due to external download"]
-fn test_move_item_dynamic() {
-    check!(
-        SupportedLanguage::Dynamic {
-            download_cmd: "git clone https://github.com/tree-sitter/tree-sitter-rust".to_string(),
-            symbol: "language".to_string(),
-            name: "tree_sitter_rust".to_string(),
-            install_dir: tempfile::tempdir().unwrap().into_path()
-        },
-        r#"
-    fn foo() {
- /* ^src */
-        fn in_foo() {
-            bar();
-        }
-    }
-
-    fn bar() {}
- /* ^dst */
-"#
-    );
-}
-
-#[test]
-#[ignore = "slow test due to external download"]
-fn test_move_item_supported_dynamic() {
-    check!(
-        SupportedLanguage::SupportedDynamic {
-            language: SupportedDynamicLanguage::Python,
-            install_dir: tempfile::tempdir().unwrap().into_path()
-        },
-        r#"
-        #Vsrc
-        @decor1
-        @decor2
-        class A:
-            ...
-           
-        #Vdst
-        class C:
-            """class docstring"""
-        
-            def __init__(self):
-                pass
-        
-            @staticmethod()
-            def foo():
-                """method docstring"""
-                
             def bar():
                 ...
                 
