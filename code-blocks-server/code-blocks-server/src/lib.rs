@@ -4,21 +4,29 @@ use std::path::PathBuf;
 use anyhow::{Context, Result};
 use code_blocks::{Block, BlockTree};
 use tree_sitter::{Language, Parser, Query};
-use tree_sitter_installer::parser_installer;
+use tree_sitter_installer::parser_installer::{self, InstallationStatus};
 
 pub use types::*;
 
 #[derive(Debug)]
-pub struct InstallLanguageArgs {
+pub struct InstallLanguageArgs<F: FnMut(InstallationStatus)> {
     pub download_cmd: String,
     pub library_name: String,
     pub install_dir: PathBuf,
+    pub report_progress: Option<F>,
 }
 
 pub type InstallLanguageResponse = PathBuf;
 
-pub fn install_language(args: InstallLanguageArgs) -> Result<InstallLanguageResponse> {
-    parser_installer::install_parser(&args.download_cmd, &args.library_name, &args.install_dir)
+pub fn install_language<F: FnMut(InstallationStatus)>(
+    args: InstallLanguageArgs<F>,
+) -> Result<InstallLanguageResponse> {
+    parser_installer::install_parser(
+        &args.download_cmd,
+        &args.library_name,
+        &args.install_dir,
+        args.report_progress,
+    )
 }
 
 #[derive(Debug)]

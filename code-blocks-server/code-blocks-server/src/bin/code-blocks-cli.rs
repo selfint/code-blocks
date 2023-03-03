@@ -50,6 +50,7 @@ pub enum CliResponse {
 #[serde(tag = "status", content = "result")]
 pub enum JsonResult<T> {
     Ok(T),
+    Progress(String),
     Error(String),
 }
 
@@ -63,7 +64,7 @@ fn main() {
         };
 
         let Ok(response) = serde_json::to_string(&response) else {
-            eprintln!("Failed to serialize response");
+            eprintln!("failed to serialize response");
             continue;
         };
 
@@ -82,6 +83,15 @@ fn handle_line(line: &str) -> Result<CliResponse> {
                 download_cmd,
                 library_name,
                 install_dir,
+                report_progress: Some(|status| {
+                    if let Ok(string) =
+                        serde_json::to_string(&JsonResult::<()>::Progress(format!("{:?}", status)))
+                    {
+                        println!("{}", string);
+                    } else {
+                        eprintln!("failed to serialize progress");
+                    }
+                }),
             })?,
         )),
         CliRequest::GetSubtrees {
@@ -132,6 +142,7 @@ mod tests {
     use std::path::PathBuf;
 
     use code_blocks_server::BlockLocation;
+    use tree_sitter_installer::parser_installer::InstallationStatus;
 
     use super::*;
 
@@ -152,6 +163,41 @@ mod tests {
             "libraryName": "tree_sitter_rust",
             "installDir": "path_to_install_dir"
           }
+        }
+        "###
+        );
+    }
+
+    #[test]
+    fn show_install_language_progress() {
+        let downloading =
+            JsonResult::<()>::Progress(format!("{:?}", InstallationStatus::Downloading));
+        let patching = JsonResult::<()>::Progress(format!("{:?}", InstallationStatus::Patching));
+        let compiling = JsonResult::<()>::Progress(format!("{:?}", InstallationStatus::Compiling));
+
+        insta::assert_json_snapshot!(downloading,
+            @r###"
+        {
+          "status": "progress",
+          "result": "Downloading"
+        }
+        "###
+        );
+
+        insta::assert_json_snapshot!(patching,
+            @r###"
+        {
+          "status": "progress",
+          "result": "Patching"
+        }
+        "###
+        );
+
+        insta::assert_json_snapshot!(compiling,
+            @r###"
+        {
+          "status": "progress",
+          "result": "Compiling"
         }
         "###
         );
