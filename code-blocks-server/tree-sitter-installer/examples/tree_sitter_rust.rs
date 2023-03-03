@@ -1,7 +1,7 @@
-use tree_sitter_installer::{parser_installer, DynamicParser};
+use tree_sitter_installer::parser_installer;
+use tree_sitter_installer::DynamicParser;
 
-#[test]
-fn test_install_and_load_parser() {
+fn main() {
     let download_cmd = "git clone https://github.com/tree-sitter/tree-sitter-rust";
     let language_fn_symbol = b"language";
     let library_name = "tree_sitter_rust";
@@ -16,9 +16,15 @@ fn test_install_and_load_parser() {
     let mut parser = DynamicParser::load_from(&library_path, language_fn_symbol)
         .expect("failed to install rust parser");
 
-    let src = "fn main() {}";
+    let text = r#"
+struct A {
+    a: i32
+}
 
-    let tree = parser.parse(src, None);
+fn main() {}
+"#;
 
-    insta::assert_snapshot!(tree.unwrap().root_node().to_sexp(), @"(source_file (function_item name: (identifier) parameters: (parameters) body: (block)))");
+    let tree = parser.parse(text, None).expect("failed to parse text");
+
+    println!("{}", tree.root_node().to_sexp());
 }

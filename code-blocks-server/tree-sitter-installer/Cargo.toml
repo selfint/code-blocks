@@ -1,6 +1,6 @@
 [package]
 name = "tree-sitter-installer"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 authors = ["Tom Selfin selfint@gmail.com"]
 description = "A tool to install tree-sitter parsers at runtime"
