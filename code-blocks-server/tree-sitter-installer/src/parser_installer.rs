@@ -21,16 +21,34 @@ pub fn is_installed_at(library_name: &str, install_dir: &Path) -> bool {
     get_compiled_lib_path(library_name, install_dir).exists()
 }
 
+#[derive(Debug)]
+pub enum InstallationStatus {
+    Downloading,
+    Patching,
+    Compiling,
+}
+
 pub fn install_parser(
     download_cmd: &str,
     library_name: &str,
     install_dir: &Path,
+    mut report_progress: Option<impl FnMut(InstallationStatus)>,
 ) -> Result<PathBuf> {
+    if let Some(report_progress) = &mut report_progress {
+        report_progress(InstallationStatus::Downloading)
+    }
     if !download_parser(download_cmd, install_dir)? {
         bail!("failed to download parser")
     }
 
+    if let Some(report_progress) = &mut report_progress {
+        report_progress(InstallationStatus::Patching)
+    }
     disable_language_fn_mangle(install_dir).context("failed to disable language fn mangle")?;
+
+    if let Some(report_progress) = &mut report_progress {
+        report_progress(InstallationStatus::Compiling)
+    }
     compile_parser(install_dir).context("failed to build test parser")?;
 
     Ok(get_compiled_lib_path(library_name, install_dir))

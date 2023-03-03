@@ -10,8 +10,13 @@ fn main() {
         .path()
         .join("rust-parser");
 
-    let library_path = parser_installer::install_parser(download_cmd, library_name, &install_dir)
-        .expect("failed to install rust parser");
+    let library_path = parser_installer::install_parser(
+        download_cmd,
+        library_name,
+        &install_dir,
+        Some(|status| println!("{:?}", status)),
+    )
+    .expect("failed to install rust parser");
 
     let mut parser = DynamicParser::load_from(&library_path, language_fn_symbol)
         .expect("failed to install rust parser");
