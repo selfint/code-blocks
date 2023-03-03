@@ -1,13 +1,13 @@
 [package]
 name = "code-blocks-server"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 authors = ["Tom Selfin selfint@gmail.com"]
 description = "A tool to re-order your code"
 readme = "README.md"
 repository = "https://github.com/selfint/code-blocks"
 license = "MIT"
-keywords = ["rest-api", "refactor", "tree-sitter"]
+keywords = ["refactor", "tree-sitter", "static-analysis"]
 categories = [
     "command-line-utilities",
     "development-tools",
@@ -20,27 +20,20 @@ categories = [
 [dependencies]
 anyhow = "1.0.69"
 code-blocks = { path = "../code-blocks", version = "0.1.0" }
-tree-sitter-installer = { path = "../tree-sitter-installer", version = "0.1.1"}
-rocket = { version = "0.5.0-rc.2", features = ["json"], optional = true }
+tree-sitter-installer = { path = "../tree-sitter-installer", version = "0.2.0" }
 serde = { version = "1.0.152", features = ["derive"] }
 serde_json = { version = "1.0.93", optional = true }
 tree-sitter = "0.20.9"
-tree-sitter-rust = "0.20.3"
-tree-sitter-svelte = "0.10.2"
-tree-sitter-typescript = "0.20.2"
-tree-sitter-python = "0.20.2"
 
 [dev-dependencies]
 insta = { version = "1.26.0", features = ["json"] }
 tempfile = "3.4.0"
+tree-sitter-rust = "0.20.3"
+tree-sitter-python = "0.20.2"
+tree-sitter-typescript = "0.20.2"
 
 [features]
-rest = ["rocket"]
 cli = ["serde_json"]
-
-[[bin]]
-name = "code-blocks-rest"
-required-features = ["rest"]
 
 [[bin]]
 name = "code-blocks-cli"
