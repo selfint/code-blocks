@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { BlockLocation, BlockLocationTree } from "./types";
+  import { textSlice } from "./utilities/textSlice";
 
   export let text: string;
   export let tree: BlockLocationTree;
@@ -14,20 +15,6 @@
 
   $: backgroundColor = tree.block === selectedBlock ? selectedBgColor : defaultBgColor;
   $: foregroundColor = tree.block === selectedBlock ? selectedFgColor : defaultFgColor;
-
-  // const sliceLengthLimit = 500;
-  function textSlice(start: number, end: number): string {
-    console.log(`Slice limit: ${sliceLengthLimit}`);
-    if (end - start < sliceLengthLimit) {
-      return text.substring(start, end);
-    } else {
-      return (
-        text.substring(start, start + (sliceLengthLimit * 3) / 4) +
-        "..." +
-        text.substring(end - sliceLengthLimit / 4, end)
-      );
-    }
-  }
 </script>
 
 <div
@@ -37,15 +24,40 @@
   on:keypress|stopPropagation|preventDefault={() => onClick(tree.block)}
 >
   {#if tree.children.length !== 0}
-    {textSlice(tree.block.startByte, tree.children[0].block.startByte)}
+    {textSlice(
+      tree.block.startByte,
+      tree.children[0].block.startByte,
+      text,
+      sliceLengthLimit,
+      true,
+      tree.block.startCol
+    )}
     {#each tree.children as childTree, i}
-      <svelte:self {text} tree={childTree} {onClick} {selectedBlock} {sliceLengthLimit} />
-      {#if i !== tree.children.length - 1}
-        {textSlice(tree.children[i].block.endByte, tree.children[i + 1].block.startByte)}
+      <svelte:self
+        {text}
+        tree={childTree}
+        {onClick}
+        {selectedBlock}
+        {sliceLengthLimit}
+      />{#if i !== tree.children.length - 1}{textSlice(
+          tree.children[i].block.endByte,
+          tree.children[i + 1].block.startByte,
+          text,
+          sliceLengthLimit,
+          true,
+          tree.children[i].block.startCol
+        )}
       {/if}
     {/each}
-    {textSlice(tree.children.at(-1).block.endByte, tree.block.endByte)}
+    {textSlice(
+      tree.children.at(-1).block.endByte,
+      tree.block.endByte,
+      text,
+      sliceLengthLimit,
+      true,
+      tree.children.at(-1).block.startCol
+    )}
   {:else}
-    {textSlice(tree.block.startByte, tree.block.endByte)}
+    {textSlice(tree.block.startByte, tree.block.endByte, text, sliceLengthLimit, true, tree.block.startCol)}
   {/if}
 </div>

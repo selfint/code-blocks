@@ -3,6 +3,7 @@
   import type { BlockLocation, BlockLocationTree } from "./types";
   import type { MoveCommand, UpdateMessage } from "./messages";
   import { vscode } from "./utilities/vscode";
+  import { textSlice } from "./utilities/textSlice";
 
   let text: string | undefined = undefined;
   let blockTrees: BlockLocationTree[] | undefined = undefined;
@@ -34,32 +35,31 @@
     }
   }
 
-  const sliceLengthLimit = 100;
-  function textSlice(start: number, end: number): string {
-    if (end - start < sliceLengthLimit) {
-      return text.substring(start, end);
-    } else {
-      return (
-        text.substring(start, start + (sliceLengthLimit * 3) / 4) +
-        "..." +
-        text.substring(end - sliceLengthLimit / 4, end)
-      );
-    }
-  }
+  const sliceLengthLimit = 10000;
 </script>
 
 {#if blockTrees === undefined}
   <div>No blocks available.</div>
 {:else}
   <div class="block">
-    {text.substring(0, blockTrees[0].block.startByte)}
+    {textSlice(0, blockTrees[0].block.startByte, text, sliceLengthLimit, true, 0)}
     {#each blockTrees as tree, i}
-      <Tree {text} {tree} onClick={handleBlockClicked} {selectedBlock} {sliceLengthLimit} />
-      {#if i !== blockTrees.length - 1}
-        {textSlice(tree.block.endByte, blockTrees[i + 1].block.startByte)}
-      {/if}
+      <Tree
+        {text}
+        {tree}
+        onClick={handleBlockClicked}
+        {selectedBlock}
+        {sliceLengthLimit}
+      />{#if i !== blockTrees.length - 1}{textSlice(
+          tree.block.endByte,
+          blockTrees[i + 1].block.startByte,
+          text,
+          sliceLengthLimit,
+          true,
+          tree.block.startCol
+        )}{/if}
     {/each}
-    {text.substring(blockTrees.at(-1).block.endByte, text.length)}
+    {textSlice(blockTrees.at(-1).block.endByte, text.length, text, sliceLengthLimit, true, 0)}
   </div>
 {/if}
 
@@ -69,7 +69,8 @@
     border-style: solid;
     border-width: 1px;
     white-space: pre-wrap;
-    font-family: var(--vscode-font-family);
+    /* font-family: var(--vscode-font-family); */
+    font-family: monospace, monospace;
     font-size: var(--vscode-font-size);
     font-weight: var(--vscode-font-weight);
     margin-top: 5px;
