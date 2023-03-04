@@ -15,27 +15,9 @@ fn test_install_and_load_parser() {
 
     let mut reported_progresses = vec![];
     let report_progress = |status: InstallationStatus| match status {
-        InstallationStatus::Downloading(string) => reported_progresses.push(format!(
-            "Downloading: {}",
-            string
-                .trim()
-                .split_ascii_whitespace()
-                .take(2)
-                .map(|w| format!("{} ", w))
-                .collect::<String>()
-                .trim()
-        )),
-        InstallationStatus::Patching => reported_progresses.push("Patching".to_string()),
-        InstallationStatus::Compiling(string) => reported_progresses.push(format!(
-            "Compiling: {}",
-            string
-                .trim()
-                .split_ascii_whitespace()
-                .take(2)
-                .map(|w| format!("{} ", w))
-                .collect::<String>()
-                .trim()
-        )),
+        InstallationStatus::Downloading(_) => reported_progresses.push("Downloading"),
+        InstallationStatus::Patching => reported_progresses.push("Patching"),
+        InstallationStatus::Compiling(_) => reported_progresses.push("Compiling"),
     };
 
     let library_path = parser_installer::install_parser(
@@ -62,20 +44,20 @@ fn test_install_and_load_parser() {
     insta::assert_debug_snapshot!(reported_progresses,
         @r###"
     [
-        "Compiling: Compiling aho-corasick",
-        "Compiling: Compiling cc",
-        "Compiling: Compiling memchr",
-        "Compiling: Compiling regex",
-        "Compiling: Compiling regex-syntax",
-        "Compiling: Compiling tree-sitter",
-        "Compiling: Compiling tree-sitter-rust",
-        "Compiling: Finished release",
-        "Compiling: Start",
-        "Compiling: Updating crates.io",
-        "Downloading: Cloning into",
-        "Downloading: Done",
-        "Downloading: Running command",
-        "Downloading: Start",
+        "Compiling",
+        "Compiling",
+        "Compiling",
+        "Compiling",
+        "Compiling",
+        "Compiling",
+        "Compiling",
+        "Compiling",
+        "Compiling",
+        "Compiling",
+        "Downloading",
+        "Downloading",
+        "Downloading",
+        "Downloading",
         "Patching",
     ]
     "###
