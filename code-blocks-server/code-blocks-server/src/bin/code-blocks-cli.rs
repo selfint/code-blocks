@@ -6,7 +6,7 @@ use code_blocks_server::{
     InstallLanguageResponse, MoveBlockArgs, MoveBlockResponse,
 };
 use serde::{Deserialize, Serialize};
-use tree_sitter_installer::DynamicParser;
+use tree_sitter_installer::{parser_installer::InstallationStatus, DynamicParser};
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -85,7 +85,15 @@ fn handle_line(line: &str) -> Result<CliResponse> {
                 install_dir,
                 report_progress: Some(|status| {
                     if let Ok(string) =
-                        serde_json::to_string(&JsonResult::<()>::Progress(format!("{:?}", status)))
+                        serde_json::to_string(&JsonResult::<()>::Progress(match status {
+                            InstallationStatus::Downloading(string) => {
+                                format!("Downloading: {}", string.trim())
+                            }
+                            InstallationStatus::Patching => "Patching".to_string(),
+                            InstallationStatus::Compiling(string) => {
+                                format!("Compiling: {}", string.trim())
+                            }
+                        }))
                     {
                         println!("{}", string);
                     } else {
@@ -142,7 +150,6 @@ mod tests {
     use std::path::PathBuf;
 
     use code_blocks_server::BlockLocation;
-    use tree_sitter_installer::parser_installer::InstallationStatus;
 
     use super::*;
 
@@ -170,34 +177,13 @@ mod tests {
 
     #[test]
     fn show_install_language_progress() {
-        let downloading =
-            JsonResult::<()>::Progress(format!("{:?}", InstallationStatus::Downloading));
-        let patching = JsonResult::<()>::Progress(format!("{:?}", InstallationStatus::Patching));
-        let compiling = JsonResult::<()>::Progress(format!("{:?}", InstallationStatus::Compiling));
+        let progress = JsonResult::<()>::Progress("progress message".to_string());
 
-        insta::assert_json_snapshot!(downloading,
+        insta::assert_json_snapshot!(progress,
             @r###"
         {
           "status": "progress",
-          "result": "Downloading"
-        }
-        "###
-        );
-
-        insta::assert_json_snapshot!(patching,
-            @r###"
-        {
-          "status": "progress",
-          "result": "Patching"
-        }
-        "###
-        );
-
-        insta::assert_json_snapshot!(compiling,
-            @r###"
-        {
-          "status": "progress",
-          "result": "Compiling"
+          "result": "progress message"
         }
         "###
         );

@@ -21,12 +21,19 @@ pub type InstallLanguageResponse = PathBuf;
 pub fn install_language<F: FnMut(InstallationStatus)>(
     args: InstallLanguageArgs<F>,
 ) -> Result<InstallLanguageResponse> {
-    parser_installer::install_parser(
-        &args.download_cmd,
-        &args.library_name,
-        &args.install_dir,
-        args.report_progress,
-    )
+    if !parser_installer::is_installed_at(&args.library_name, &args.install_dir) {
+        parser_installer::install_parser(
+            &args.download_cmd,
+            &args.library_name,
+            &args.install_dir,
+            args.report_progress,
+        )
+    } else {
+        Ok(parser_installer::get_compiled_lib_path(
+            &args.library_name,
+            &args.install_dir,
+        ))
+    }
 }
 
 #[derive(Debug)]
