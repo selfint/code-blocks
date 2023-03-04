@@ -6,6 +6,8 @@ import * as releaseUtils from "./releaseUtils";
 import * as vscode from "vscode";
 import which from "which";
 
+export const CODE_BLOCKS_SERVER_VERSION = "0.4.0";
+
 const BINARY = "code-blocks-cli";
 const INSTALLED_PERM =
   fs.constants.S_IRWXU |

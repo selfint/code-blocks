@@ -1,35 +1,70 @@
+use std::path::PathBuf;
+
 use anyhow::Result;
-use code_blocks_server::get_subtrees;
-use code_blocks_server::move_block;
-use code_blocks_server::GetSubtreesArgs;
-use code_blocks_server::MoveBlockArgs;
+use code_blocks_server::{
+    BlockLocation, GetSubtreesArgs, GetSubtreesResponse, InstallLanguageArgs,
+    InstallLanguageResponse, MoveBlockArgs, MoveBlockResponse,
+};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use tree_sitter_installer::{parser_installer::InstallationStatus, DynamicParser};
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+#[serde(tag = "method", content = "params")]
+pub enum CliRequest {
+    #[serde(rename_all = "camelCase")]
+    InstallLanguage {
+        download_cmd: String,
+        library_name: String,
+        install_dir: PathBuf,
+    },
+    #[serde(rename_all = "camelCase")]
+    GetSubtrees {
+        queries: Vec<String>,
+        text: String,
+        library_path: PathBuf,
+        language_fn_symbol: String,
+    },
+    #[serde(rename_all = "camelCase")]
+    MoveBlock {
+        queries: Vec<String>,
+        text: String,
+        library_path: PathBuf,
+        language_fn_symbol: String,
+        src_block: BlockLocation,
+        dst_block: BlockLocation,
+    },
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+#[serde(untagged)]
+pub enum CliResponse {
+    InstallLanguage(InstallLanguageResponse),
+    GetSubtrees(GetSubtreesResponse),
+    MoveBlock(MoveBlockResponse),
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "status", content = "result")]
 pub enum JsonResult<T> {
     Ok(T),
+    Progress(String),
     Error(String),
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-#[serde(tag = "method", content = "params")]
-pub enum MethodCall {
-    GetSubtrees(GetSubtreesArgs),
-    MoveBlock(MoveBlockArgs),
 }
 
 fn main() {
     for line in std::io::stdin().lines() {
         let Ok(line) = line else { continue; };
 
-        let response = handle_request(&line);
+        let response = match handle_line(&line) {
+            Ok(ok) => JsonResult::Ok(ok),
+            Err(err) => JsonResult::Error(err.to_string()),
+        };
 
         let Ok(response) = serde_json::to_string(&response) else {
-            eprintln!("Failed to serialize response");
+            eprintln!("failed to serialize response");
             continue;
         };
 
@@ -37,17 +72,76 @@ fn main() {
     }
 }
 
-fn handle_request(request: &str) -> JsonResult<Value> {
-    match handle_line(request) {
-        Ok(ok) => JsonResult::Ok(ok),
-        Err(err) => JsonResult::Error(err.to_string()),
-    }
-}
+fn handle_line(line: &str) -> Result<CliResponse> {
+    match serde_json::from_str::<CliRequest>(line)? {
+        CliRequest::InstallLanguage {
+            download_cmd,
+            library_name,
+            install_dir,
+        } => Ok(CliResponse::InstallLanguage(
+            code_blocks_server::install_language(InstallLanguageArgs {
+                download_cmd,
+                library_name,
+                install_dir,
+                report_progress: Some(|status| {
+                    if let Ok(string) =
+                        serde_json::to_string(&JsonResult::<()>::Progress(match status {
+                            InstallationStatus::Downloading(string) => {
+                                format!("Downloading: {}", string.trim())
+                            }
+                            InstallationStatus::Patching => "Patching".to_string(),
+                            InstallationStatus::Compiling(string) => {
+                                format!("Compiling: {}", string.trim())
+                            }
+                        }))
+                    {
+                        println!("{}", string);
+                    } else {
+                        eprintln!("failed to serialize progress");
+                    }
+                }),
+            })?,
+        )),
+        CliRequest::GetSubtrees {
+            queries,
+            text,
+            library_path,
+            language_fn_symbol,
+        } => {
+            let dynamic_parser =
+                DynamicParser::load_from(&library_path, language_fn_symbol.as_bytes())?;
+            let language = dynamic_parser.get_language();
 
-fn handle_line(line: &str) -> Result<Value> {
-    match serde_json::from_str::<MethodCall>(line)? {
-        MethodCall::GetSubtrees(args) => Ok(serde_json::to_value(&get_subtrees(args)?)?),
-        MethodCall::MoveBlock(args) => Ok(serde_json::to_value(&move_block(args)?)?),
+            Ok(CliResponse::GetSubtrees(code_blocks_server::get_subtrees(
+                GetSubtreesArgs {
+                    queries,
+                    text,
+                    language,
+                },
+            )?))
+        }
+        CliRequest::MoveBlock {
+            queries,
+            text,
+            library_path,
+            language_fn_symbol,
+            src_block,
+            dst_block,
+        } => {
+            let dynamic_parser =
+                DynamicParser::load_from(&library_path, language_fn_symbol.as_bytes())?;
+            let language = dynamic_parser.get_language();
+
+            Ok(CliResponse::MoveBlock(code_blocks_server::move_block(
+                MoveBlockArgs {
+                    queries,
+                    text,
+                    language,
+                    src_block,
+                    dst_block,
+                },
+            )?))
+        }
     }
 }
 
@@ -55,18 +149,71 @@ fn handle_line(line: &str) -> Result<Value> {
 mod tests {
     use std::path::PathBuf;
 
-    use code_blocks_server::{BlockLocation, SupportedLanguage};
+    use code_blocks_server::BlockLocation;
 
     use super::*;
 
     #[test]
+    fn show_install_language_request() {
+        let request = CliRequest::InstallLanguage {
+            download_cmd: "git clone https://github.com/tree-sitter/tree-sitter-rust".to_string(),
+            library_name: "tree_sitter_rust".to_string(),
+            install_dir: "path_to_install_dir".into(),
+        };
+
+        insta::assert_json_snapshot!(request,
+            @r###"
+        {
+          "method": "installLanguage",
+          "params": {
+            "downloadCmd": "git clone https://github.com/tree-sitter/tree-sitter-rust",
+            "libraryName": "tree_sitter_rust",
+            "installDir": "path_to_install_dir"
+          }
+        }
+        "###
+        );
+    }
+
+    #[test]
+    fn show_install_language_progress() {
+        let progress = JsonResult::<()>::Progress("progress message".to_string());
+
+        insta::assert_json_snapshot!(progress,
+            @r###"
+        {
+          "status": "progress",
+          "result": "progress message"
+        }
+        "###
+        );
+    }
+
+    #[test]
+    fn show_install_language_response() {
+        let response = JsonResult::Ok(CliResponse::InstallLanguage(PathBuf::from(
+            "path_to_installed_library",
+        )));
+
+        insta::assert_json_snapshot!(response,
+            @r###"
+        {
+          "status": "ok",
+          "result": "path_to_installed_library"
+        }
+        "###
+        );
+    }
+
+    #[test]
     fn show_get_subtrees_request() {
-        insta::assert_json_snapshot!(
-            MethodCall::GetSubtrees(GetSubtreesArgs {
-                queries: vec!["(function_item) @ident".to_string()],
-                text: "fn main() {}\nfn foo() {}".to_string(),
-                language: SupportedLanguage::Rust,
-            }),
+        let request = CliRequest::GetSubtrees {
+            queries: vec!["(function_item) @ident".to_string()],
+            text: "fn main() {}\nfn foo() {}".to_string(),
+            library_path: "path_to_installed_library".into(),
+            language_fn_symbol: "language".to_string(),
+        };
+        insta::assert_json_snapshot!(request,
             @r###"
         {
           "method": "getSubtrees",
@@ -75,75 +222,8 @@ mod tests {
               "(function_item) @ident"
             ],
             "text": "fn main() {}\nfn foo() {}",
-            "language": "rust"
-          }
-        }
-        "###
-        );
-    }
-
-    use code_blocks_server::SupportedDynamicLanguage;
-
-    #[test]
-    fn show_get_subtrees_request_supported_dynamic() {
-        insta::assert_json_snapshot!(
-            MethodCall::GetSubtrees(GetSubtreesArgs {
-                queries: vec!["(function_item) @ident".to_string()],
-                text: "fn main() {}\nfn foo() {}".to_string(),
-                language: SupportedLanguage::SupportedDynamic {
-                  language: SupportedDynamicLanguage::Rust,
-                  install_dir: PathBuf::from("full_path_to_install_dir")
-                },
-            }),
-            @r###"
-        {
-          "method": "getSubtrees",
-          "params": {
-            "queries": [
-              "(function_item) @ident"
-            ],
-            "text": "fn main() {}\nfn foo() {}",
-            "language": {
-              "supporteddynamic": {
-                "language": "rust",
-                "installDir": "full_path_to_install_dir"
-              }
-            }
-          }
-        }
-        "###
-        );
-    }
-
-    #[test]
-    fn show_get_subtrees_request_dynamic() {
-        insta::assert_json_snapshot!(
-            MethodCall::GetSubtrees(GetSubtreesArgs {
-                queries: vec!["(function_item) @ident".to_string()],
-                text: "fn main() {}\nfn foo() {}".to_string(),
-                language: SupportedLanguage::Dynamic {
-                  download_cmd: "git clone https://github.com/tree-sitter/tree-sitter-rust".to_string(),
-                  symbol: "language".to_string(),
-                  name: "tree_sitter_rust".to_string(),
-                  install_dir:PathBuf::from("full_path_to_install_dir"),
-                },
-            }),
-            @r###"
-        {
-          "method": "getSubtrees",
-          "params": {
-            "queries": [
-              "(function_item) @ident"
-            ],
-            "text": "fn main() {}\nfn foo() {}",
-            "language": {
-              "dynamic": {
-                "downloadCmd": "git clone https://github.com/tree-sitter/tree-sitter-rust",
-                "symbol": "language",
-                "name": "tree_sitter_rust",
-                "installDir": "full_path_to_install_dir"
-              }
-            }
+            "libraryPath": "path_to_installed_library",
+            "languageFnSymbol": "language"
           }
         }
         "###
@@ -152,124 +232,74 @@ mod tests {
 
     #[test]
     fn show_get_subtrees_response() {
-        insta::assert_json_snapshot!(handle_request(
-            r#"
-        {
-          "method": "getSubtrees",
-          "params": {
-            "queries": [
-              "(function_item) @ident"
-            ],
-            "text": "fn main() {}\nfn foo() {}",
-            "language": "rust"
-          }
-        }
-        "#
-        ),
-        @r###"
+        let server_response = code_blocks_server::get_subtrees(GetSubtreesArgs {
+            queries: vec!["(function_item) @ident".to_string()],
+            text: "fn main() {}\nfn foo() {}".to_string(),
+            language: tree_sitter_rust::language(),
+        })
+        .unwrap();
+
+        let response = JsonResult::Ok(CliResponse::GetSubtrees(server_response));
+
+        insta::assert_json_snapshot!(response,
+            @r###"
         {
           "status": "ok",
           "result": [
             {
               "block": {
-                "endByte": 12,
-                "endCol": 12,
-                "endRow": 0,
                 "startByte": 0,
+                "endByte": 12,
+                "startRow": 0,
                 "startCol": 0,
-                "startRow": 0
+                "endRow": 0,
+                "endCol": 12
               },
               "children": []
             },
             {
               "block": {
-                "endByte": 24,
-                "endCol": 11,
-                "endRow": 1,
                 "startByte": 13,
+                "endByte": 24,
+                "startRow": 1,
                 "startCol": 0,
-                "startRow": 1
+                "endRow": 1,
+                "endCol": 11
               },
               "children": []
             }
           ]
         }
-        "###);
-
-        insta::assert_json_snapshot!(handle_request(
-            r#"
-        {
-          "method": "badMethod",
-          "params": {
-            "queries": [
-              "(function_item) @ident"
-            ],
-            "text": "fn main() {}\nfn foo() {}",
-            "language": "rust"
-          }
-        }
-        "#
-        ),
-        @r###"
-        {
-          "status": "error",
-          "result": "unknown variant `badMethod`, expected `getSubtrees` or `moveBlock` at line 3 column 31"
-        }
-        "###);
-
-        insta::assert_json_snapshot!(handle_request(
-            r#"
-        {
-          "method": "getSubtrees",
-          "params": {
-            "queries": [
-              "bad query"
-            ],
-            "text": "fn main() {}\nfn foo() {}",
-            "language": "rust"
-          }
-        }
-        "#
-        ),
-        @r###"
-        {
-          "status": "error",
-          "result": "Query error at 1:1. Invalid syntax:\nbad query\n^"
-        }
-        "###);
-
-        insta::assert_json_snapshot!(handle_request(
-            r#"
-        {
-          "method": "getSubtrees",
-          "params": {
-            "queries": [
-              "(function_item) @ident"
-            ],
-            "text": "fn main() {}\nfn foo() {}",
-            "language": "bad language"
-          }
-        }
-        "#
-        ),
-        @r###"
-        {
-          "status": "error",
-          "result": "unknown variant `bad language`, expected one of `rust`, `typescript`, `tsx`, `svelte`, `python`, `supporteddynamic`, `dynamic` at line 9 column 38"
-        }
-        "###);
+        "###
+        );
     }
 
     #[test]
-    fn show_move_block_request() {
-        insta::assert_json_snapshot!(
-            MethodCall::MoveBlock(MoveBlockArgs {
-                queries: vec!["(function_item) @ident".to_string()],
-                text: "fn main() {}\nfn foo() {}".to_string(),
-                language: SupportedLanguage::Rust,
-                src_block: BlockLocation::default(),
-                dst_block: BlockLocation::default()
-            }),
+    fn show_move_block() {
+        let request = CliRequest::MoveBlock {
+            queries: vec!["(function_item) @ident".to_string()],
+            text: "fn main() {}\nfn foo() {}".to_string(),
+            library_path: "path_to_installed_library".into(),
+            language_fn_symbol: "language".to_string(),
+            src_block: BlockLocation {
+                start_byte: 0,
+                end_byte: 12,
+                start_row: 0,
+                start_col: 0,
+                end_row: 0,
+                end_col: 12,
+            },
+            dst_block: BlockLocation {
+                start_byte: 13,
+                end_byte: 24,
+                start_row: 1,
+                start_col: 0,
+                end_row: 1,
+                end_col: 11,
+            },
+        };
+
+        insta::assert_json_snapshot!(request,
             @r###"
         {
           "method": "moveBlock",
@@ -278,22 +308,23 @@ mod tests {
               "(function_item) @ident"
             ],
             "text": "fn main() {}\nfn foo() {}",
-            "language": "rust",
+            "libraryPath": "path_to_installed_library",
+            "languageFnSymbol": "language",
             "srcBlock": {
               "startByte": 0,
-              "endByte": 0,
+              "endByte": 12,
               "startRow": 0,
               "startCol": 0,
               "endRow": 0,
-              "endCol": 0
+              "endCol": 12
             },
             "dstBlock": {
-              "startByte": 0,
-              "endByte": 0,
-              "startRow": 0,
+              "startByte": 13,
+              "endByte": 24,
+              "startRow": 1,
               "startCol": 0,
-              "endRow": 0,
-              "endCol": 0
+              "endRow": 1,
+              "endCol": 11
             }
           }
         }
@@ -303,35 +334,32 @@ mod tests {
 
     #[test]
     fn show_move_block_response() {
-        insta::assert_json_snapshot!(handle_request(
-                r###"
-            {
-            "method": "moveBlock",
-            "params": {
-                "queries": [
-                "(function_item) @ident"
-                ],
-                "text": "fn main() {}\nfn foo() {}",
-                "language": "rust",
-                "srcBlock": {
-                    "startByte": 0,
-                    "endByte": 12,
-                    "startRow": 0,
-                    "startCol": 0,
-                    "endRow": 0,
-                    "endCol": 12
-                },
-                "dstBlock": {
-                    "startByte": 13,
-                    "endByte": 24,
-                    "startRow": 1,
-                    "startCol": 0,
-                    "endRow": 1,
-                    "endCol": 11
-                }
-            }
-            }
-            "###),
+        let server_response = code_blocks_server::move_block(MoveBlockArgs {
+            queries: vec!["(function_item) @ident".to_string()],
+            text: "fn main() {}\nfn foo() {}".to_string(),
+            language: tree_sitter_rust::language(),
+            src_block: BlockLocation {
+                start_byte: 0,
+                end_byte: 12,
+                start_row: 0,
+                start_col: 0,
+                end_row: 0,
+                end_col: 12,
+            },
+            dst_block: BlockLocation {
+                start_byte: 13,
+                end_byte: 24,
+                start_row: 1,
+                start_col: 0,
+                end_row: 1,
+                end_col: 11,
+            },
+        })
+        .unwrap();
+
+        let response = JsonResult::Ok(CliResponse::MoveBlock(server_response));
+
+        insta::assert_json_snapshot!(response,
             @r###"
         {
           "status": "ok",
@@ -339,225 +367,17 @@ mod tests {
         }
         "###
         );
+    }
 
-        insta::assert_json_snapshot!(handle_request(
-                r###"
-            {
-            "method": "badMethod",
-            "params": {
-                "queries": [
-                "(function_item) @ident"
-                ],
-                "text": "fn main() {}\nfn foo() {}",
-                "language": "rust",
-                "srcBlock": {
-                    "startByte": 0,
-                    "endByte": 12,
-                    "startRow": 0,
-                    "startCol": 0,
-                    "endRow": 0,
-                    "endCol": 12
-                },
-                "dstBlock": {
-                    "startByte": 13,
-                    "endByte": 24,
-                    "startRow": 1,
-                    "startCol": 0,
-                    "endRow": 1,
-                    "endCol": 11
-                }
-            }
-            }
-            "###),
+    #[test]
+    fn show_error() {
+        let error: JsonResult<()> = JsonResult::Error("error occurred".to_string());
+
+        insta::assert_json_snapshot!(error,
             @r###"
         {
           "status": "error",
-          "result": "unknown variant `badMethod`, expected `getSubtrees` or `moveBlock` at line 3 column 33"
-        }
-        "###
-        );
-
-        insta::assert_json_snapshot!(handle_request(
-                r###"
-            {
-            "method": "moveBlock",
-            "params": {
-                "queries": [
-                "bad query"
-                ],
-                "text": "fn main() {}\nfn foo() {}",
-                "language": "rust",
-                "srcBlock": {
-                    "startByte": 0,
-                    "endByte": 12,
-                    "startRow": 0,
-                    "startCol": 0,
-                    "endRow": 0,
-                    "endCol": 12
-                },
-                "dstBlock": {
-                    "startByte": 13,
-                    "endByte": 24,
-                    "startRow": 1,
-                    "startCol": 0,
-                    "endRow": 1,
-                    "endCol": 11
-                }
-            }
-            }
-            "###),
-            @r###"
-        {
-          "status": "error",
-          "result": "Query error at 1:1. Invalid syntax:\nbad query\n^"
-        }
-        "###
-        );
-
-        insta::assert_json_snapshot!(handle_request(
-                r###"
-            {
-            "method": "moveBlock",
-            "params": {
-                "queries": [
-                "(function_item) @ident"
-                ],
-                "text": "bad text",
-                "language": "rust",
-                "srcBlock": {
-                    "startByte": 0,
-                    "endByte": 12,
-                    "startRow": 0,
-                    "startCol": 0,
-                    "endRow": 0,
-                    "endCol": 12
-                },
-                "dstBlock": {
-                    "startByte": 13,
-                    "endByte": 24,
-                    "startRow": 1,
-                    "startCol": 0,
-                    "endRow": 1,
-                    "endCol": 11
-                }
-            }
-            }
-            "###),
-            @r###"
-        {
-          "status": "error",
-          "result": "Failed to find src item"
-        }
-        "###
-        );
-
-        insta::assert_json_snapshot!(handle_request(
-                r###"
-            {
-            "method": "moveBlock",
-            "params": {
-                "queries": [
-                "(function_item) @ident"
-                ],
-                "text": "fn main() {}\nfn foo() {}",
-                "language": "bad language",
-                "srcBlock": {
-                    "startByte": 0,
-                    "endByte": 12,
-                    "startRow": 0,
-                    "startCol": 0,
-                    "endRow": 0,
-                    "endCol": 12
-                },
-                "dstBlock": {
-                    "startByte": 13,
-                    "endByte": 24,
-                    "startRow": 1,
-                    "startCol": 0,
-                    "endRow": 1,
-                    "endCol": 11
-                }
-            }
-            }
-            "###),
-            @r###"
-        {
-          "status": "error",
-          "result": "unknown variant `bad language`, expected one of `rust`, `typescript`, `tsx`, `svelte`, `python`, `supporteddynamic`, `dynamic` at line 9 column 42"
-        }
-        "###
-        );
-
-        insta::assert_json_snapshot!(handle_request(
-                r###"
-            {
-            "method": "moveBlock",
-            "params": {
-                "queries": [
-                "(function_item) @ident"
-                ],
-                "text": "fn main() {}\nfn foo() {}",
-                "language": "rust",
-                "srcBlock": {
-                    "startByte": 999,
-                    "endByte": 999,
-                    "startRow": 999,
-                    "startCol": 999,
-                    "endRow": 999,
-                    "endCol": 999
-                },
-                "dstBlock": {
-                    "startByte": 13,
-                    "endByte": 24,
-                    "startRow": 1,
-                    "startCol": 0,
-                    "endRow": 1,
-                    "endCol": 11
-                }
-            }
-            }
-            "###),
-            @r###"
-        {
-          "status": "error",
-          "result": "Failed to find src item"
-        }
-        "###
-        );
-
-        insta::assert_json_snapshot!(handle_request(
-                r###"
-            {
-            "method": "moveBlock",
-            "params": {
-                "queries": [
-                "(function_item) @ident"
-                ],
-                "text": "fn main() {}\nfn foo() {}",
-                "language": "rust",
-                "srcBlock": {
-                    "startByte": 0,
-                    "endByte": 12,
-                    "startRow": 0,
-                    "startCol": 0,
-                    "endRow": 0,
-                    "endCol": 12
-                },
-                "dstBlock": {
-                    "startByte": 999,
-                    "endByte": 999,
-                    "startRow": 999,
-                    "startCol": 999,
-                    "endRow": 999,
-                    "endCol": 999
-                }
-            }
-            }
-            "###),
-            @r###"
-        {
-          "status": "error",
-          "result": "Failed to find dst item"
+          "result": "error occurred"
         }
         "###
         );

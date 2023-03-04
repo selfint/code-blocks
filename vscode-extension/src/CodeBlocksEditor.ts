@@ -1,6 +1,6 @@
 import * as core from "./core";
 import * as vscode from "vscode";
-import { Dynamic, Query } from "./codeBlocks/types";
+import { GetSubtreesArgs, MoveBlockArgs } from "./codeBlocks/types";
 import { MoveCommand } from "./messages";
 import { getNonce } from "./utilities/getNonce";
 import { getUri } from "./utilities/getUri";
@@ -11,8 +11,9 @@ export class CodeBlocksEditor {
     private readonly document: vscode.TextDocument,
     private readonly webviewPanel: vscode.WebviewPanel,
     private readonly codeBlocksCliPath: string,
-    private readonly docLang: Dynamic,
-    private readonly queries: Query[]
+    private readonly queries: string[],
+    private readonly libraryPath: string,
+    private readonly languageFnSymbol: string
   ) {
     this.initWebview();
     this.subscribeToDocEvents();
@@ -24,17 +25,26 @@ export class CodeBlocksEditor {
   }
 
   private async drawBlocks(): Promise<void> {
-    await core.drawBlocks(
-      this.codeBlocksCliPath,
-      this.webviewPanel.webview,
-      this.document,
-      this.docLang,
-      this.queries
-    );
+    const args: GetSubtreesArgs = {
+      queries: this.queries,
+      text: this.document.getText(),
+      libraryPath: this.libraryPath,
+      languageFnSymbol: this.languageFnSymbol,
+    };
+    await core.drawBlocks(this.codeBlocksCliPath, this.webviewPanel.webview, args);
   }
 
   private async moveBlock(message: MoveCommand): Promise<void> {
-    await core.moveBlock(message, this.codeBlocksCliPath, this.document, this.docLang, this.queries);
+    const args: MoveBlockArgs = {
+      queries: this.queries,
+      text: this.document.getText(),
+      libraryPath: this.libraryPath,
+      languageFnSymbol: this.languageFnSymbol,
+      srcBlock: message.args.src,
+      dstBlock: message.args.dst,
+    };
+
+    await core.moveBlock(this.codeBlocksCliPath, this.document, args);
   }
 
   private initWebview(): void {

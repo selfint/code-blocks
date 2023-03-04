@@ -8,7 +8,7 @@
     "directory": "vscode-extension",
     "type": "git"
   },
-  "version": "0.3.1",
+  "version": "0.3.2",
   "private": true,
   "license": "MIT",
   "engines": {
@@ -61,8 +61,8 @@
             "rust": {
               "parserInstaller": {
                 "downloadCmd": "git clone https://github.com/tree-sitter/tree-sitter-rust",
-                "symbol": "language",
-                "name": "tree_sitter_rust"
+                "libraryName": "tree_sitter_rust",
+                "languageFnSymbol": "language"
               },
               "queries": [
                 "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (function_item) @item)",
@@ -75,8 +75,8 @@
             "typescript": {
               "parserInstaller": {
                 "downloadCmd": "git clone https://github.com/tree-sitter/tree-sitter-typescript",
-                "symbol": "language_typescript",
-                "name": "tree_sitter_typescript"
+                "libraryName": "tree_sitter_typescript",
+                "languageFnSymbol": "language_typescript"
               },
               "queries": [
                 "( (comment)* @header . (class_declaration) @item)",
@@ -88,8 +88,8 @@
             "typescriptreact": {
               "parserInstaller": {
                 "downloadCmd": "git clone https://github.com/tree-sitter/tree-sitter-typescript",
-                "symbol": "language_tsx",
-                "name": "tree_sitter_typescript"
+                "libraryName": "tree_sitter_typescript",
+                "languageFnSymbol": "language_tsx"
               },
               "queries": [
                 "( (comment)* @header . (class_declaration) @item)",
@@ -103,8 +103,8 @@
             "svelte": {
               "parserInstaller": {
                 "downloadCmd": "git clone https://github.com/Himujjal/tree-sitter-svelte",
-                "symbol": "language",
-                "name": "tree_sitter_svelte"
+                "libraryName": "tree_sitter_svelte",
+                "languageFnSymbol": "language"
               },
               "queries": [
                 "( (comment)* @header . (element) @item)",
@@ -117,8 +117,8 @@
             "python": {
               "parserInstaller": {
                 "downloadCmd": "git clone https://github.com/tree-sitter/tree-sitter-python",
-                "symbol": "language",
-                "name": "tree_sitter_python"
+                "libraryName": "tree_sitter_python",
+                "languageFnSymbol": "language"
               },
               "queries": [
                 "(class_definition) @item",
@@ -129,8 +129,8 @@
             "java": {
               "parserInstaller": {
                 "downloadCmd": "git clone https://github.com/tree-sitter/tree-sitter-java",
-                "symbol": "language",
-                "name": "tree_sitter_java"
+                "libraryName": "tree_sitter_java",
+                "languageFnSymbol": "language"
               },
               "queries": [
                 "( (block_comment)* @header . (class_declaration) @item)",

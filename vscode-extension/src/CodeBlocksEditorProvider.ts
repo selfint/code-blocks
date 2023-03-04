@@ -1,12 +1,16 @@
+import * as core from "./core";
 import * as path from "path";
 import * as vscode from "vscode";
-import { ParserInstaller, Query } from "./codeBlocks/types";
 import { CodeBlocksEditor } from "./CodeBlocksEditor";
 import { getOrInstallCli } from "./codeBlocks/installer/installer";
 
 export type LanguageSupport = {
-  parserInstaller: ParserInstaller;
-  queries: Query[];
+  parserInstaller: {
+    downloadCmd: string;
+    libraryName: string;
+    languageFnSymbol: string;
+  };
+  queries: string[];
 };
 
 export type CodeBlocksExtensionSettings = {
@@ -58,20 +62,23 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
       return;
     }
 
-    const docLang = {
-      dynamic: {
-        ...languageSupport.parserInstaller,
-        installDir: path.join(this.extensionParsersDirPath, languageSupport.parserInstaller.name),
-      },
-    };
+    const libraryPath = await core.installLanguage(codeBlocksCliPath, {
+      ...languageSupport.parserInstaller,
+      installDir: path.join(this.extensionParsersDirPath, languageSupport.parserInstaller.libraryName),
+    });
+    if (libraryPath === undefined) {
+      await vscode.window.showErrorMessage("Parser not installed");
+      return;
+    }
 
     new CodeBlocksEditor(
       this.context,
       document,
       webviewPanel,
       codeBlocksCliPath,
-      docLang,
-      languageSupport.queries
+      languageSupport.queries,
+      libraryPath,
+      languageSupport.parserInstaller.languageFnSymbol
     );
   }
 }

@@ -1,10 +1,11 @@
 import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
+import { CODE_BLOCKS_SERVER_VERSION } from "./installer";
 import { promises as asyncFs } from "fs";
 import { download } from "./lldb_vscode_copy/lldb_vscode_installer_utils";
 
-const RELEASE_URL = "https://github.com/selfint/code-blocks/releases/download/code-blocks-server-v0.3.0/";
+const RELEASE_URL = `https://github.com/selfint/code-blocks/releases/download/code-blocks-server-v${CODE_BLOCKS_SERVER_VERSION}/`;
 
 export type SupportedTriple =
   | "x86_64-unknown-linux-gnu"

@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use libloading::Library;
 
 use anyhow::Result;
@@ -16,23 +18,37 @@ use tree_sitter::{Language, Parser, Query, Tree};
 ///
 /// ## Drop
 /// When dropping this struct, the Library need to be dropped last. That is why the order
-/// of the fields is parser, language, lib. Changing this order will result in a segfault.
+/// of the fields is parser, language, library. Changing this order will result in a segfault.
 pub struct DynamicParser {
     parser: Parser,
     language: Language,
-    _lib: Library,
+    _library: Library,
 }
 
 impl DynamicParser {
-    pub fn new(lib: Library, lang: Language) -> Result<Self> {
+    pub fn load_from(library_path: &Path, language_fn_symbol: &[u8]) -> Result<Self> {
+        let (library, language) = unsafe {
+            let library = libloading::Library::new(library_path)?;
+            let language_fn: libloading::Symbol<unsafe extern "C" fn() -> Language> =
+                library.get(language_fn_symbol)?;
+
+            let language = language_fn();
+
+            (library, language)
+        };
+
         let mut parser = Parser::new();
-        parser.set_language(lang)?;
+        parser.set_language(language)?;
 
         Ok(Self {
-            _lib: lib,
-            language: lang,
+            language,
             parser,
+            _library: library,
         })
+    }
+
+    pub fn get_language(&self) -> Language {
+        self.language
     }
 
     /// Wrapper method around [tree_sitter::Parser]'s parse method.
