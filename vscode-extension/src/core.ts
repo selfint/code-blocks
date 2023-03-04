@@ -1,57 +1,69 @@
 import * as codeBlocksCliClient from "./codeBlocks/codeBlocksCliClient";
-import * as fs from "fs";
 import * as vscode from "vscode";
 import {
-  Dynamic,
   GetSubtreesArgs,
-  GetSubtreesResponse,
+  InstallLanguageArgs,
+  InstallLanguageResponse,
   JsonResult,
   MoveBlockArgs,
-  MoveBlockResponse,
 } from "./codeBlocks/types";
-import { MoveCommand, UpdateMessage } from "./messages";
+import { UpdateMessage } from "./messages";
+
+export async function installLanguage(
+  codeBlocksCliPath: string,
+  args: InstallLanguageArgs
+): Promise<InstallLanguageResponse | undefined> {
+  console.log(`Install language args: ${JSON.stringify(args)}`);
+
+  const response: Exclude<
+    JsonResult<InstallLanguageResponse>,
+    { status: "progress" }
+  > = await vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      cancellable: false,
+      title: `Installing ${args.libraryName}`,
+    },
+    async (progress) => {
+      const response = await codeBlocksCliClient.installLanguage(
+        codeBlocksCliPath,
+        args,
+        (installationProgress) => {
+          progress.report({
+            increment: 5,
+            message: installationProgress,
+          });
+        }
+      );
+
+      return response;
+    }
+  );
+
+  switch (response.status) {
+    case "ok":
+      return response.result;
+
+    case "error":
+      await vscode.window.showErrorMessage(`Failed to install language: ${response.result}`);
+      break;
+  }
+}
 
 export async function drawBlocks(
   codeBlocksCliPath: string,
   webview: vscode.Webview,
-  document: vscode.TextDocument,
-  docLang: Dynamic,
-  queries: string[]
+  args: GetSubtreesArgs
 ): Promise<void> {
-  const text = document.getText();
-  const getSubtreeArgs: GetSubtreesArgs = {
-    text: text,
-    queries: queries,
-    language: docLang,
-  };
+  console.log(`Get subtrees args: ${JSON.stringify(args)}`);
 
-  console.log(`Get subtrees args: ${JSON.stringify(getSubtreeArgs.language)}`);
-
-  let response: JsonResult<GetSubtreesResponse>;
-
-  try {
-    if (fs.existsSync(docLang.dynamic.installDir)) {
-      response = await codeBlocksCliClient.getSubtrees(codeBlocksCliPath, getSubtreeArgs);
-    } else {
-      response = await vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          cancellable: false,
-          title: `Installing ${docLang.dynamic.name}`,
-        },
-        async () => await codeBlocksCliClient.getSubtrees(codeBlocksCliPath, getSubtreeArgs)
-      );
-    }
-  } catch (error) {
-    await vscode.window.showErrorMessage(`Failed to get blocks: ${JSON.stringify(error)}`);
-    return;
-  }
+  const response = await codeBlocksCliClient.getSubtrees(codeBlocksCliPath, args);
 
   switch (response.status) {
     case "ok":
       await webview.postMessage({
         type: "update",
-        text: text,
+        text: args.text,
         blockTrees: response.result,
       } as UpdateMessage);
       break;
@@ -63,39 +75,11 @@ export async function drawBlocks(
 }
 
 export async function moveBlock(
-  msg: MoveCommand,
   codeBlocksCliPath: string,
   document: vscode.TextDocument,
-  docLang: Dynamic,
-  queries: string[]
+  moveArgs: MoveBlockArgs
 ): Promise<void> {
-  const moveArgs: MoveBlockArgs = {
-    text: document.getText(),
-    srcBlock: msg.args.src,
-    dstBlock: msg.args.dst,
-    queries: queries,
-    language: docLang,
-  };
-
-  let response: JsonResult<MoveBlockResponse>;
-
-  try {
-    if (fs.existsSync(docLang.dynamic.installDir)) {
-      response = await codeBlocksCliClient.moveBlock(codeBlocksCliPath, moveArgs);
-    } else {
-      response = await vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          cancellable: false,
-          title: `Installing ${docLang.dynamic.name}`,
-        },
-        async () => await codeBlocksCliClient.moveBlock(codeBlocksCliPath, moveArgs)
-      );
-    }
-  } catch (error) {
-    await vscode.window.showErrorMessage(`Failed to move block: ${JSON.stringify(error)}`);
-    return;
-  }
+  const response = await codeBlocksCliClient.moveBlock(codeBlocksCliPath, moveArgs);
 
   switch (response.status) {
     case "ok": {

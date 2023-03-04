@@ -12,10 +12,21 @@ export type BlockLocationTree = {
   children: BlockLocationTree[];
 };
 
+export type InstallLanguageArgs = {
+  downloadCmd: string;
+  libraryName: string;
+  installDir: string;
+};
+
+export type InstallLanguageProgress = "Downloading" | "Patching" | "Compiling";
+
+export type InstallLanguageResponse = string;
+
 export type GetSubtreesArgs = {
   queries: string[];
   text: string;
-  language: Dynamic;
+  libraryPath: string;
+  languageFnSymbol: string;
 };
 
 export type GetSubtreesResponse = BlockLocationTree[];
@@ -23,14 +34,19 @@ export type GetSubtreesResponse = BlockLocationTree[];
 export type MoveBlockArgs = {
   queries: string[];
   text: string;
-  language: Dynamic;
+  libraryPath: string;
+  languageFnSymbol: string;
   srcBlock: BlockLocation;
   dstBlock: BlockLocation;
 };
 
 export type MoveBlockResponse = string;
 
-export type MethodCall =
+export type CliRequest =
+  | {
+      method: "installLanguage";
+      params: InstallLanguageArgs;
+    }
   | {
       method: "getSubtrees";
       params: GetSubtreesArgs;
@@ -40,29 +56,18 @@ export type MethodCall =
       params: MoveBlockArgs;
     };
 
+export type CliResponse = InstallLanguageResponse | GetSubtreesResponse | MoveBlockResponse;
+
 export type JsonResult<T> =
   | {
       status: "ok";
       result: T;
     }
   | {
+      status: "progress";
+      result: string;
+    }
+  | {
       status: "error";
       result: string;
     };
-
-export type Dynamic = {
-  dynamic: {
-    downloadCmd: string;
-    symbol: string;
-    name: string;
-    installDir: string;
-  };
-};
-
-export type ParserInstaller = {
-  downloadCmd: string;
-  symbol: string;
-  name: string;
-};
-
-export type Query = string;
