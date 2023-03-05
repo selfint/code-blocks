@@ -1,6 +1,8 @@
-import { Component, createSignal, Show } from "solid-js";
+import { Component, createSignal, For, Show } from "solid-js";
 import "./App.css";
 import { UpdateMessage, MoveCommand } from "./messages";
+import TextSlice from "./TextSlice";
+import Tree from "./Tree";
 import { BlockLocationTree, BlockLocation } from "./types";
 import { vscode } from "./utilities/vscode";
 
@@ -10,10 +12,11 @@ type State = {
 };
 
 const App: Component = () => {
-  let [getSelectedBlock, setSelectedBlock] = createSignal<BlockLocation | undefined>();
-  let [getState, setState] = createSignal<State | undefined>();
+  let [selectedBlock, setSelectedBlock] = createSignal<BlockLocation | undefined>();
+  let [state, setState] = createSignal<State | undefined>();
 
   window.addEventListener("message", (message: MessageEvent<UpdateMessage>) => {
+    console.log(message);
     setState({
       text: message.data.text,
       blockTrees: message.data.blockTrees,
@@ -21,17 +24,17 @@ const App: Component = () => {
   });
 
   function handleBlockClicked(block: BlockLocation): void {
-    const selectedBlock = getSelectedBlock();
+    const _selectedBlock = selectedBlock();
 
-    if (selectedBlock === undefined) {
+    if (_selectedBlock === undefined) {
       setSelectedBlock(block);
-    } else if (selectedBlock === block) {
+    } else if (_selectedBlock === block) {
       setSelectedBlock(undefined);
     } else {
       const moveCommand: MoveCommand = {
         command: "move",
         args: {
-          src: selectedBlock,
+          src: _selectedBlock,
           dst: block,
         },
       };
@@ -54,15 +57,31 @@ const App: Component = () => {
         )}{/if}{/each}{text.substring(blockTrees.at(-1).block.endByte, text.length)}
   */
 
-  const state = getState();
-  const { text, blockTrees } = state ?? { text: undefined, blockTrees: undefined };
-
   return (
     <main>
-      <Show when={state !== undefined} fallback={<div>No blocks available.</div>}>
-        <h1>Hello world!</h1>
-        <div>{text!.substring(0, blockTrees![0].block.startByte)}</div>
-        <span class="code-block"></span>
+      <Show when={state() !== undefined} fallback={<div>No blocks available.</div>}>
+        <TextSlice text={state()!.text.substring(0, state()!.blockTrees[0].block.startByte)} />
+        <For each={state()!.blockTrees}>
+          {(tree, i) => (
+            <>
+              <Tree
+                text={state()!.text}
+                tree={tree}
+                onClick={handleBlockClicked}
+                parentSelected={false}
+                selectedBlock={selectedBlock()}
+              />
+              <Show when={i() !== state()!.blockTrees.length - 1}>
+                <TextSlice
+                  text={state()!.text.substring(
+                    tree.block.endByte,
+                    state()!.blockTrees[i() + 1].block.startByte
+                  )}
+                />
+              </Show>
+            </>
+          )}
+        </For>
       </Show>
     </main>
   );
