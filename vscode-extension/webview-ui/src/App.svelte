@@ -1,5 +1,6 @@
 <script lang="ts">
   import Tree from "./Tree.svelte";
+  import Text from "./Text.svelte";
   import type { BlockLocation, BlockLocationTree } from "./types";
   import type { MoveCommand, UpdateMessage } from "./messages";
   import { vscode } from "./utilities/vscode";
@@ -36,28 +37,14 @@
 {#if blockTrees === undefined}
   <div>No blocks available.</div>
 {:else}
-  <span class="code-block">
-    {text.substring(0, blockTrees[0].block.startByte)}{#each blockTrees as tree, i}<Tree
-        {text}
-        {tree}
-        onClick={handleBlockClicked}
-        {selectedBlock}
-        parentSelected={false}
-      />{#if i !== blockTrees.length - 1}{text.substring(
-          tree.block.endByte,
-          blockTrees[i + 1].block.startByte
-        )}{/if}{/each}{text.substring(blockTrees.at(-1).block.endByte, text.length)}
+  <span>
+    <Text text={text.substring(0, blockTrees[0].block.startByte)} />
+    {#each blockTrees as tree, i}
+      <Tree {text} {tree} onClick={handleBlockClicked} {selectedBlock} parentSelected={false} />
+      {#if i !== blockTrees.length - 1}
+        <Text text={text.substring(tree.block.endByte, blockTrees[i + 1].block.startByte)} />
+      {/if}
+    {/each}
+    <Text text={text.substring(blockTrees.at(-1).block.endByte, text.length)} />
   </span>
 {/if}
-
-<style>
-  :global(.code-block) {
-    font-family: var(--vscode-editor-font-family);
-    font-size: var(--vscode-editor-font-size);
-    font-weight: var(--vscode-editor-font-weight);
-    outline-color: var(--vscode-editorIndentGuide-background);
-    outline-style: solid;
-    outline-width: 1px;
-    white-space: pre-wrap;
-  }
-</style>

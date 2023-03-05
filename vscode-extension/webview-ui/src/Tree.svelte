@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Text from "./Text.svelte";
   import type { BlockLocation, BlockLocationTree } from "./types";
 
   export let text: string;
@@ -18,24 +19,20 @@
 </script>
 
 <span
-  class="code-block"
   style="color: {foregroundColor}; background-color: {backgroundColor}"
   on:click|stopPropagation|preventDefault={() => onClick(tree.block)}
   on:keypress|stopPropagation|preventDefault={() => onClick(tree.block)}
-  >{#if tree.children.length !== 0}{text.substring(
-      tree.block.startByte,
-      tree.children[0].block.startByte
-    )}{#each tree.children as childTree, i}<svelte:self
-        {text}
-        tree={childTree}
-        {onClick}
-        {selectedBlock}
-        parentSelected={isSelected}
-      />{#if i !== tree.children.length - 1}{text.substring(
-          tree.children[i].block.endByte,
-          tree.children[i + 1].block.startByte
-        )}{/if}{/each}{text.substring(
-      tree.children.at(-1).block.endByte,
-      tree.block.endByte
-    )}{:else}{text.substring(tree.block.startByte, tree.block.endByte)}{/if}</span
 >
+  {#if tree.children.length !== 0}
+    <Text text={text.substring(tree.block.startByte, tree.children[0].block.startByte)} />
+    {#each tree.children as childTree, i}
+      <svelte:self {text} tree={childTree} {onClick} {selectedBlock} parentSelected={isSelected} />
+      {#if i !== tree.children.length - 1}
+        <Text text={text.substring(tree.children[i].block.endByte, tree.children[i + 1].block.startByte)} />
+      {/if}
+    {/each}
+    <Text text={text.substring(tree.children.at(-1).block.endByte, tree.block.endByte)} />
+  {:else}
+    <Text text={text.substring(tree.block.startByte, tree.block.endByte)} />
+  {/if}
+</span>
