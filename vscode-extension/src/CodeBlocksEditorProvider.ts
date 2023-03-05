@@ -1,4 +1,5 @@
 import * as core from "./core";
+import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 import { CodeBlocksEditor } from "./CodeBlocksEditor";
@@ -62,13 +63,25 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
       return;
     }
 
-    const libraryPath = await core.installLanguage(codeBlocksCliPath, {
+    const installDir = path.join(this.extensionParsersDirPath, languageSupport.parserInstaller.libraryName);
+    let libraryPath = await core.installLanguage(codeBlocksCliPath, {
       ...languageSupport.parserInstaller,
-      installDir: path.join(this.extensionParsersDirPath, languageSupport.parserInstaller.libraryName),
+      installDir: installDir,
     });
-    if (libraryPath === undefined) {
-      await vscode.window.showErrorMessage("Parser not installed");
-      return;
+
+    while (libraryPath === undefined) {
+      const choice = await vscode.window.showErrorMessage("Parser installation failed", "Reinstall", "Ok");
+      if (choice === "Ok") {
+        return;
+      }
+
+      if (fs.existsSync(installDir)) {
+        fs.rmdirSync(installDir, { recursive: true });
+      }
+      libraryPath = await core.installLanguage(codeBlocksCliPath, {
+        ...languageSupport.parserInstaller,
+        installDir: installDir,
+      });
     }
 
     new CodeBlocksEditor(
