@@ -1,5 +1,3 @@
-/// <reference types="svelte" />
-
 export type BlockLocation = {
   startByte: number;
   endByte: number;

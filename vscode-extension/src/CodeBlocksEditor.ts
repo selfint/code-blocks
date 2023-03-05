@@ -51,8 +51,8 @@ export class CodeBlocksEditor {
     const webview = this.webviewPanel.webview;
     const extensionUri = this.context.extensionUri;
 
-    const stylesUri = getUri(webview, extensionUri, ["webview-ui", "public", "build", "bundle.css"]);
-    const scriptUri = getUri(webview, extensionUri, ["webview-ui", "public", "build", "bundle.js"]);
+    const stylesUri = getUri(webview, extensionUri, ["webview-ui", "build", "assets", "index.css"]);
+    const scriptUri = getUri(webview, extensionUri, ["webview-ui", "build", "assets", "index.js"]);
 
     const nonce = getNonce();
 
@@ -71,9 +71,10 @@ export class CodeBlocksEditor {
             webview.cspSource
           }; script-src 'nonce-${nonce}';">
           <link rel="stylesheet" type="text/css" href="${stylesUri.toString()}">
-          <script defer nonce="${nonce}" src="${scriptUri.toString()}"></script>
         </head>
         <body>
+          <div id="root"></div>
+          <script type="module" nonce="${nonce}" src="${scriptUri.toString()}"></script>
         </body>
       </html>
     `;
