@@ -8,12 +8,10 @@
   let blockTrees: BlockLocationTree[] | undefined = undefined;
   let selectedBlock: BlockLocation | undefined = undefined;
 
-  function handleMessage(message: MessageEvent<UpdateMessage>) {
+  window.addEventListener("message", (message: MessageEvent<UpdateMessage>) => {
     text = message.data.text;
     blockTrees = message.data.blockTrees;
-  }
-
-  window.addEventListener("message", handleMessage);
+  });
 
   function handleBlockClicked(block: BlockLocation): void {
     if (selectedBlock === undefined) {
@@ -33,50 +31,33 @@
       selectedBlock = undefined;
     }
   }
-
-  const sliceLengthLimit = 500;
-  function textSlice(start: number, end: number): string {
-    if (end - start < sliceLengthLimit) {
-      return text.substring(start, end);
-    } else {
-      return (
-        text.substring(start, start + (sliceLengthLimit * 3) / 4) +
-        "..." +
-        text.substring(end - sliceLengthLimit / 4, end)
-      );
-    }
-  }
 </script>
 
-{#if blockTrees === undefined || blockTrees.length === 0}
+{#if blockTrees === undefined}
   <div>No blocks available.</div>
 {:else}
-  <div class="block">
-    {text.substring(0, blockTrees[0].block.startByte)}
-    {#each blockTrees as tree, i}
-      <Tree {text} {tree} onClick={handleBlockClicked} {selectedBlock} />
-      {#if i !== blockTrees.length - 1}
-        <div>
-          {textSlice(tree.block.endByte, blockTrees[i + 1].block.startByte)}
-        </div>
-      {/if}
-    {/each}
-    {text.substring(blockTrees.at(-1).block.endByte, text.length)}
-  </div>
+  <span class="code-block">
+    {text.substring(0, blockTrees[0].block.startByte)}{#each blockTrees as tree, i}<Tree
+        {text}
+        {tree}
+        onClick={handleBlockClicked}
+        {selectedBlock}
+        parentSelected={false}
+      />{#if i !== blockTrees.length - 1}{text.substring(
+          tree.block.endByte,
+          blockTrees[i + 1].block.startByte
+        )}{/if}{/each}{text.substring(blockTrees.at(-1).block.endByte, text.length)}
+  </span>
 {/if}
 
 <style>
-  :global(.block) {
-    border-color: var(--vscode-editorIndentGuide-background);
-    border-style: solid;
-    border-width: 1px;
-    font-family: var(--vscode-font-family);
-    font-size: var(--vscode-font-size);
-    font-weight: var(--vscode-font-weight);
-    margin-top: 5px;
-    margin-left: 5px;
-    margin-bottom: 5px;
-    padding: 5px;
-    text-align: left;
+  :global(.code-block) {
+    font-family: var(--vscode-editor-font-family);
+    font-size: var(--vscode-editor-font-size);
+    font-weight: var(--vscode-editor-font-weight);
+    outline-color: var(--vscode-editorIndentGuide-background);
+    outline-style: solid;
+    outline-width: 1px;
+    white-space: pre-wrap;
   }
 </style>
