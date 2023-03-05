@@ -12,6 +12,7 @@
   window.addEventListener("message", (message: MessageEvent<UpdateMessage>) => {
     text = message.data.text;
     blockTrees = message.data.blockTrees;
+    selectedBlock = undefined;
   });
 
   function handleBlockClicked(block: BlockLocation): void {
