@@ -17,7 +17,7 @@ export function textSlice(
   }
 
   if (removeTrailingNewLine) {
-    slice = slice.trim();
+    slice = slice;
   } else {
     slice = slice;
   }

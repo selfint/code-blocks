@@ -41,15 +41,22 @@
 {#if blockTrees === undefined}
   <div>No blocks available.</div>
 {:else}
-  <div class="block">
-    {textSlice(0, blockTrees[0].block.startByte, text, sliceLengthLimit, true, 0)}
-    {#each blockTrees as tree, i}
+  <span class="block"
+    >{textSlice(
+      0,
+      blockTrees[0].block.startByte,
+      text,
+      sliceLengthLimit,
+      true,
+      0
+    )}{#each blockTrees as tree, i}
       <Tree
         {text}
         {tree}
         onClick={handleBlockClicked}
         {selectedBlock}
         {sliceLengthLimit}
+        parentSelected={false}
       />{#if i !== blockTrees.length - 1}{textSlice(
           tree.block.endByte,
           blockTrees[i + 1].block.startByte,
@@ -57,26 +64,27 @@
           sliceLengthLimit,
           true,
           tree.block.startCol
-        )}{/if}
-    {/each}
-    {textSlice(blockTrees.at(-1).block.endByte, text.length, text, sliceLengthLimit, true, 0)}
-  </div>
+        )}{/if}{/each}{textSlice(
+      blockTrees.at(-1).block.endByte,
+      text.length,
+      text,
+      sliceLengthLimit,
+      true,
+      0
+    )}</span
+  >
 {/if}
 
 <style>
   :global(.block) {
-    border-color: var(--vscode-editorIndentGuide-background);
-    border-style: solid;
-    border-width: 1px;
     white-space: pre-wrap;
+    display: inline;
+    outline-color: var(--vscode-editorIndentGuide-background);
+    outline-style: solid;
+    outline-width: 1px;
     /* font-family: var(--vscode-font-family); */
     font-family: monospace, monospace;
     font-size: var(--vscode-font-size);
     font-weight: var(--vscode-font-weight);
-    margin-top: 5px;
-    margin-left: 5px;
-    margin-bottom: 5px;
-    padding: 5px;
-    text-align: left;
   }
 </style>
