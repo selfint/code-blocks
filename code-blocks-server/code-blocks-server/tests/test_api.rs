@@ -1,3 +1,5 @@
+use anyhow::ensure;
+use anyhow::Result;
 use code_blocks::get_query_subtrees;
 use code_blocks::Block;
 use code_blocks::BlockTree;
@@ -13,6 +15,7 @@ enum TestLanguage {
     Rust,
     TypeScript,
     Python,
+    Tsx,
 }
 
 impl TestLanguage {
@@ -21,6 +24,7 @@ impl TestLanguage {
             TestLanguage::Rust => tree_sitter_rust::language(),
             TestLanguage::TypeScript => tree_sitter_typescript::language_typescript(),
             TestLanguage::Python => tree_sitter_python::language(),
+            TestLanguage::Tsx => tree_sitter_typescript::language_tsx(),
         }
     }
 }
@@ -46,7 +50,7 @@ fn copy_target_item<'tree>(
     })?;
 
     for tree in trees {
-        if tree.block.tail().unwrap().start_position() == pos {
+        if tree.block.tail().start_position() == pos {
             return Some(tree.block.clone());
         }
         if let Some(node) = copy_target_item(ident, text, &tree.children, lang) {
@@ -155,6 +159,14 @@ fn get_query_strings(lang: &TestLanguage) -> Vec<String> {
             "(function_definition) @item".to_string(),
             "(decorated_definition) @item".to_string(),
         ],
+        TestLanguage::Tsx => vec![
+            "( (comment)* @header . (class_declaration) @item)".to_string(),
+            "( (comment)* @header . (method_definition) @item)".to_string(),
+            "( (comment)* @header . (function_declaration) @item)".to_string(),
+            "( (comment)* @header . (export_statement) @item)".to_string(),
+            "(jsx_element) @item".to_string(),
+            "(jsx_self_closing_element) @item".to_string(),
+        ],
     }
 }
 
@@ -246,7 +258,7 @@ export default function baz2() {}
 }
 
 macro_rules! check {
-    ($lang:expr, $text:literal) => {
+    (language: $lang:expr, check with: $check_fn:expr, force: $force:literal, $text:literal) => {
         let lang = $lang;
         let mut parser = Parser::new();
         parser.set_language(lang.get_language()).unwrap();
@@ -266,26 +278,43 @@ macro_rules! check {
                 language: lang.get_language(),
                 src_block: src_block.into(),
                 dst_block: dst_block.into(),
+                assert_move_legal_fn: $check_fn,
+                force: $force,
             })
             .unwrap());
         } else if let Some(fail_block) = fail_block {
-            insta::assert_display_snapshot!(code_blocks_server::move_block(MoveBlockArgs {
+            insta::assert_debug_snapshot!(code_blocks_server::move_block(MoveBlockArgs {
                 queries: get_query_strings(&lang),
                 text: $text.to_string(),
                 language: lang.get_language(),
                 src_block: src_block.into(),
                 dst_block: fail_block.into(),
-            },)
+                assert_move_legal_fn: $check_fn,
+                force: $force,
+            })
             .err()
             .unwrap());
+        } else {
+            unreachable!("No dst/fail block");
         }
     };
+}
+
+fn check_fn(s: &Block, d: &Block) -> Result<()> {
+    ensure!(
+        s.head().parent() == d.head().parent(),
+        "Blocks have different parents"
+    );
+
+    Ok(())
 }
 
 #[test]
 fn test_move_item_rs() {
     check!(
-        TestLanguage::Rust,
+        language: TestLanguage::Rust,
+        check with: Some(check_fn),
+        force: false,
         r#"
     fn foo() {
  /* ^src */
@@ -300,7 +329,9 @@ fn test_move_item_rs() {
     );
 
     check!(
-        TestLanguage::Rust,
+        language: TestLanguage::Rust,
+        check with: Some(check_fn),
+        force: false,
         r#"
 mod m {
     fn foo() {
@@ -319,7 +350,9 @@ fn baz() {}
     );
 
     check!(
-        TestLanguage::Rust,
+        language: TestLanguage::Rust,
+        check with: Some(check_fn),
+        force: false,
         r#"
 mod m {
     fn foo() {}
@@ -333,7 +366,9 @@ fn baz() {}
     );
 
     check!(
-        TestLanguage::Rust,
+        language: TestLanguage::Rust,
+        check with: Some(check_fn),
+        force: false,
         r#"
     mod m {
         fn foo() {}
@@ -346,7 +381,9 @@ fn baz() {}
     );
 
     check!(
-        TestLanguage::Rust,
+        language: TestLanguage::Rust,
+        check with: Some(check_fn),
+        force: false,
         r#"
     mod m {
 /*  ^fail */
@@ -359,7 +396,9 @@ fn baz() {}
     );
 
     check!(
-        TestLanguage::Rust,
+        language: TestLanguage::Rust,
+        check with: Some(check_fn),
+        force: false,
         r#"
     fn foo() {}
  /* ^dst */
@@ -372,7 +411,9 @@ fn baz() {}
     );
 
     check!(
-        TestLanguage::Rust,
+        language: TestLanguage::Rust,
+        check with: Some(check_fn),
+        force: false,
         r#"
     mod m1 {
 /*  ^src */
@@ -391,7 +432,9 @@ fn baz() {}
     );
 
     check!(
-        TestLanguage::Rust,
+        language: TestLanguage::Rust,
+        check with: Some(check_fn),
+        force: false,
         r#"
     mod m1 {
 /*  ^dst */
@@ -410,7 +453,9 @@ fn baz() {}
     );
 
     check!(
-        TestLanguage::Rust,
+        language: TestLanguage::Rust,
+        check with: Some(check_fn),
+        force: false,
         r#"
     mod m1 {
         fn foo() {}
@@ -429,7 +474,9 @@ fn baz() {}
     );
 
     check!(
-        TestLanguage::Rust,
+        language: TestLanguage::Rust,
+        check with: Some(check_fn),
+        force: false,
         r#"
     mod m1 {
 /*  ^dst */
@@ -455,7 +502,9 @@ fn baz() {}
 #[test]
 fn test_move_item_ts() {
     check!(
-        TestLanguage::TypeScript,
+        language: TestLanguage::TypeScript,
+        check with: Some(check_fn),
+        force: false,
         r#"
 class TsClass {
     constructor() {}
@@ -475,7 +524,9 @@ function baz() {}
     );
 
     check!(
-        TestLanguage::TypeScript,
+        language: TestLanguage::TypeScript,
+        check with: Some(check_fn),
+        force: false,
         r#"
 class TsClass {
     constructor() {}
@@ -497,7 +548,9 @@ function baz() {}
     );
 
     check!(
-        TestLanguage::TypeScript,
+        language: TestLanguage::TypeScript,
+        check with: Some(check_fn),
+        force: false,
         r#"
     class TsClass {
         constructor() {}
@@ -519,7 +572,9 @@ function baz() {}
     );
 
     check!(
-        TestLanguage::TypeScript,
+        language: TestLanguage::TypeScript,
+        check with: Some(check_fn),
+        force: false,
         r#"
     /**
     * class docs
@@ -541,7 +596,9 @@ function baz() {}
     );
 
     check!(
-        TestLanguage::TypeScript,
+        language: TestLanguage::TypeScript,
+        check with: Some(check_fn),
+        force: false,
         r#"
     /**
     * class docs
@@ -570,7 +627,9 @@ function baz() {}
 #[test]
 fn test_move_item_python() {
     check!(
-        TestLanguage::Python,
+        language: TestLanguage::Python,
+        check with: Some(check_fn),
+        force: false,
         r#"
         #Vsrc
         @decor1
@@ -598,7 +657,9 @@ fn test_move_item_python() {
     );
 
     check!(
-        TestLanguage::Python,
+        language: TestLanguage::Python,
+        check with: Some(check_fn),
+        force: false,
         r#"
         #Vsrc
         @decor1
@@ -626,7 +687,9 @@ fn test_move_item_python() {
     );
 
     check!(
-        TestLanguage::Python,
+        language: TestLanguage::Python,
+        check with: Some(check_fn),
+        force: false,
         r#"
         @decor1
         @decor2
@@ -654,7 +717,9 @@ fn test_move_item_python() {
     );
 
     check!(
-        TestLanguage::Python,
+        language: TestLanguage::Python,
+        check with: Some(check_fn),
+        force: false,
         r#"
         @decor1
         @decor2
@@ -682,7 +747,9 @@ fn test_move_item_python() {
     );
 
     check!(
-        TestLanguage::Python,
+        language: TestLanguage::Python,
+        check with: Some(check_fn),
+        force: false,
         r#"
         @decor1
         @decor2
@@ -707,5 +774,77 @@ fn test_move_item_python() {
         def func():
             ...
 "#
+    );
+}
+
+#[test]
+fn test_move_item_tsx() {
+    check!(
+        language: TestLanguage::Tsx,
+        check with: Some(check_fn),
+        force: false,
+        r#"
+    export default function App() {
+      return (
+          <div>
+            <button className="card" onClick={readFile}>
+        {/* ^src */}
+              Choose file
+            </button>
+            <button className="card" onClick={() => writeFile(filePath, content)}>
+        {/* ^dst */}
+              Write file
+            </button>
+          </div>
+      );
+    }
+    "#
+    );
+
+    check!(
+        language: TestLanguage::Tsx,
+        check with: Some(check_fn),
+        force: false,
+        r#"
+    export default function App() {
+      return (
+          <div>
+      {/* ^fail */}
+            <button className="card" onClick={readFile}>
+        {/* ^src */}
+              Choose file
+            </button>
+            <button className="card" onClick={() => writeFile(filePath, content)}>
+              Write file
+            </button>
+          </div>
+      );
+    }
+    "#
+    );
+}
+
+#[test]
+fn test_move_item_force() {
+    check!(
+        language: TestLanguage::Tsx,
+        check with: Some(check_fn),
+        force: true,
+        r#"
+    export default function App() {
+      return (
+          <div>
+      {/* ^dst */}
+            <button className="card" onClick={readFile}>
+        {/* ^src */}
+              Choose file
+            </button>
+            <button className="card" onClick={() => writeFile(filePath, content)}>
+              Write file
+            </button>
+          </div>
+      );
+    }
+    "#
     );
 }

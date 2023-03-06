@@ -1,5 +1,8 @@
 ---
 source: code-blocks-server/tests/test_api.rs
-expression: "code_blocks_server::move_block(MoveBlockArgs {\n                queries: get_query_strings(SupportedLanguage::Rust),\n                text: r#\"\n    mod m1 {\n        fn foo() {}\n    }\n\n    mod m2 {\n        fn bar() {}\n    /*  ^fail */\n    }\n\n    mod m3 {\n/*  ^src */\n        fn baz() {}\n    }\n\"#.to_string(),\n                language: SupportedLanguage::Rust,\n                src_block: src_block.into(),\n                dst_block: fail_block.into(),\n            }).err().unwrap()"
+expression: "code_blocks_server::move_block(MoveBlockArgs {\n                queries: get_query_strings(&lang),\n                text: r#\"\n    mod m1 {\n        fn foo() {}\n    }\n\n    mod m2 {\n        fn bar() {}\n    /*  ^fail */\n    }\n\n    mod m3 {\n/*  ^src */\n        fn baz() {}\n    }\n\"#.to_string(),\n                language: lang.get_language(),\n                src_block: src_block.into(),\n                dst_block: fail_block.into(),\n                assert_move_legal_fn: Some(check_fn),\n                force: false,\n            }).err().unwrap()"
 ---
-Can't move items to different scopes
+Error {
+    context: "Illegal move operation",
+    source: "Blocks have different parents",
+}
