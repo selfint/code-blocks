@@ -1,3 +1,4 @@
+use anyhow::{ensure, Result};
 use code_blocks::{get_query_subtrees, Block, BlockTree};
 
 use tree_sitter::{Parser, Point, Query, Tree};
@@ -14,7 +15,7 @@ const PYTHON_QUERY_STRINGS: [&str; 3] = [
     "(decorated_definition) @item",
 ];
 
-fn tsx_queries() -> [Query; 3] {
+fn python_queries() -> [Query; 3] {
     PYTHON_QUERY_STRINGS.map(|q| Query::new(tree_sitter_python::language(), q).unwrap())
 }
 
@@ -47,10 +48,10 @@ fn test_get_query_subtrees() {
 "#;
 
     let tree = build_tree(text);
-    let subtrees = get_query_subtrees(&tsx_queries(), &tree, text);
+    let subtrees = get_query_subtrees(&python_queries(), &tree, text);
 
     fn get_tree_blocks(subtree: &BlockTree, blocks: &mut Vec<String>, text: &str) {
-        blocks.push(text[subtree.block.byte_range().unwrap()].to_string());
+        blocks.push(text[subtree.block.byte_range()].to_string());
         for child in &subtree.children {
             get_tree_blocks(child, blocks, text);
         }
@@ -75,7 +76,7 @@ fn copy_item_below<'tree>(
         .find_map(|(row, line)| line.find(ident).map(|col| Point::new(row + 1, col - 1)))?;
 
     for tree in trees {
-        if tree.block.tail().unwrap().start_position() == pos {
+        if tree.block.tail().start_position() == pos {
             return Some(tree.block.clone());
         }
 
@@ -88,30 +89,42 @@ fn copy_item_below<'tree>(
 }
 
 macro_rules! check {
-    ($text:literal) => {
+    (check: $check_fn:expr, force: $force:literal, $text:literal) => {
         let tree = build_tree($text);
 
-        let items = get_query_subtrees(&tsx_queries(), &tree, $text);
+        let items = get_query_subtrees(&python_queries(), &tree, $text);
         let src_block = copy_item_below("Vsrc", $text, &items).unwrap();
         let dst_item = copy_item_below("Vdst", $text, &items);
         let fail_item = copy_item_below("Vfail", $text, &items);
 
         if let Some(dst_item) = dst_item {
-            insta::assert_display_snapshot!(
-                code_blocks::move_block(src_block, dst_item, $text).unwrap()
-            );
+            insta::assert_display_snapshot!(code_blocks::move_block(
+                src_block, dst_item, $text, $check_fn, $force
+            )
+            .unwrap());
         } else if let Some(fail_item) = fail_item {
-            let result = code_blocks::move_block(src_block, fail_item, $text);
+            let result = code_blocks::move_block(src_block, fail_item, $text, $check_fn, $force);
             assert!(result.is_err());
 
-            insta::assert_display_snapshot!(format!("{}\n\n{}", $text, result.err().unwrap()));
+            insta::assert_display_snapshot!(format!("{}\n\n{:?}", $text, result.err().unwrap()));
         }
     };
+}
+
+fn check_fn(s: &Block, d: &Block) -> Result<()> {
+    ensure!(
+        s.head().parent() == d.head().parent(),
+        "Blocks have different parents"
+    );
+
+    Ok(())
 }
 
 #[test]
 fn test_move_block() {
     check!(
+        check: Some(check_fn),
+        force: false,
         r#"
         #Vsrc
         @decor1
@@ -139,6 +152,8 @@ fn test_move_block() {
     );
 
     check!(
+        check: Some(check_fn),
+        force: false,
         r#"
         #Vsrc
         @decor1
@@ -166,6 +181,8 @@ fn test_move_block() {
     );
 
     check!(
+        check: Some(check_fn),
+        force: false,
         r#"
         @decor1
         @decor2
@@ -193,6 +210,8 @@ fn test_move_block() {
     );
 
     check!(
+        check: Some(check_fn),
+        force: false,
         r#"
         @decor1
         @decor2
@@ -220,6 +239,8 @@ fn test_move_block() {
     );
 
     check!(
+        check: Some(check_fn),
+        force: false,
         r#"
         @decor1
         @decor2

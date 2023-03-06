@@ -1,6 +1,6 @@
 ---
 source: code-blocks-server/tests/test_api.rs
-expression: "get_subtrees(GetSubtreesArgs {\n        queries: get_query_strings(SupportedLanguage::Rust),\n        language: SupportedLanguage::Rust,\n        text: r#\"\nmod m {\n    fn foo() {}\n    fn baz() {}\n}\n\n#[cfg(test)]\nmod m {\n    /// comment 1\n    #[test]\n    fn foo() {}\n\n    #[test]\n    #[ignore]\n    /// comment 2\n    fn baz() {}\n}\n            \"#.to_string(),\n    })"
+expression: "get_subtrees(GetSubtreesArgs {\n        queries: get_query_strings(&TestLanguage::Rust),\n        language: TestLanguage::Rust.get_language(),\n        text: r#\"\nmod m {\n    fn foo() {}\n    fn baz() {}\n}\n\n#[cfg(test)]\nmod m {\n    /// comment 1\n    #[test]\n    fn foo() {}\n\n    #[test]\n    #[ignore]\n    /// comment 2\n    fn baz() {}\n}\n            \"#.to_string(),\n    })"
 ---
 Ok(
     [

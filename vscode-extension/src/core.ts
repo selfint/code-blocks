@@ -4,7 +4,6 @@ import {
   GetSubtreesArgs,
   InstallLanguageArgs,
   InstallLanguageResponse,
-  JsonResult,
   MoveBlockArgs,
 } from "./codeBlocks/types";
 import { UpdateMessage } from "./messages";
@@ -15,29 +14,19 @@ export async function installLanguage(
 ): Promise<InstallLanguageResponse | undefined> {
   console.log(`Install language args: ${JSON.stringify(args)}`);
 
-  const response: Exclude<
-    JsonResult<InstallLanguageResponse>,
-    { status: "progress" }
-  > = await vscode.window.withProgress(
+  const response = await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
       cancellable: false,
       title: `Installing ${args.libraryName}`,
     },
-    async (progress) => {
-      const response = await codeBlocksCliClient.installLanguage(
-        codeBlocksCliPath,
-        args,
-        (installationProgress) => {
-          progress.report({
-            increment: 5,
-            message: installationProgress,
-          });
-        }
-      );
-
-      return response;
-    }
+    async (progress) =>
+      await codeBlocksCliClient.installLanguage(codeBlocksCliPath, args, (installationProgress) =>
+        progress.report({
+          increment: 5,
+          message: installationProgress,
+        })
+      )
   );
 
   switch (response.status) {
@@ -80,6 +69,8 @@ export async function moveBlock(
   moveArgs: MoveBlockArgs
 ): Promise<void> {
   const response = await codeBlocksCliClient.moveBlock(codeBlocksCliPath, moveArgs);
+  const differentScopeErrorMsg =
+    "Illegal move operation\n\nCaused by:\n    Can't move block to different scope";
 
   switch (response.status) {
     case "ok": {
@@ -93,7 +84,21 @@ export async function moveBlock(
     }
 
     case "error": {
-      await vscode.window.showErrorMessage(`Failed to move block: ${response.result}`);
+      const options: "Try force"[] = [];
+      if (response.result === differentScopeErrorMsg && !moveArgs.force) {
+        options.push("Try force");
+      }
+
+      const choice = await vscode.window.showErrorMessage(
+        `Failed to move block: ${response.result}`,
+        ...options
+      );
+
+      if (choice === "Try force") {
+        moveArgs.force = true;
+        await moveBlock(codeBlocksCliPath, document, moveArgs);
+      }
+
       break;
     }
   }

@@ -38,6 +38,7 @@ export type MoveBlockArgs = {
   languageFnSymbol: string;
   srcBlock: BlockLocation;
   dstBlock: BlockLocation;
+  force: boolean;
 };
 
 export type MoveBlockResponse = string;

@@ -1,6 +1,6 @@
 ---
 source: code-blocks-server/tests/test_api.rs
-expression: "code_blocks_server::get_subtrees(GetSubtreesArgs {\n        queries: get_query_strings(SupportedLanguage::TypeScript),\n        language: SupportedLanguage::TypeScript,\n        text: r#\"\nclass TsClass {\n    constructor() {}\n\n    foo() {}\n\n    /**\n    * bar docs\n    */\n    bar() {}\n}\n\nexport function baz() {}\n\nexport default function baz2() {}\n            \"#.to_string(),\n    })"
+expression: "code_blocks_server::get_subtrees(GetSubtreesArgs {\n        queries: get_query_strings(&TestLanguage::TypeScript),\n        language: TestLanguage::TypeScript.get_language(),\n        text: r#\"\nclass TsClass {\n    constructor() {}\n\n    foo() {}\n\n    /**\n    * bar docs\n    */\n    bar() {}\n}\n\nexport function baz() {}\n\nexport default function baz2() {}\n            \"#.to_string(),\n    })"
 ---
 Ok(
     [

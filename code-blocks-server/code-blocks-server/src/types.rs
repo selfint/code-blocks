@@ -14,26 +14,13 @@ pub struct BlockLocation {
 
 impl From<Block<'_>> for BlockLocation {
     fn from(value: Block) -> Self {
-        let (Some(head), Some(tail)) = value.head_tail() else {
-            panic!("Got empty block");
-        };
-
-        Self {
-            start_byte: head.start_byte(),
-            end_byte: tail.end_byte(),
-            start_row: head.start_position().row,
-            start_col: head.start_position().column,
-            end_row: tail.end_position().row,
-            end_col: tail.end_position().column,
-        }
+        BlockLocation::from(&value)
     }
 }
 
 impl From<&Block<'_>> for BlockLocation {
     fn from(value: &Block) -> Self {
-        let (Some(head), Some(tail)) = value.head_tail() else {
-            panic!("Got empty block");
-        };
+        let (head, tail) = value.head_tail();
 
         Self {
             start_byte: head.start_byte(),

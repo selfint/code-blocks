@@ -1,3 +1,4 @@
+use anyhow::{ensure, Result};
 use code_blocks::{get_query_subtrees, Block, BlockTree};
 
 use tree_sitter::{Parser, Point, Query, Tree};
@@ -108,7 +109,7 @@ mod tests {
     let subtrees = get_query_subtrees(&rust_queries(), &tree, text);
 
     for t in &subtrees {
-        dbg!(text[t.block.byte_range().unwrap()].to_string());
+        dbg!(text[t.block.byte_range()].to_string());
     }
 
     insta::assert_debug_snapshot!(subtrees);
@@ -125,7 +126,7 @@ fn copy_item_above<'tree>(
         .find_map(|(row, line)| line.find(ident).map(|col| Point::new(row - 1, col)))?;
 
     for tree in trees {
-        if tree.block.tail().unwrap().start_position() == pos {
+        if tree.block.tail().start_position() == pos {
             return Some(tree.block.clone());
         }
 
@@ -138,7 +139,7 @@ fn copy_item_above<'tree>(
 }
 
 macro_rules! check {
-    ($text:literal) => {
+    (check: $check_fn:expr, force: $force:literal, $text:literal) => {
         let tree = build_tree($text);
 
         let items = get_query_subtrees(&rust_queries(), &tree, $text);
@@ -147,21 +148,33 @@ macro_rules! check {
         let fail_item = copy_item_above("^fail", $text, &items);
 
         if let Some(dst_item) = dst_item {
-            insta::assert_display_snapshot!(
-                code_blocks::move_block(src_block, dst_item, $text).unwrap()
-            );
+            insta::assert_display_snapshot!(code_blocks::move_block(
+                src_block, dst_item, $text, $check_fn, $force
+            )
+            .unwrap());
         } else if let Some(fail_item) = fail_item {
-            let result = code_blocks::move_block(src_block, fail_item, $text);
+            let result = code_blocks::move_block(src_block, fail_item, $text, $check_fn, $force);
             assert!(result.is_err());
 
-            insta::assert_display_snapshot!(format!("{}\n\n{}", $text, result.err().unwrap()));
+            insta::assert_display_snapshot!(format!("{}\n\n{:?}", $text, result.err().unwrap()));
         }
     };
+}
+
+fn check_fn(s: &Block, d: &Block) -> Result<()> {
+    ensure!(
+        s.head().parent() == d.head().parent(),
+        "Blocks have different parents"
+    );
+
+    Ok(())
 }
 
 #[test]
 fn test_move_block() {
     check!(
+        check: Some(check_fn),
+        force: false,
         r#"
     fn foo() {
  /* ^src */
@@ -176,6 +189,8 @@ fn test_move_block() {
     );
 
     check!(
+        check: Some(check_fn),
+        force: false,
         r#"
 mod m {
     fn foo() {
@@ -194,6 +209,8 @@ fn baz() {}
     );
 
     check!(
+        check: Some(check_fn),
+        force: false,
         r#"
 mod m {
     fn foo() {}
@@ -207,6 +224,8 @@ fn baz() {}
     );
 
     check!(
+        check: Some(check_fn),
+        force: false,
         r#"
     mod m {
         fn foo() {}
@@ -219,6 +238,8 @@ fn baz() {}
     );
 
     check!(
+        check: Some(check_fn),
+        force: false,
         r#"
     mod m {
 /*  ^fail */
@@ -231,6 +252,8 @@ fn baz() {}
     );
 
     check!(
+        check: Some(check_fn),
+        force: false,
         r#"
     fn foo() {}
  /* ^dst */
@@ -243,6 +266,8 @@ fn baz() {}
     );
 
     check!(
+        check: Some(check_fn),
+        force: false,
         r#"
     mod m1 {
 /*  ^src */
@@ -261,6 +286,8 @@ fn baz() {}
     );
 
     check!(
+        check: Some(check_fn),
+        force: false,
         r#"
     mod m1 {
 /*  ^dst */
@@ -279,6 +306,8 @@ fn baz() {}
     );
 
     check!(
+        check: Some(check_fn),
+        force: false,
         r#"
     mod m1 {
         fn foo() {}
@@ -297,6 +326,8 @@ fn baz() {}
     );
 
     check!(
+        check: Some(check_fn),
+        force: false,
         r#"
     #[test]
     fn foo() {}

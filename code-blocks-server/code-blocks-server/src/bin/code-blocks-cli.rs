@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
-use anyhow::Result;
+use anyhow::{ensure, Result};
+use code_blocks::Block;
 use code_blocks_server::{
     BlockLocation, GetSubtreesArgs, GetSubtreesResponse, InstallLanguageArgs,
     InstallLanguageResponse, MoveBlockArgs, MoveBlockResponse,
@@ -33,6 +34,7 @@ pub enum CliRequest {
         language_fn_symbol: String,
         src_block: BlockLocation,
         dst_block: BlockLocation,
+        force: bool,
     },
 }
 
@@ -54,14 +56,20 @@ pub enum JsonResult<T> {
     Error(String),
 }
 
+impl<T> From<Result<T>> for JsonResult<T> {
+    fn from(value: Result<T>) -> Self {
+        match value {
+            Ok(ok) => JsonResult::Ok(ok),
+            Err(err) => JsonResult::Error(format!("{:?}", err)),
+        }
+    }
+}
+
 fn main() {
     for line in std::io::stdin().lines() {
         let Ok(line) = line else { continue; };
 
-        let response = match handle_line(&line) {
-            Ok(ok) => JsonResult::Ok(ok),
-            Err(err) => JsonResult::Error(err.to_string()),
-        };
+        let response: JsonResult<CliResponse> = handle_line(&line).into();
 
         let Ok(response) = serde_json::to_string(&response) else {
             eprintln!("failed to serialize response");
@@ -127,6 +135,7 @@ fn handle_line(line: &str) -> Result<CliResponse> {
             language_fn_symbol,
             src_block,
             dst_block,
+            force,
         } => {
             let dynamic_parser =
                 DynamicParser::load_from(&library_path, language_fn_symbol.as_bytes())?;
@@ -139,16 +148,28 @@ fn handle_line(line: &str) -> Result<CliResponse> {
                     language,
                     src_block,
                     dst_block,
+                    assert_move_legal_fn: Some(assert_move_legal_fn),
+                    force,
                 },
             )?))
         }
     }
 }
 
+fn assert_move_legal_fn(src_block: &Block, dst_block: &Block) -> Result<()> {
+    ensure!(
+        src_block.head().parent() == dst_block.head().parent(),
+        "Can't move block to different scope"
+    );
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use std::path::PathBuf;
 
+    use anyhow::anyhow;
     use code_blocks_server::BlockLocation;
 
     use super::*;
@@ -297,6 +318,7 @@ mod tests {
                 end_row: 1,
                 end_col: 11,
             },
+            force: false,
         };
 
         insta::assert_json_snapshot!(request,
@@ -325,7 +347,8 @@ mod tests {
               "startCol": 0,
               "endRow": 1,
               "endCol": 11
-            }
+            },
+            "force": false
           }
         }
         "###
@@ -354,6 +377,8 @@ mod tests {
                 end_row: 1,
                 end_col: 11,
             },
+            assert_move_legal_fn: Some(assert_move_legal_fn),
+            force: false,
         })
         .unwrap();
 
@@ -371,13 +396,14 @@ mod tests {
 
     #[test]
     fn show_error() {
-        let error: JsonResult<()> = JsonResult::Error("error occurred".to_string());
+        let json_result_error: JsonResult<()> =
+            Err(anyhow!("Error root").context("Error context")).into();
 
-        insta::assert_json_snapshot!(error,
+        insta::assert_json_snapshot!(json_result_error,
             @r###"
         {
           "status": "error",
-          "result": "error occurred"
+          "result": "Error context\n\nCaused by:\n    Error root"
         }
         "###
         );

@@ -11,5 +11,6 @@ export type MoveCommand = {
   args: {
     src: BlockLocation;
     dst: BlockLocation;
+    force: boolean;
   };
 };
