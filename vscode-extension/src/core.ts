@@ -15,29 +15,19 @@ export async function installLanguage(
 ): Promise<InstallLanguageResponse | undefined> {
   console.log(`Install language args: ${JSON.stringify(args)}`);
 
-  const response: Exclude<
-    JsonResult<InstallLanguageResponse>,
-    { status: "progress" }
-  > = await vscode.window.withProgress(
+  const response = await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
       cancellable: false,
       title: `Installing ${args.libraryName}`,
     },
-    async (progress) => {
-      const response = await codeBlocksCliClient.installLanguage(
-        codeBlocksCliPath,
-        args,
-        (installationProgress) => {
-          progress.report({
-            increment: 5,
-            message: installationProgress,
-          });
-        }
-      );
-
-      return response;
-    }
+    async (progress) =>
+      await codeBlocksCliClient.installLanguage(codeBlocksCliPath, args, (installationProgress) =>
+        progress.report({
+          increment: 5,
+          message: installationProgress,
+        })
+      )
   );
 
   switch (response.status) {
