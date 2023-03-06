@@ -69,7 +69,8 @@ export async function moveBlock(
   moveArgs: MoveBlockArgs
 ): Promise<void> {
   const response = await codeBlocksCliClient.moveBlock(codeBlocksCliPath, moveArgs);
-  const specialErrorMsg = "Illegal move operation\n\nCaused by:\n    Can't move block to different scope";
+  const differentScopeErrorMsg =
+    "Illegal move operation\n\nCaused by:\n    Can't move block to different scope";
 
   switch (response.status) {
     case "ok": {
@@ -84,13 +85,9 @@ export async function moveBlock(
 
     case "error": {
       const options: "Try force"[] = [];
-      if (response.result === specialErrorMsg && !moveArgs.force) {
+      if (response.result === differentScopeErrorMsg && !moveArgs.force) {
         options.push("Try force");
       }
-
-      console.log(response.result);
-      console.log(specialErrorMsg);
-      console.log(response.result === specialErrorMsg);
 
       const choice = await vscode.window.showErrorMessage(
         `Failed to move block: ${response.result}`,
