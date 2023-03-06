@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{ensure, Result};
 use code_blocks::{get_query_subtrees, Block, BlockTree};
 
 use tree_sitter::{Parser, Point, Query, Tree};
@@ -112,9 +112,10 @@ macro_rules! check {
 }
 
 fn check_fn(s: &Block, d: &Block) -> Result<()> {
-    if s.head().parent() != d.head().parent() {
-        bail!("Blocks have different parents");
-    }
+    ensure!(
+        s.head().parent() == d.head().parent(),
+        "Blocks have different parents"
+    );
 
     Ok(())
 }
