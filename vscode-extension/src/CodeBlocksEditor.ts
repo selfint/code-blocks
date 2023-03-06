@@ -42,6 +42,7 @@ export class CodeBlocksEditor {
       languageFnSymbol: this.languageFnSymbol,
       srcBlock: message.args.src,
       dstBlock: message.args.dst,
+      force: false,
     };
 
     await core.moveBlock(this.codeBlocksCliPath, this.document, args);
