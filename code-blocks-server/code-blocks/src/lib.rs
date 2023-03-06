@@ -113,11 +113,14 @@ pub fn move_block<'tree>(
     };
 
     // move src to be below dst
-    if src_head.start_byte() < dst_head.start_byte() {
+    // move down
+    if src_head.end_byte() < dst_head.end_byte() {
         new_text.insert_str(dst_tail.end_byte(), src_text);
         new_text.insert_str(dst_tail.end_byte(), max_space);
         new_text.replace_range(src_range, "");
-    } else {
+    }
+    // move up
+    else {
         new_text.replace_range(src_range, "");
         new_text.insert_str(dst_tail.end_byte(), src_text);
         new_text.insert_str(dst_tail.end_byte(), max_space);
