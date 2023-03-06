@@ -63,17 +63,21 @@ pub fn get_subtrees(args: GetSubtreesArgs) -> Result<GetSubtreesResponse> {
 }
 
 #[derive(Debug)]
-pub struct MoveBlockArgs {
+pub struct MoveBlockArgs<C: Fn(&Block, &Block) -> bool> {
     pub queries: Vec<String>,
     pub text: String,
     pub language: Language,
     pub src_block: BlockLocation,
     pub dst_block: BlockLocation,
+    pub check_move_legal_fn: Option<C>,
+    pub force: bool,
 }
 
 pub type MoveBlockResponse = String;
 
-pub fn move_block(args: MoveBlockArgs) -> Result<MoveBlockResponse> {
+pub fn move_block<C: Fn(&Block, &Block) -> bool>(
+    args: MoveBlockArgs<C>,
+) -> Result<MoveBlockResponse> {
     fn copy_item_at<'tree>(
         location: &BlockLocation,
         trees: &[BlockTree<'tree>],
@@ -106,5 +110,11 @@ pub fn move_block(args: MoveBlockArgs) -> Result<MoveBlockResponse> {
     let src_block = copy_item_at(&args.src_block, &subtrees).context("Failed to find src item")?;
     let dst_item = copy_item_at(&args.dst_block, &subtrees).context("Failed to find dst item")?;
 
-    code_blocks::move_block(src_block, dst_item, &args.text)
+    code_blocks::move_block(
+        src_block,
+        dst_item,
+        &args.text,
+        args.check_move_legal_fn,
+        args.force,
+    )
 }

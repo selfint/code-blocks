@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use tree_sitter::{Node, Query, QueryCursor, Tree, TreeCursor};
 
 #[derive(PartialEq, Eq, Clone, Hash, Debug)]
@@ -11,24 +11,32 @@ pub struct BlockTree<'tree> {
 
 #[derive(PartialEq, Eq, Clone, Hash, Debug)]
 pub struct Block<'tree> {
-    pub nodes: Vec<Node<'tree>>,
+    nodes: Vec<Node<'tree>>,
 }
 
 impl<'tree> Block<'tree> {
-    pub fn head(&self) -> Option<&Node<'tree>> {
-        self.nodes.first()
+    pub fn new(nodes: Vec<Node<'tree>>) -> Result<Self> {
+        if nodes.is_empty() {
+            Err(anyhow!("Can't create block empty nodes vec"))
+        } else {
+            Ok(Self { nodes })
+        }
     }
 
-    pub fn tail(&self) -> Option<&Node<'tree>> {
-        self.nodes.last()
+    pub fn head(&self) -> &Node<'tree> {
+        self.nodes.first().expect("empty nodes vec")
     }
 
-    pub fn head_tail(&self) -> (Option<&Node<'tree>>, Option<&Node<'tree>>) {
+    pub fn tail(&self) -> &Node<'tree> {
+        self.nodes.last().expect("empty nodes vec")
+    }
+
+    pub fn head_tail(&self) -> (&Node<'tree>, &Node<'tree>) {
         (self.head(), self.tail())
     }
 
-    pub fn byte_range(&self) -> Option<Range<usize>> {
-        Some(self.head()?.start_byte()..self.tail()?.end_byte())
+    pub fn byte_range(&self) -> Range<usize> {
+        self.head().start_byte()..self.tail().end_byte()
     }
 }
 
@@ -39,32 +47,25 @@ pub fn get_query_subtrees<'tree>(
 ) -> Vec<BlockTree<'tree>> {
     let mut blocks = get_blocks(queries, tree, text);
 
-    dbg!(tree.root_node().to_sexp());
-
     build_block_tree(&mut blocks, &mut tree.walk())
 }
 
 pub fn move_block<'tree>(
     src_block: Block<'tree>,
-    dst_item: Block<'tree>,
+    dst_block: Block<'tree>,
     text: &str,
+    assert_move_legal_fn: Option<impl Fn(&Block, &Block) -> Result<()>>,
+    force: bool,
 ) -> Result<String> {
-    let (Some(src_head), Some(src_tail)) = src_block.head_tail() else {
-        return Err(anyhow!("Can't move empty block"));
-    };
-
-    let (Some(dst_head), Some(dst_tail)) = dst_item.head_tail() else {
-        return Err(anyhow!("Can't move empty block"));
-    };
-
-    let Some(src_block_range) = src_block.byte_range() else {
-        return Err(anyhow!("Can't move empty block"));
-    };
-
-    if src_head.parent() != dst_head.parent() {
-        dbg!((src_head.parent(), dst_head.parent()));
-        return Err(anyhow!("Can't move items to different scopes"));
+    if !force {
+        if let Some(move_is_legal) = assert_move_legal_fn {
+            move_is_legal(&src_block, &dst_block).context("Illegal move operation")?;
+        }
     }
+
+    let (src_head, src_tail) = src_block.head_tail();
+    let (dst_head, dst_tail) = dst_block.head_tail();
+    let src_block_range = src_block.byte_range();
 
     if src_head.start_position() == dst_head.start_position() {
         return Ok(text.to_string());
@@ -163,7 +164,7 @@ fn build_block_tree<'tree>(
     if cursor.goto_first_child() {
         let mut children = build_block_tree(blocks, cursor);
 
-        if let Some(index) = blocks.iter().position(|b| b.tail() == Some(&node)) {
+        if let Some(index) = blocks.iter().position(|b| b.tail() == &node) {
             let block = blocks.remove(index);
             trees.push(BlockTree { block, children });
         } else {

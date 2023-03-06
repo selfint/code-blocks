@@ -1,6 +1,6 @@
 ---
 source: code-blocks/tests/rust/main.rs
-expression: "code_blocks::move_block(src_item, dst_item,\n        r#\"\nmod m {\n    fn foo() {\n /* ^src */\n        fn in_foo() {\n            bar();\n        }\n    }\n\n    fn bar() {}\n /* ^dst */\n}\n\nfn baz() {}\n\"#).unwrap()"
+expression: "code_blocks::move_block(src_block, dst_item,\n        r#\"\nmod m {\n    fn foo() {\n /* ^src */\n        fn in_foo() {\n            bar();\n        }\n    }\n\n    fn bar() {}\n /* ^dst */\n}\n\nfn baz() {}\n\"#,\n        Some(check_fn), false).unwrap()"
 ---
 
 mod m {

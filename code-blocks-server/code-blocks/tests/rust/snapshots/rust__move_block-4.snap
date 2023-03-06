@@ -1,6 +1,6 @@
 ---
 source: code-blocks/tests/rust/main.rs
-expression: "format!(\"{}\\n\\n{}\",\n    r#\"\n    mod m {\n        fn foo() {}\n     /* ^src */\n    }\n\n    fn baz() {}\n/*  ^fail */\n\"#,\n    result.err().unwrap())"
+expression: "format!(\"{}\\n\\n{:?}\",\n    r#\"\n    mod m {\n        fn foo() {}\n     /* ^src */\n    }\n\n    fn baz() {}\n/*  ^fail */\n\"#,\n    result.err().unwrap())"
 ---
 
     mod m {
@@ -12,4 +12,7 @@ expression: "format!(\"{}\\n\\n{}\",\n    r#\"\n    mod m {\n        fn foo() {}
 /*  ^fail */
 
 
-Can't move items to different scopes
+Illegal move operation
+
+Caused by:
+    Blocks have different parents

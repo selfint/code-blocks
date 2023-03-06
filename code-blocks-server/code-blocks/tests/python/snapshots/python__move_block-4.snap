@@ -1,6 +1,6 @@
 ---
 source: code-blocks/tests/python/main.rs
-expression: "format!(\"{}\\n\\n{}\",\n    r#\"\n        @decor1\n        @decor2\n        class A:\n            ...\n           \n        class C:\n            \"\"\"class docstring\"\"\"\n        \n            def __init__(self):\n                pass\n        \n            #Vsrc\n            @staticmethod()\n            def foo():\n                \"\"\"method docstring\"\"\"\n                \n            def bar():\n                ...\n                \n        #Vfail\n        def func():\n            ...\n\"#,\n    result.err().unwrap())"
+expression: "format!(\"{}\\n\\n{:?}\",\n    r#\"\n        @decor1\n        @decor2\n        class A:\n            ...\n           \n        class C:\n            \"\"\"class docstring\"\"\"\n        \n            def __init__(self):\n                pass\n        \n            #Vsrc\n            @staticmethod()\n            def foo():\n                \"\"\"method docstring\"\"\"\n                \n            def bar():\n                ...\n                \n        #Vfail\n        def func():\n            ...\n\"#,\n    result.err().unwrap())"
 ---
 
         @decor1
@@ -27,4 +27,7 @@ expression: "format!(\"{}\\n\\n{}\",\n    r#\"\n        @decor1\n        @decor2
             ...
 
 
-Can't move items to different scopes
+Illegal move operation
+
+Caused by:
+    Blocks have different parents
