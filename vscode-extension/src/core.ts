@@ -4,7 +4,6 @@ import {
   GetSubtreesArgs,
   InstallLanguageArgs,
   InstallLanguageResponse,
-  JsonResult,
   MoveBlockArgs,
 } from "./codeBlocks/types";
 import { UpdateMessage } from "./messages";
