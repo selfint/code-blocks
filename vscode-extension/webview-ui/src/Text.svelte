@@ -9,9 +9,6 @@
     font-family: var(--vscode-editor-font-family);
     font-size: var(--vscode-editor-font-size);
     font-weight: var(--vscode-editor-font-weight);
-    outline-color: var(--vscode-editorIndentGuide-background);
-    outline-style: solid;
-    outline-width: 1px;
     white-space: pre-wrap;
   }
 </style>

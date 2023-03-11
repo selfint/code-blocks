@@ -20,6 +20,7 @@
 
 <span
   style="color: {foregroundColor}; background-color: {backgroundColor}"
+  class="tree"
   on:click|stopPropagation|preventDefault={() => onClick(tree.block)}
   on:keypress|stopPropagation|preventDefault={() => onClick(tree.block)}
 >
@@ -36,3 +37,11 @@
     <Text text={text.substring(tree.block.startByte, tree.block.endByte)} />
   {/if}
 </span>
+
+<style>
+  .tree {
+    outline-color: var(--vscode-editorIndentGuide-background);
+    outline-style: solid;
+    outline-width: 1px;
+  }
+</style>
