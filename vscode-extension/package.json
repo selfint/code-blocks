@@ -14,7 +14,7 @@
   },
   "homepage": "https://github.com/selfint/code-blocks#readme",
   "icon": "./assets/extension-logo.png",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "private": true,
   "license": "MIT",
   "engines": {
