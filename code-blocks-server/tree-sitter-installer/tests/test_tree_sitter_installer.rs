@@ -30,8 +30,6 @@ fn test_install_and_load_parser() {
     )
     .expect("failed to install rust parser");
 
-    reported_progresses.sort();
-
     let mut parser = DynamicParser::load_from(&library_path, language_fn_symbol)
         .expect("failed to install rust parser");
 
