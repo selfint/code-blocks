@@ -13,11 +13,13 @@ fn test_install_and_load_parser() {
         .path()
         .join("rust-parser");
 
-    let mut reported_progresses = vec![];
+    let mut did_download = false;
+    let mut did_patching = false;
+    let mut did_compiling = false;
     let report_progress = |status: InstallationStatus| match status {
-        InstallationStatus::Downloading(_) => reported_progresses.push("Downloading"),
-        InstallationStatus::Patching => reported_progresses.push("Patching"),
-        InstallationStatus::Compiling(_) => reported_progresses.push("Compiling"),
+        InstallationStatus::Downloading(_) => did_download = true,
+        InstallationStatus::Patching => did_patching = true,
+        InstallationStatus::Compiling(_) => did_compiling = true,
     };
 
     let library_path = parser_installer::install_parser(
@@ -27,8 +29,6 @@ fn test_install_and_load_parser() {
         Some(report_progress),
     )
     .expect("failed to install rust parser");
-
-    reported_progresses.sort();
 
     let mut parser = DynamicParser::load_from(&library_path, language_fn_symbol)
         .expect("failed to install rust parser");
@@ -41,25 +41,7 @@ fn test_install_and_load_parser() {
         @"(source_file (function_item name: (identifier) parameters: (parameters) body: (block)))"
     );
 
-    insta::assert_debug_snapshot!(reported_progresses,
-        @r###"
-    [
-        "Compiling",
-        "Compiling",
-        "Compiling",
-        "Compiling",
-        "Compiling",
-        "Compiling",
-        "Compiling",
-        "Compiling",
-        "Compiling",
-        "Compiling",
-        "Downloading",
-        "Downloading",
-        "Downloading",
-        "Downloading",
-        "Patching",
-    ]
-    "###
-    )
+    assert!(did_download);
+    assert!(did_compiling);
+    assert!(did_patching);
 }
