@@ -1,7 +1,6 @@
 import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
-import { CODE_BLOCKS_SERVER_VERSION } from "./installer";
 import { promises as asyncFs } from "fs";
 import { download } from "./lldb_vscode_copy/lldb_vscode_installer_utils";
 
@@ -25,7 +24,7 @@ export const supportedPlatforms = new Map<string, PlatfromInfo>([
   ["win32-x86_64", { triple: "x86_64-pc-windows-msvc", ext: ".exe" }],
 ]);
 
-function getPlatform(): string {
+export function getPlatform(): string {
   const platform = os.platform();
   let arch = os.arch();
   console.log(`Got platform: ${platform} arch: ${arch}`);
@@ -64,8 +63,8 @@ export function platformIsSupported(): boolean {
 }
 
 export async function installViaRelease(
+  binary: string,
   extensionBinDirPath: string,
-  bin: string,
   permissions: number
 ): Promise<boolean> {
   return await vscode.window.withProgress(
@@ -85,7 +84,7 @@ export async function installViaRelease(
         lastPercentage = percentage;
       };
 
-      const downloadTarget = path.join(os.tmpdir(), bin);
+      const downloadTarget = path.join(os.tmpdir(), binary);
       const uri = getPlatfromBinaryUri();
       if (uri === undefined) {
         await vscode.window.showErrorMessage(`Unsupported os/arch: ${getPlatform()}`);
@@ -105,13 +104,13 @@ export async function installViaRelease(
       });
 
       await asyncFs.mkdir(extensionBinDirPath, { recursive: true });
-      const finalPath = path.join(extensionBinDirPath, bin);
+      const finalPath = path.join(extensionBinDirPath, binary);
 
       await asyncFs.copyFile(downloadTarget, finalPath);
       await asyncFs.unlink(downloadTarget);
       await asyncFs.chmod(finalPath, permissions);
 
-      console.log(`Installed ${bin} to ${finalPath}`);
+      console.log(`Installed ${binary} to ${finalPath}`);
 
       return true;
     }

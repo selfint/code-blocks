@@ -6,9 +6,6 @@ import * as releaseUtils from "./releaseUtils";
 import * as vscode from "vscode";
 import which from "which";
 
-export const CODE_BLOCKS_SERVER_VERSION = "0.5.0";
-
-const BINARY = "code-blocks-cli";
 const INSTALLED_PERM =
   fs.constants.S_IRWXU |
   fs.constants.S_IRGRP |
@@ -17,22 +14,23 @@ const INSTALLED_PERM =
   fs.constants.S_IXOTH;
 
 export async function getOrInstallCli(binDirPath: string): Promise<string | undefined> {
-  const installationPath = await getExecutableBinString(binDirPath);
+  const binary = os.platform() === "win32" ? "code-blocks-cli.exe" : "code-blocks-cli";
+  const installationPath = await getExecutableBinString(binary, binDirPath);
 
   if (installationPath !== undefined) {
     return installationPath;
   } else {
-    await installCli(binDirPath);
-    return await getExecutableBinString(binDirPath);
+    await installCli(binary, binDirPath);
+    return await getExecutableBinString(binary, binDirPath);
   }
 }
 
-async function getExecutableBinString(extensionBinDirPath: string): Promise<string | undefined> {
+async function getExecutableBinString(binary: string, extensionBinDirPath: string): Promise<string | undefined> {
   // TODO: allow setting path from extension settings
 
-  const binPath = which.sync(BINARY, { nothrow: true });
+  const binPath = which.sync(binary, { nothrow: true });
 
-  const localBinPath = path.join(extensionBinDirPath, BINARY);
+  const localBinPath = path.join(extensionBinDirPath, binary);
   const inExtensionBinDir = fs.existsSync(localBinPath);
 
   if (binPath !== null) {
@@ -41,7 +39,7 @@ async function getExecutableBinString(extensionBinDirPath: string): Promise<stri
     if (ensureExecutable(localBinPath)) {
       return localBinPath;
     } else {
-      await vscode.window.showErrorMessage(`${BINARY} is installed at ${localBinPath} but not exectuable`);
+      await vscode.window.showErrorMessage(`${binary} is installed at ${localBinPath} but not exectuable`);
       return undefined;
     }
   } else {
@@ -49,7 +47,7 @@ async function getExecutableBinString(extensionBinDirPath: string): Promise<stri
   }
 }
 
-async function installCli(binDirPath: string): Promise<void> {
+async function installCli(binary: string, binDirPath: string): Promise<void> {
   const installationMethod = await getInstallationMethod();
 
   switch (installationMethod) {
@@ -57,7 +55,7 @@ async function installCli(binDirPath: string): Promise<void> {
       break;
 
     case "Install from release":
-      await releaseUtils.installViaRelease(binDirPath, BINARY, INSTALLED_PERM);
+      await releaseUtils.installViaRelease(binary, binDirPath, INSTALLED_PERM);
       break;
 
     case "Install with cargo":
@@ -79,12 +77,12 @@ async function getInstallationMethod(): Promise<InstallationMethod | undefined> 
 
   if (options.length === 0) {
     await vscode.window.showErrorMessage(
-      `Cargo isn't installed and system ${os.platform()}-${os.arch()} has no release target, try installing cargo`
+      `Cargo isn't installed and system ${releaseUtils.getPlatform()} has no release target, try installing cargo`
     );
     return undefined;
   }
 
-  return await vscode.window.showErrorMessage(`${BINARY} is not in PATH`, ...options);
+  return await vscode.window.showErrorMessage(`code-blocks-cli is not in PATH`, ...options);
 }
 
 function ensureExecutable(binPath: string): boolean {
