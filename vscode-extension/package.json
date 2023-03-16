@@ -9,12 +9,12 @@
     "type": "git"
   },
   "bugs": {
-    "url": "https://github.com/selfint/code-blocks",
+    "url": "https://github.com/selfint/code-blocks/issues",
     "email": "selfint@gmail.com"
   },
   "homepage": "https://github.com/selfint/code-blocks#readme",
   "icon": "./assets/extension-logo.png",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "private": true,
   "license": "MIT",
   "engines": {

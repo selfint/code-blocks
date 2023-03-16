@@ -1,11 +1,10 @@
 import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
-import { CODE_BLOCKS_SERVER_VERSION } from "./installer";
 import { promises as asyncFs } from "fs";
 import { download } from "./lldb_vscode_copy/lldb_vscode_installer_utils";
 
-const RELEASE_URL = `https://github.com/selfint/code-blocks/releases/download/code-blocks-server-v${CODE_BLOCKS_SERVER_VERSION}/`;
+const RELEASE_URL = `https://github.com/selfint/code-blocks/releases/download/code-blocks-server-v0.5.1/`;
 
 export type SupportedTriple =
   | "x86_64-unknown-linux-gnu"
@@ -25,12 +24,21 @@ export const supportedPlatforms = new Map<string, PlatfromInfo>([
   ["win32-x86_64", { triple: "x86_64-pc-windows-msvc", ext: ".exe" }],
 ]);
 
-export function getPlatfromBinaryUri(): vscode.Uri | undefined {
+export function getPlatform(): string {
   const platform = os.platform();
-  const arch = os.arch();
+  let arch = os.arch();
   console.log(`Got platform: ${platform} arch: ${arch}`);
+  if (arch === "x64") {
+    arch = "x86_64";
+    console.log(`Overwrote arch: ${arch}`);
+  }
 
-  const info = supportedPlatforms.get(`${platform}-${arch}`);
+  return `${platform}-${arch}`;
+}
+
+export function getPlatfromBinaryUri(): vscode.Uri | undefined {
+  const platform = getPlatform();
+  const info = supportedPlatforms.get(platform);
 
   if (info === undefined) {
     return undefined;
@@ -48,16 +56,15 @@ export function getPlatfromBinaryUri(): vscode.Uri | undefined {
 }
 
 export function platformIsSupported(): boolean {
-  const platform = os.platform();
-  const arch = os.arch();
-  console.log(`Got platform: ${platform} arch: ${arch}`);
+  const platform = getPlatform();
+  console.log(`Got platform: ${platform}`);
 
-  return supportedPlatforms.has(`${platform}-${arch}`);
+  return supportedPlatforms.has(platform);
 }
 
 export async function installViaRelease(
+  binary: string,
   extensionBinDirPath: string,
-  bin: string,
   permissions: number
 ): Promise<boolean> {
   return await vscode.window.withProgress(
@@ -77,10 +84,10 @@ export async function installViaRelease(
         lastPercentage = percentage;
       };
 
-      const downloadTarget = path.join(os.tmpdir(), bin);
+      const downloadTarget = path.join(os.tmpdir(), binary);
       const uri = getPlatfromBinaryUri();
       if (uri === undefined) {
-        await vscode.window.showErrorMessage(`Unsupported os/arch: ${os.platform()}-${os.arch()}`);
+        await vscode.window.showErrorMessage(`Unsupported os/arch: ${getPlatform()}`);
         return false;
       }
 
@@ -97,13 +104,13 @@ export async function installViaRelease(
       });
 
       await asyncFs.mkdir(extensionBinDirPath, { recursive: true });
-      const finalPath = path.join(extensionBinDirPath, bin);
+      const finalPath = path.join(extensionBinDirPath, binary);
 
       await asyncFs.copyFile(downloadTarget, finalPath);
       await asyncFs.unlink(downloadTarget);
       await asyncFs.chmod(finalPath, permissions);
 
-      console.log(`Installed ${bin} to ${finalPath}`);
+      console.log(`Installed ${binary} to ${finalPath}`);
 
       return true;
     }
