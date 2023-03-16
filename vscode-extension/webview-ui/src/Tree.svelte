@@ -43,5 +43,6 @@
     outline-color: var(--vscode-editorIndentGuide-background);
     outline-style: solid;
     outline-width: 1px;
+    padding: 2px 2px;
   }
 </style>
