@@ -46,7 +46,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
       binPath = undefined;
     }
 
-    console.log(`Got bin path: ${JSON.stringify(binPath)}`);
+    console.log(`Got settings bin path: ${JSON.stringify(binPath)}`);
 
     this.extensionSettings = {
       languageSupport: new Map(Object.entries(languageSupport)),
