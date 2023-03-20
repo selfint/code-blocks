@@ -26,8 +26,6 @@ export async function getOrInstallCli(binDirPath: string): Promise<string | unde
 }
 
 async function getExecutableBinString(binary: string, extensionBinDirPath: string): Promise<string | undefined> {
-  // TODO: allow setting path from extension settings
-
   const binPath = which.sync(binary, { nothrow: true });
 
   const localBinPath = path.join(extensionBinDirPath, binary);
