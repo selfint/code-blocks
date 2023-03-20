@@ -16,6 +16,7 @@ export type LanguageSupport = {
 
 export type CodeBlocksExtensionSettings = {
   languageSupport: Map<string, LanguageSupport>;
+  codeBlocksCliPath: string | undefined;
 };
 
 export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider {
@@ -38,8 +39,18 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
       throw new Error("Invalid languageSupport settings");
     }
 
+    let binPath: string | undefined | null = vscode.workspace
+      .getConfiguration("codeBlocks")
+      .get("binPath");
+    if (binPath === null || binPath === undefined || binPath.length === 0) {
+      binPath = undefined;
+    }
+
+    console.log(`Got settings bin path: ${JSON.stringify(binPath)}`);
+
     this.extensionSettings = {
       languageSupport: new Map(Object.entries(languageSupport)),
+      codeBlocksCliPath: binPath
     };
   }
 
@@ -52,12 +63,16 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     if (languageSupport === undefined) {
       await vscode.window.showErrorMessage(
         `Opened file in language without support: '${document.languageId}'. Try adding ` +
-          ` support via the 'codeBlocks.languageSupport' extension setting`
+        ` support via the 'codeBlocks.languageSupport' extension setting`
       );
       return;
     }
 
-    const codeBlocksCliPath = await getOrInstallCli(this.extensionBinDirPath);
+    const codeBlocksCliPath = this.extensionSettings.codeBlocksCliPath
+      ?? await getOrInstallCli(this.extensionBinDirPath);
+
+    console.log(`Using bin path: ${JSON.stringify(codeBlocksCliPath)}`);
+
     if (codeBlocksCliPath === undefined) {
       await vscode.window.showErrorMessage("Server not installed");
       return;

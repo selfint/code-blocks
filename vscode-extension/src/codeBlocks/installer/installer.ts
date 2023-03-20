@@ -4,7 +4,6 @@ import * as os from "os";
 import * as path from "path";
 import * as releaseUtils from "./releaseUtils";
 import * as vscode from "vscode";
-import which from "which";
 
 const INSTALLED_PERM =
   fs.constants.S_IRWXU |
@@ -26,24 +25,21 @@ export async function getOrInstallCli(binDirPath: string): Promise<string | unde
 }
 
 async function getExecutableBinString(binary: string, extensionBinDirPath: string): Promise<string | undefined> {
-  // TODO: allow setting path from extension settings
-
-  const binPath = which.sync(binary, { nothrow: true });
+  if (await cargoUtils.cmdInstalledWithCargo(binary)) {
+    console.log(`${binary} is installed with cargo`);
+    return binary;
+  }
 
   const localBinPath = path.join(extensionBinDirPath, binary);
-  const inExtensionBinDir = fs.existsSync(localBinPath);
-
-  if (binPath !== null) {
-    return binPath;
-  } else if (inExtensionBinDir) {
+  if (fs.existsSync(localBinPath)) {
+    console.log(`${binary} is installed at ${localBinPath}`);
     if (ensureExecutable(localBinPath)) {
       return localBinPath;
     } else {
+      console.log(`${binary} is installed at ${localBinPath} but not exectuable`);
       await vscode.window.showErrorMessage(`${binary} is installed at ${localBinPath} but not exectuable`);
       return undefined;
     }
-  } else {
-    return undefined;
   }
 }
 
@@ -71,7 +67,7 @@ async function getInstallationMethod(): Promise<InstallationMethod | undefined> 
     options.push("Install from release");
   }
 
-  if (which.sync("cargo", { nothrow: true }) !== null) {
+  if (await cargoUtils.cargoIsInstalled()) {
     options.push("Install with cargo");
   }
 
@@ -82,7 +78,7 @@ async function getInstallationMethod(): Promise<InstallationMethod | undefined> 
     return undefined;
   }
 
-  return await vscode.window.showErrorMessage(`code-blocks-cli is not in PATH`, ...options);
+  return await vscode.window.showErrorMessage(`code-blocks-cli is not installed`, ...options);
 }
 
 function ensureExecutable(binPath: string): boolean {

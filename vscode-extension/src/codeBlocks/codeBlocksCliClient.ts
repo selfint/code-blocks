@@ -41,32 +41,38 @@ async function callCodeBlocksCli<Response>(
   methodCall: CliRequest,
   progressHandler?: (progress: string) => void
 ): Promise<JsonResponse<Response>> {
-  return await new Promise((resolve, reject) => {
-    try {
-      const cli = spawn(codeBlocksCliPath);
+  const cli = spawn(codeBlocksCliPath);
+
+  try {
+    return await new Promise<JsonResponse<Response>>((resolve, reject) => {
+      cli.on("error", (err) => {
+        console.log(`Got err: ${JSON.stringify(err)}`);
+        reject(err);
+      });
       const rl = createInterface(cli.stdout);
 
       rl.on("line", (line) => {
         console.log(`Got line: ${line}`);
-        try {
-          const parsedLine = JSON.parse(line) as JsonResult<Response> | undefined;
-          if (parsedLine === undefined) {
-            reject(`failed to parse line: ${line}`);
-          } else if (parsedLine.status === "progress") {
-            if (progressHandler !== undefined) {
-              progressHandler(parsedLine.result);
-            }
-          } else {
-            resolve(parsedLine);
+        const parsedLine = JSON.parse(line) as JsonResult<Response> | undefined;
+        if (parsedLine === undefined) {
+          reject(`failed to parse line: ${line}`);
+        } else if (parsedLine.status === "progress") {
+          if (progressHandler !== undefined) {
+            progressHandler(parsedLine.result);
           }
-        } catch (e) {
-          reject(e);
+        } else {
+          resolve(parsedLine);
         }
       });
 
       cli.stdin.write(JSON.stringify(methodCall) + "\n");
-    } catch (e) {
-      reject(e);
-    }
-  });
+    });
+  } catch (err) {
+    return {
+      status: "error",
+      result: `Internal error: ${JSON.stringify(err)}`,
+    };
+  } finally {
+    cli.kill();
+  }
 }
