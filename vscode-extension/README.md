@@ -4,13 +4,17 @@ Move your code blocks around!
 
 This extension allows you to move your code as blocks, **_in any language_\***.
 
+Rust (technically just `cargo`) is required for this extension to work, go to [rust-lang.org](https://www.rust-lang.org/) to install it.
+
 ## Installation
 
-![installation video](./assets/Code-Blocks-Installation-Demo.gif)
 
-1. Download the .vsix file from the latest Release, and install it in Visual Studio Code.
+1. Install the extension from:
+    - Inside vscode, search for the `selfint.code-blocks` extension.
+    - The [vscode marketplace](https://marketplace.visualstudio.com/items?itemName=selfint.code-blocks).
+    - The GitHub [releases](https://github.com/selfint/code-blocks/releases?q=vscode-extension&expanded=true) page.
 
-2. After opening a file with the Code Blocks Editor, the `code-blocks-cli` will need to be downloaded
+2. Open a file with the Code Blocks Editor, the `code-blocks-cli` will need to be downloaded
    by the method of your choosing (using `cargo` or downloading from the latest release).
 
 3. Then the tree sitter grammar will be downloaded and compiled automatically.
@@ -18,6 +22,12 @@ This extension allows you to move your code as blocks, **_in any language_\***.
 That's it!
 
 The next time you open a file in the same language, everything will already be setup.
+
+If you open a file in a new language, the appropriate tree sitter grammar will be downloaded and compiled again.
+
+### Installation demo
+
+![installation video](./assets/Code-Blocks-Installation-Demo.gif)
 
 ## Examples
 
