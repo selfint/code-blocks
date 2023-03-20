@@ -1,12 +1,12 @@
 import * as vscode from "vscode";
-import { promisify } from "util";
 import { exec } from "child_process";
+import { promisify } from "util";
 
 const CARGO_INSTALL_CMD = `cargo install code-blocks-server --features=cli --version 0.5.1`;
 
 export async function cargoIsInstalled(): Promise<boolean> {
   try {
-    const cargoVersion = await promisify(exec)("cargo --version")
+    const cargoVersion = await promisify(exec)("cargo --version");
     console.log(`Got cargo version ${JSON.stringify(cargoVersion)}`);
     if (cargoVersion.stderr.length > 0) {
       return false;
@@ -21,7 +21,7 @@ export async function cargoIsInstalled(): Promise<boolean> {
 
 export async function cmdInstalledWithCargo(cmd: string): Promise<boolean> {
   try {
-    const installedList = await promisify(exec)("cargo install --list")
+    const installedList = await promisify(exec)("cargo install --list");
     if (installedList.stderr.length > 0) {
       return false;
     } else {

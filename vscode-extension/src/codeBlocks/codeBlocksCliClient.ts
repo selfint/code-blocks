@@ -71,7 +71,7 @@ async function callCodeBlocksCli<Response>(
     return {
       status: "error",
       result: `Internal error: ${JSON.stringify(err)}`,
-    }
+    };
   } finally {
     cli.kill();
   }

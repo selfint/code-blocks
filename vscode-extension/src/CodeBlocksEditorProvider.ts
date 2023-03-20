@@ -46,7 +46,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
       binPath = undefined;
     }
 
-    console.log(`Got bin path: ${binPath}`);
+    console.log(`Got bin path: ${JSON.stringify(binPath)}`);
 
     this.extensionSettings = {
       languageSupport: new Map(Object.entries(languageSupport)),
@@ -71,7 +71,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     const codeBlocksCliPath = this.extensionSettings.codeBlocksCliPath
       ?? await getOrInstallCli(this.extensionBinDirPath);
 
-    console.log(`Using bin path: ${codeBlocksCliPath}`);
+    console.log(`Using bin path: ${JSON.stringify(codeBlocksCliPath)}`);
 
     if (codeBlocksCliPath === undefined) {
       await vscode.window.showErrorMessage("Server not installed");
