@@ -40,5 +40,7 @@ parsers/
 tsconfig.json
 webpack.config.js
 .*
+assets/
 
 !out/extension.js
+!assets/extension-logo.png
