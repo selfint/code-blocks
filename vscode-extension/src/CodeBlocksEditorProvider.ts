@@ -39,9 +39,12 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
       throw new Error("Invalid languageSupport settings");
     }
 
-    const binPath: string | undefined = vscode.workspace
+    let binPath: string | undefined | null = vscode.workspace
       .getConfiguration("codeBlocks")
-      .get("binPath") ?? undefined;
+      .get("binPath");
+    if (binPath === null || binPath === undefined || binPath.length === 0) {
+      binPath = undefined;
+    }
 
     console.log(`Got bin path: ${binPath}`);
 
