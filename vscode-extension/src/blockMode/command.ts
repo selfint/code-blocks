@@ -1,6 +1,7 @@
 import * as core from "./newCore";
 import * as vscode from "vscode";
 import { join } from "path";
+import { BlockLocation, BlockLocationTree } from "../codeBlocks/types";
 
 
 async function showBlocks(binDir: string, parsersDir: string): Promise<void> {
@@ -30,21 +31,61 @@ async function showBlocks(binDir: string, parsersDir: string): Promise<void> {
 
   const text = textDocument.getText();
   const blocks = await core.getBlocks(text, languageId, languageSupport, libraryPath);
+  if (blocks === undefined) {
+    console.log("failed to get blocks");
+    return undefined;
+  }
 
-  const smallNumberDecorationType = vscode.window.createTextEditorDecorationType({
-    borderWidth: '1px',
-    borderStyle: 'solid',
-    overviewRulerColor: 'blue',
-    overviewRulerLane: vscode.OverviewRulerLane.Right,
-    light: {
-      borderColor: 'darkblue'
-    },
-    dark: {
-      borderColor: 'lightblue'
-    }
+  if (blocks.length === 0) {
+    console.log("got no blocks");
+    return undefined;
+  }
+
+  const decoration = vscode.window.createTextEditorDecorationType({
+    backgroundColor: "var(--vscode-editor-selectionBackground)",
   });
 
-  await vscode.window.showInformationMessage(`Got blocks: ${JSON.stringify(blocks)}`);
+  const cursorStart = editor.selection.start;
+  const cursorEnd = editor.selection.end;
+
+  function walkTree(tree: BlockLocationTree): BlockLocation | undefined {
+    if (
+      tree.block.startRow <= cursorStart.line
+      && tree.block.startCol <= cursorStart.character
+      && cursorEnd.line <= tree.block.endRow
+      && cursorEnd.character <= tree.block.endCol
+    ) {
+      for (const childTree of tree.children) {
+        const innerBlock = walkTree(childTree);
+        if (innerBlock !== undefined) {
+          return innerBlock;
+        }
+      }
+
+      return tree.block;
+    } else {
+      console.log([
+        tree.block,
+        cursorStart,
+        tree.block.startRow <= cursorStart.line,
+        tree.block.startCol <= cursorStart.character,
+        cursorEnd.line <= tree.block.endRow,
+        cursorEnd.character <= tree.block.endCol,
+      ]);
+      return undefined;
+    }
+  }
+
+  for (const tree of blocks) {
+    const isSelected = walkTree(tree);
+    if (isSelected !== undefined) {
+      const block = isSelected;
+      console.log("found block");
+      const range = new vscode.Range(block.startRow, block.startCol, block.endRow, block.endCol);
+      editor.setDecorations(decoration, [range]);
+      break;
+    }
+  }
 
   return;
 }
