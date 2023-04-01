@@ -60,6 +60,14 @@
       {
         "command": "codeBlocks.toggle",
         "title": "Code Blocks: Toggle block mode"
+      },
+      {
+        "command": "codeBlocks.moveUp",
+        "title": "Code Blocks: Move selected block up"
+      },
+      {
+        "command": "codeBlocks.moveDown",
+        "title": "Code Blocks: Move selected block down"
       }
     ],
     "configuration": {

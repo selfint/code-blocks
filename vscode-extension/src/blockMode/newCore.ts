@@ -91,9 +91,9 @@ export async function getBlocks(
 }
 
 export async function moveBlock(
+  binDir: string,
   document: vscode.TextDocument,
   moveArgs: MoveBlockArgs,
-  binDir: string,
 ): Promise<void> {
   const codeBlocksCliPath = await getCodeBlocksCliPath(binDir);
   if (codeBlocksCliPath === undefined) {
@@ -128,7 +128,7 @@ export async function moveBlock(
 
       if (choice === "Try force") {
         moveArgs.force = true;
-        await moveBlock(document, moveArgs, binDir);
+        await moveBlock(binDir, document, moveArgs);
       }
 
       break;
