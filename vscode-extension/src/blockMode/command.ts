@@ -1,8 +1,11 @@
 import * as core from "./newCore";
 import * as vscode from "vscode";
-import { join } from "path";
 import { BlockLocation, BlockLocationTree } from "../codeBlocks/types";
+import { join } from "path";
 
+const decoration = vscode.window.createTextEditorDecorationType({
+  backgroundColor: "var(--vscode-editor-selectionBackground)",
+});
 
 async function showBlocks(binDir: string, parsersDir: string): Promise<void> {
   const editor = vscode.window.activeTextEditor;
@@ -41,9 +44,6 @@ async function showBlocks(binDir: string, parsersDir: string): Promise<void> {
     return undefined;
   }
 
-  const decoration = vscode.window.createTextEditorDecorationType({
-    backgroundColor: "var(--vscode-editor-selectionBackground)",
-  });
 
   const cursorStart = editor.selection.start;
   const cursorEnd = editor.selection.end;
@@ -74,15 +74,18 @@ async function showBlocks(binDir: string, parsersDir: string): Promise<void> {
       const block = isSelected;
       const range = new vscode.Range(block.startRow, block.startCol, block.endRow, block.endCol);
       editor.setDecorations(decoration, [range]);
-      break;
+      return;
     }
   }
+
+  console.log("closing");
+  editor.setDecorations(decoration, []);
 }
 
 
 export function toggleBlockMode(context: vscode.ExtensionContext): () => Promise<void> {
   let enabled = false;
-  let disposables: [vscode.Disposable, vscode.Disposable] | undefined = undefined;
+  let disposables: [vscode.Disposable, vscode.Disposable, vscode.Disposable] | undefined = undefined;
 
   return async () => {
     const activeTabInput = vscode.window.tabGroups.activeTabGroup.activeTab?.input as {
@@ -97,13 +100,12 @@ export function toggleBlockMode(context: vscode.ExtensionContext): () => Promise
     if (!enabled) {
       disposables = [
         vscode.workspace.onDidChangeTextDocument(callback),
-        vscode.window.onDidChangeActiveTextEditor(callback)
+        vscode.window.onDidChangeActiveTextEditor(callback),
+        vscode.window.onDidChangeTextEditorSelection(callback)
       ];
       enabled = true;
     } else if (disposables !== undefined) {
-      const [d0, d1] = disposables;
-      await d0.dispose();
-      await d1.dispose();
+      disposables.map(async d => { await d.dispose(); });
       enabled = false;
     } else {
       throw new Error("Illegal state");
