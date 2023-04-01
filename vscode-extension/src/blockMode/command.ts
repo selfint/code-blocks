@@ -64,14 +64,6 @@ async function showBlocks(binDir: string, parsersDir: string): Promise<void> {
 
       return tree.block;
     } else {
-      console.log([
-        tree.block,
-        cursorStart,
-        tree.block.startRow <= cursorStart.line,
-        tree.block.startCol <= cursorStart.character,
-        cursorEnd.line <= tree.block.endRow,
-        cursorEnd.character <= tree.block.endCol,
-      ]);
       return undefined;
     }
   }
@@ -80,14 +72,11 @@ async function showBlocks(binDir: string, parsersDir: string): Promise<void> {
     const isSelected = walkTree(tree);
     if (isSelected !== undefined) {
       const block = isSelected;
-      console.log("found block");
       const range = new vscode.Range(block.startRow, block.startCol, block.endRow, block.endCol);
       editor.setDecorations(decoration, [range]);
       break;
     }
   }
-
-  return;
 }
 
 
