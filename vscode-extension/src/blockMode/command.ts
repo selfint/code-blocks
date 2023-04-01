@@ -20,9 +20,7 @@ async function showBlocks(binDir: string, parsersDir: string, textDocument: vsco
 
   const text = textDocument.getText();
 
-  console.log("getting blocks");
   const blocks = await core.getBlocks(text, languageId, languageSupport, libraryPath);
-  console.log("got blocks");
 
   await vscode.window.showInformationMessage(`Got blocks: ${JSON.stringify(blocks)}`);
 

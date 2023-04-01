@@ -7,7 +7,6 @@ import {
   MoveBlockArgs,
 } from "../codeBlocks/types";
 import { getOrInstallCli } from "../codeBlocks/installer/installer";
-import { join } from "path";
 
 export type LanguageSupport = {
   parserInstaller: {
