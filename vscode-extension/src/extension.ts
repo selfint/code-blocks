@@ -1,5 +1,6 @@
 import { ExtensionContext, Uri, commands, window } from "vscode";
 import { CodeBlocksEditorProvider } from "./CodeBlocksEditorProvider";
+import { toggleBlockMode } from "./blockMode/command";
 
 async function reopenWithCodeBocksEditor(): Promise<void> {
   const activeTabInput = window.tabGroups.activeTabGroup.activeTab?.input as {
@@ -36,4 +37,5 @@ export function activate(context: ExtensionContext): void {
   context.subscriptions.push(
     commands.registerCommand("codeBlocks.openToTheSide", openCodeBlocksEditorToTheSide)
   );
+  context.subscriptions.push(commands.registerCommand("codeBlocks.toggle", toggleBlockMode));
 }

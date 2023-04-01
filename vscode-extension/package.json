@@ -56,6 +56,10 @@
       {
         "command": "codeBlocks.openToTheSide",
         "title": "Code Blocks: Open active file in Code Blocks editor to the side"
+      },
+      {
+        "command": "codeBlocks.toggle",
+        "title": "Code Blocks: Toggle block mode"
       }
     ],
     "configuration": {
