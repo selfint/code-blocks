@@ -37,7 +37,5 @@ export function activate(context: ExtensionContext): void {
   context.subscriptions.push(
     commands.registerCommand("codeBlocks.openToTheSide", openCodeBlocksEditorToTheSide)
   );
-  context.subscriptions.push(commands.registerCommand("codeBlocks.toggle", async (..._args) => {
-    await toggleBlockMode(context);
-  }));
+  context.subscriptions.push(commands.registerCommand("codeBlocks.toggle", toggleBlockMode(context)));
 }

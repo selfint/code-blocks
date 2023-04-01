@@ -50,20 +50,37 @@ async function showBlocks(binDir: string, parsersDir: string): Promise<void> {
 }
 
 
-export async function toggleBlockMode(context: vscode.ExtensionContext): Promise<void> {
-  const activeTabInput = vscode.window.tabGroups.activeTabGroup.activeTab?.input as {
-    [key: string]: unknown;
-    uri: vscode.Uri | undefined;
+export function toggleBlockMode(context: vscode.ExtensionContext): () => Promise<void> {
+  let enabled = false;
+  let disposables: [vscode.Disposable, vscode.Disposable] | undefined = undefined;
+
+  return async () => {
+    const activeTabInput = vscode.window.tabGroups.activeTabGroup.activeTab?.input as {
+      [key: string]: unknown;
+      uri: vscode.Uri | undefined;
+    };
+
+    const binDir = join(context.extensionPath, "bin");
+    const parsersDir = join(context.extensionPath, "parsers");
+    const callback = async (): Promise<void> => await showBlocks(binDir, parsersDir);
+
+    if (!enabled) {
+      disposables = [
+        vscode.workspace.onDidChangeTextDocument(callback),
+        vscode.window.onDidChangeActiveTextEditor(callback)
+      ];
+      enabled = true;
+    } else if (disposables !== undefined) {
+      const [d0, d1] = disposables;
+      await d0.dispose();
+      await d1.dispose();
+      enabled = false;
+    } else {
+      throw new Error("Illegal state");
+    }
+
+    if (activeTabInput.uri !== undefined && enabled) {
+      await callback();
+    }
   };
-
-  const binDir = join(context.extensionPath, "bin");
-  const parsersDir = join(context.extensionPath, "parsers");
-  const callback = async (): Promise<void> => await showBlocks(binDir, parsersDir);
-
-  vscode.workspace.onDidChangeTextDocument(callback);
-  vscode.window.onDidChangeActiveTextEditor(callback);
-
-  if (activeTabInput.uri !== undefined) {
-    await callback();
-  }
 }
