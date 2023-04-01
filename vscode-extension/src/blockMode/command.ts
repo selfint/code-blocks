@@ -3,24 +3,46 @@ import * as vscode from "vscode";
 import { join } from "path";
 
 
-async function showBlocks(binDir: string, parsersDir: string, textDocument: vscode.TextDocument): Promise<void> {
+async function showBlocks(binDir: string, parsersDir: string): Promise<void> {
+  const editor = vscode.window.activeTextEditor;
+  console.log(`editor: ${JSON.stringify(editor === undefined)}`);
+  if (editor === undefined) {
+    return undefined;
+  }
+
+  const textDocument = editor.document;
   const languageId = textDocument.languageId;
   const languageSupport = core.getLanguageSupport(languageId);
   if (languageSupport === undefined) {
     return undefined;
   }
 
-  const libraryPath = await core.installLanguage({
-    ...languageSupport.parserInstaller,
-    installDir: join(parsersDir, languageSupport.parserInstaller.libraryName),
-  }, binDir);
+  const libraryPath = await core.installLanguage(
+    {
+      installDir: join(parsersDir, languageSupport.parserInstaller.libraryName),
+      ...languageSupport.parserInstaller,
+    },
+    binDir
+  );
   if (libraryPath === undefined) {
     return undefined;
   }
 
   const text = textDocument.getText();
-
   const blocks = await core.getBlocks(text, languageId, languageSupport, libraryPath);
+
+  const smallNumberDecorationType = vscode.window.createTextEditorDecorationType({
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    overviewRulerColor: 'blue',
+    overviewRulerLane: vscode.OverviewRulerLane.Right,
+    light: {
+      borderColor: 'darkblue'
+    },
+    dark: {
+      borderColor: 'lightblue'
+    }
+  });
 
   await vscode.window.showInformationMessage(`Got blocks: ${JSON.stringify(blocks)}`);
 
@@ -36,20 +58,12 @@ export async function toggleBlockMode(context: vscode.ExtensionContext): Promise
 
   const binDir = join(context.extensionPath, "bin");
   const parsersDir = join(context.extensionPath, "parsers");
+  const callback = async (): Promise<void> => await showBlocks(binDir, parsersDir);
 
-  vscode.workspace.onDidOpenTextDocument(
-    async textDocument => await showBlocks(
-      binDir,
-      parsersDir,
-      textDocument
-    )
-  );
+  vscode.workspace.onDidChangeTextDocument(callback);
+  vscode.window.onDidChangeActiveTextEditor(callback);
 
   if (activeTabInput.uri !== undefined) {
-    await showBlocks(
-      binDir,
-      parsersDir,
-      await vscode.workspace.openTextDocument(activeTabInput.uri)
-    );
+    await callback();
   }
 }
