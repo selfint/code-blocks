@@ -11,6 +11,7 @@ let enabled = false;
 let disposables: vscode.Disposable[] | undefined = undefined;
 let blocks: BlockLocationTree[] | undefined = undefined;
 let selectedBlock: BlockLocation | undefined = undefined;
+let selectedBlockSiblings: [BlockLocation | undefined, BlockLocation | undefined] = [undefined, undefined];
 
 async function updateBlocks(binDir: string, parsersDir: string): Promise<void> {
   const editor = vscode.window.activeTextEditor;
@@ -58,7 +59,7 @@ async function updateBlocks(binDir: string, parsersDir: string): Promise<void> {
   blocks = newBlocks;
 }
 
-function updateSelectedBlock(): void {
+function updateSelection(): void {
   const editor = vscode.window.activeTextEditor;
   if (editor === undefined) {
     return undefined;
@@ -71,42 +72,73 @@ function updateSelectedBlock(): void {
   const cursorStart = editor.selection.start;
   const cursorEnd = editor.selection.end;
 
-  function walkTree(tree: BlockLocationTree): BlockLocation | undefined {
-    if (
-      tree.block.startRow <= cursorStart.line
-      && tree.block.startCol <= cursorStart.character
-      && cursorEnd.line <= tree.block.endRow
-      && cursorEnd.character <= tree.block.endCol
-    ) {
-      for (const childTree of tree.children) {
-        const innerBlock = walkTree(childTree);
-        if (innerBlock !== undefined) {
-          return innerBlock;
+  function cursorInBlock(block: BlockLocation): boolean {
+    return (
+      block.startRow <= cursorStart.line
+      && block.startCol <= cursorStart.character
+      && cursorEnd.line <= block.endRow
+      && cursorEnd.character <= block.endCol
+    );
+  }
+
+  function findSelectedBlockAndSiblings(trees: BlockLocationTree[]): [BlockLocation | undefined, BlockLocation | undefined, BlockLocation | undefined] {
+    for (const tree of trees) {
+      if (!cursorInBlock(tree.block)) {
+        continue;
+      }
+
+      if (tree.children.length !== 0) {
+        for (let j = 0; j < tree.children.length; j++) {
+          const childTree = tree.children[j];
+          if (!cursorInBlock(childTree.block)) {
+            continue;
+          }
+
+          let [prev, selected, next] = findSelectedBlockAndSiblings(childTree.children);
+
+          if (selected === undefined) {
+            selected = childTree.block;
+          } else {
+            if (prev === undefined) {
+              if (j === 0) {
+                prev = childTree.block;
+              } else {
+                prev = childTree.children[j - 1].block;
+              }
+            }
+
+            if (next === undefined) {
+              if (j === childTree.children.length - 1) {
+                next = childTree.block;
+              } else {
+                next = childTree.children[j + 1].block;
+              }
+            }
+          }
+
+          return [prev, selected, next];
         }
       }
 
-      return tree.block;
-    } else {
-      return undefined;
+      return [undefined, tree.block, undefined];
     }
+
+    return [undefined, undefined, undefined];
   }
 
-  for (const tree of blocks) {
-    const isSelected = walkTree(tree);
-    if (isSelected !== undefined) {
-      const block = isSelected;
-      selectedBlock = block;
-      const range = new vscode.Range(block.startRow, block.startCol, block.endRow, block.endCol);
-      editor.setDecorations(decoration, [range]);
-      return;
-    }
+  const [prev, selected, next] = findSelectedBlockAndSiblings(blocks);
+  if (selected !== undefined) {
+    const range = new vscode.Range(selected.startRow, selected.startCol, selected.endRow, selected.endCol);
+    editor.setDecorations(decoration, [range]);
+  } else {
+    editor.setDecorations(decoration, []);
   }
 
-  editor.setDecorations(decoration, []);
-  selectedBlock = undefined;
+  selectedBlock = selected;
+  selectedBlockSiblings = [prev, next];
 }
 
-async function moveSelectedBlock(binDir: string, parsersDir: string, direction: "up" | "down"): Promise<void> {
+async function moveSelectedBlock(binDir: string, parsersDir: string, direction: "up" | "down", force: boolean): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   console.log(`editor: ${JSON.stringify(editor === undefined)}`);
   if (editor === undefined) {
@@ -139,43 +171,10 @@ async function moveSelectedBlock(binDir: string, parsersDir: string, direction: 
     return undefined;
   }
 
-
-  function findSiblings(trees: BlockLocationTree[]): [BlockLocation | undefined, BlockLocation | undefined] | undefined {
-    let prev = undefined;
-    for (let i = 0; i < trees.length; i++) {
-      const tree = trees[i];
-      let next = undefined;
-      if (i < trees.length - 1) {
-        next = trees[i + 1].block;
-      }
-
-      if (tree.block === selectedBlock) {
-        return [prev, next];
-      }
-
-      prev = tree.block;
-    }
-
-    for (const tree of trees) {
-      const found = findSiblings(tree.children);
-      if (found !== undefined) {
-        return found;
-      }
-    }
-
-    return undefined;
-  }
-
-  const siblings = findSiblings(blocks);
-  if (siblings === undefined) {
-    console.log("no siblings");
-    return;
-  }
-
-  const [prev, next] = siblings;
-
   let srcBlock: BlockLocation | undefined = undefined;
   let dstBlock: BlockLocation | undefined = undefined;
+
+  const [prev, next] = selectedBlockSiblings;
 
   switch (direction) {
     case "up":
@@ -194,10 +193,13 @@ async function moveSelectedBlock(binDir: string, parsersDir: string, direction: 
     return;
   }
 
-  await core.moveBlock(binDir, editor.document, {
+  const cursorByte = editor.document.offsetAt(editor.selection.start);
+  const cursorSrcBlockOffset = cursorByte - srcBlock.startByte;
+
+  const newSrcOffset = await core.moveBlock(binDir, editor.document, {
     srcBlock,
     dstBlock,
-    force: false,
+    force,
     languageFnSymbol: languageSupport.parserInstaller.languageFnSymbol,
     queries: languageSupport.queries,
     libraryPath,
@@ -210,6 +212,14 @@ async function moveSelectedBlock(binDir: string, parsersDir: string, direction: 
     libraryPath,
     text: textDocument.getText()
   });
+
+  if (newSrcOffset === undefined) {
+    console.log("failed to get new src offset");
+  } else {
+    const newPosition = editor.document.positionAt(newSrcOffset + cursorSrcBlockOffset);
+    const newSelection = new vscode.Selection(newPosition, newPosition);
+    editor.selection = newSelection;
+  }
 
   if (newBlocks === undefined) {
     console.log("failed to get blocks");
@@ -225,7 +235,7 @@ async function toggle(binDir: string, parsersDir: string): Promise<void> {
   };
 
   const doUpdateBlocks = async (): Promise<void> => await updateBlocks(binDir, parsersDir);
-  const doUpdateSelectedBlock = (): void => updateSelectedBlock();
+  const doUpdateSelectedBlock = (): void => updateSelection();
 
   if (!enabled) {
     disposables = [
@@ -247,17 +257,16 @@ async function toggle(binDir: string, parsersDir: string): Promise<void> {
   }
 }
 
-export function getBlockModeHooks(context: vscode.ExtensionContext): [
-  () => Promise<void>,
-  () => Promise<void>,
-  () => Promise<void>
-] {
+export function getBlockModeHooks(context: vscode.ExtensionContext): Map<string, () => Promise<void>> {
   const binDir = join(context.extensionPath, "bin");
   const parsersDir = join(context.extensionPath, "parsers");
 
-  return [
-    async (): Promise<void> => await toggle(binDir, parsersDir),
-    async (): Promise<void> => await moveSelectedBlock(binDir, parsersDir, "up"),
-    async (): Promise<void> => await moveSelectedBlock(binDir, parsersDir, "down")
-  ];
+  const hooks = new Map<string, () => Promise<void>>();
+  hooks.set("toggle", async (): Promise<void> => await toggle(binDir, parsersDir));
+  hooks.set("moveUp", async (): Promise<void> => await moveSelectedBlock(binDir, parsersDir, "up", false));
+  hooks.set("moveDown", async (): Promise<void> => await moveSelectedBlock(binDir, parsersDir, "down", false));
+  hooks.set("moveUpForce", async (): Promise<void> => await moveSelectedBlock(binDir, parsersDir, "up", true));
+  hooks.set("moveDownForce", async (): Promise<void> => await moveSelectedBlock(binDir, parsersDir, "down", true));
+
+  return hooks;
 }

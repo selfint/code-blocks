@@ -37,9 +37,9 @@ export function activate(context: ExtensionContext): void {
   context.subscriptions.push(
     commands.registerCommand("codeBlocks.openToTheSide", openCodeBlocksEditorToTheSide)
   );
-  const [toggle, moveUp, moveDown] = getBlockModeHooks(context);
 
-  context.subscriptions.push(commands.registerCommand("codeBlocks.toggle", toggle));
-  context.subscriptions.push(commands.registerCommand("codeBlocks.moveUp", moveUp));
-  context.subscriptions.push(commands.registerCommand("codeBlocks.moveDown", moveDown));
+  const hooks = getBlockModeHooks(context);
+  for (const [hookName, hook] of hooks) {
+    context.subscriptions.push(commands.registerCommand(`codeBlocks.${hookName}`, hook));
+  }
 }
