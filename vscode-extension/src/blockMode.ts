@@ -7,6 +7,13 @@ const decoration = vscode.window.createTextEditorDecorationType({
   backgroundColor: "var(--vscode-editor-selectionBackground)",
 });
 
+const decoration1 = vscode.window.createTextEditorDecorationType({
+  backgroundColor: "#00AA00",
+});
+const decoration2 = vscode.window.createTextEditorDecorationType({
+  backgroundColor: "#AA0000",
+});
+
 let enabled = false;
 let disposables: vscode.Disposable[] | undefined = undefined;
 let blocks: BlockLocationTree[] | undefined = undefined;
@@ -69,64 +76,52 @@ function updateSelection(): void {
     return undefined;
   }
 
-  const cursorStart = editor.selection.start;
-  const cursorEnd = editor.selection.end;
+  const cursor = editor.selection.active;
 
   function cursorInBlock(block: BlockLocation): boolean {
-    return (
-      block.startRow <= cursorStart.line
-      && block.startCol <= cursorStart.character
-      && cursorEnd.line <= block.endRow
-      && cursorEnd.character <= block.endCol
-    );
+    return cursor.isAfterOrEqual(new vscode.Position(block.startRow, block.startCol))
+      && cursor.isBeforeOrEqual(new vscode.Position(block.endRow, block.endCol));
   }
 
-  function findSelectedBlockAndSiblings(trees: BlockLocationTree[]): [BlockLocation | undefined, BlockLocation | undefined, BlockLocation | undefined] {
-    for (const tree of trees) {
+  function findTreesSelections(trees: BlockLocationTree[]): [BlockLocation | undefined, BlockLocation | undefined, BlockLocation | undefined] {
+    for (let i = 0; i < trees.length; i++) {
+      const tree = trees[i];
+
       if (!cursorInBlock(tree.block)) {
         continue;
       }
 
-      if (tree.children.length !== 0) {
-        for (let j = 0; j < tree.children.length; j++) {
-          const childTree = tree.children[j];
-          if (!cursorInBlock(childTree.block)) {
-            continue;
-          }
-
-          let [prev, selected, next] = findSelectedBlockAndSiblings(childTree.children);
-
-          if (selected === undefined) {
-            selected = childTree.block;
-          } else {
-            if (prev === undefined) {
-              if (j === 0) {
-                prev = childTree.block;
-              } else {
-                prev = childTree.children[j - 1].block;
-              }
-            }
-
-            if (next === undefined) {
-              if (j === childTree.children.length - 1) {
-                next = childTree.block;
-              } else {
-                next = childTree.children[j + 1].block;
-              }
-            }
-          }
-
-          return [prev, selected, next];
-        }
+      const [childPrev, selected, childNext] = findTreesSelections(tree.children);
+      if (selected !== undefined) {
+        return [childPrev, selected, childNext ?? tree.block];
       }
 
-      return [undefined, tree.block, undefined];
+      const prev = i > 0 ? trees[i - 1].block : undefined;
+      const next = i < trees.length - 1 ? trees[i + 1].block : undefined;
+
+      return [prev, tree.block, next];
     }
 
     return [undefined, undefined, undefined];
   }
 
-  const [prev, selected, next] = findSelectedBlockAndSiblings(blocks);
+  const [prev, selected, next] = findTreesSelections(blocks);
+
+  selectedBlock = selected;
+  selectedBlockSiblings = [prev, next];
+
+  highlightSelections();
+}
+
+function highlightSelections(): void {
+  const editor = vscode.window.activeTextEditor;
+  if (editor === undefined) {
+    return;
+  }
+
+  const selected = selectedBlock;
+  const [prev, next] = selectedBlockSiblings;
+
   if (selected !== undefined) {
     const range = new vscode.Range(selected.startRow, selected.startCol, selected.endRow, selected.endCol);
     editor.setDecorations(decoration, [range]);
@@ -134,8 +129,18 @@ function updateSelection(): void {
     editor.setDecorations(decoration, []);
   }
 
-  selectedBlock = selected;
-  selectedBlockSiblings = [prev, next];
+  if (prev !== undefined) {
+    editor.setDecorations(decoration1, [new vscode.Range(prev.startRow, prev.startCol, prev.endRow, prev.endCol)]);
+  } else {
+    editor.setDecorations(decoration1, []);
+  }
+
+  if (next !== undefined) {
+    editor.setDecorations(decoration2, [new vscode.Range(next.startRow, next.startCol, next.endRow, next.endCol)]);
+  } else {
+    editor.setDecorations(decoration2, []);
+  }
+
 }
 
 async function moveSelectedBlock(binDir: string, parsersDir: string, direction: "up" | "down", force: boolean): Promise<void> {
@@ -218,7 +223,7 @@ async function moveSelectedBlock(binDir: string, parsersDir: string, direction: 
   } else {
     const newPosition = editor.document.positionAt(newSrcOffset + cursorSrcBlockOffset);
     const newSelection = new vscode.Selection(newPosition, newPosition);
-    editor.selection = newSelection;
+    // editor.selection = newSelection;
   }
 
   if (newBlocks === undefined) {
