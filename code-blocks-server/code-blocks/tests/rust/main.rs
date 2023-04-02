@@ -150,6 +150,7 @@ macro_rules! check {
         let snapshot = if let Some(dst_item) = dst_item {
             let (new_text, new_src_start, new_dst_start) =
                 code_blocks::move_block(src_block, dst_item, $text, $check_fn, $force).unwrap();
+
             format!(
                 "{}\n\nNew src start: {}\nNew dst start: {}",
                 new_text, new_src_start, new_dst_start

@@ -1,0 +1,30 @@
+---
+source: code-blocks/tests/test_utils.rs
+expression: snapshot
+---
+input:
+
+    fn foo() {
+ /* ^src */
+        fn in_foo() {
+            bar();
+        }
+    }
+
+    fn bar() {}
+ /* ^dst */
+
+---
+output:
+
+    fn bar() {}
+    ^ Dest
+
+    fn foo() {
+    ^ Source
+ /* ^src */
+        fn in_foo() {
+            bar();
+        }
+    }
+ /* ^dst */

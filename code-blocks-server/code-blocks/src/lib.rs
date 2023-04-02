@@ -124,21 +124,28 @@ pub fn move_block<'tree>(
         new_text.replace_range(src_range.clone(), "");
 
         (
-            dst_tail.end_byte() + max_space.len(),
             if src_head.start_byte() < dst_head.start_byte() {
-                dst_head.start_byte() - (src_range.end - src_range.start)
+                dst_tail.end_byte() + max_space.len() - (src_range.end - src_range.start) - 3
             } else {
-                dst_head.start_byte() + (src_range.end - src_range.start)
+                dst_tail.end_byte() + max_space.len() + (src_range.end - src_range.start)
+            },
+            if src_head.start_byte() < dst_head.start_byte() {
+                dst_head.start_byte() - (src_range.end - src_range.start + 1)
+            } else {
+                dst_head.start_byte() + (src_range.end - src_range.start + 1)
             },
         )
     }
     // move up
     else {
-        new_text.replace_range(src_range, "");
+        new_text.replace_range(src_range.clone(), "");
         new_text.insert_str(dst_tail.end_byte(), src_text);
         new_text.insert_str(dst_tail.end_byte(), max_space);
 
-        (dst_tail.end_byte() + max_space.len(), dst_head.start_byte())
+        (
+            dst_tail.end_byte() - (src_range.end - src_range.start - 1),
+            dst_head.start_byte(),
+        )
     };
 
     Ok((new_text, new_src_start, new_dst_start))
