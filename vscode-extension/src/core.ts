@@ -84,31 +84,33 @@ export async function getBlocks(
 export async function moveBlock(
   binDir: string,
   document: vscode.TextDocument,
-  moveArgs: MoveBlockArgs,
-): Promise<void> {
+  args: MoveBlockArgs,
+): Promise<number | undefined> {
+  console.log(`Move block args: ${JSON.stringify(args)}`);
+
   const codeBlocksCliPath = await getCodeBlocksCliPath(binDir);
   if (codeBlocksCliPath === undefined) {
     return undefined;
   }
 
-  const response = await codeBlocksCliClient.moveBlock(codeBlocksCliPath, moveArgs);
+  const response = await codeBlocksCliClient.moveBlock(codeBlocksCliPath, args);
   const differentScopeErrorMsg =
     "Illegal move operation\n\nCaused by:\n    Can't move block to different scope";
 
   switch (response.status) {
     case "ok": {
-      const newContent = response.result;
+      const moveBlockResponse = response.result;
 
       const edit = new vscode.WorkspaceEdit();
-      edit.replace(document.uri, new vscode.Range(0, 0, document.lineCount, 0), newContent);
+      edit.replace(document.uri, new vscode.Range(0, 0, document.lineCount, 0), moveBlockResponse.text);
 
       await vscode.workspace.applyEdit(edit);
-      break;
+      return moveBlockResponse.newSrcStart;
     }
 
     case "error": {
       const options: "Try force"[] = [];
-      if (response.result === differentScopeErrorMsg && !moveArgs.force) {
+      if (response.result === differentScopeErrorMsg && !args.force) {
         options.push("Try force");
       }
 
@@ -118,8 +120,8 @@ export async function moveBlock(
       );
 
       if (choice === "Try force") {
-        moveArgs.force = true;
-        await moveBlock(binDir, document, moveArgs);
+        args.force = true;
+        await moveBlock(binDir, document, args);
       }
 
       break;

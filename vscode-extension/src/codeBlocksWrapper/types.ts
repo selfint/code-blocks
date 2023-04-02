@@ -41,34 +41,37 @@ export type MoveBlockArgs = {
   force: boolean;
 };
 
-export type MoveBlockResponse = string;
+export type MoveBlockResponse = {
+  text: string;
+  newSrcStart: number;
+};
 
 export type CliRequest =
   | {
-      method: "installLanguage";
-      params: InstallLanguageArgs;
-    }
+    method: "installLanguage";
+    params: InstallLanguageArgs;
+  }
   | {
-      method: "getSubtrees";
-      params: GetSubtreesArgs;
-    }
+    method: "getSubtrees";
+    params: GetSubtreesArgs;
+  }
   | {
-      method: "moveBlock";
-      params: MoveBlockArgs;
-    };
+    method: "moveBlock";
+    params: MoveBlockArgs;
+  };
 
 export type CliResponse = InstallLanguageResponse | GetSubtreesResponse | MoveBlockResponse;
 
 export type JsonResult<T> =
   | {
-      status: "ok";
-      result: T;
-    }
+    status: "ok";
+    result: T;
+  }
   | {
-      status: "progress";
-      result: string;
-    }
+    status: "progress";
+    result: string;
+  }
   | {
-      status: "error";
-      result: string;
-    };
+    status: "error";
+    result: string;
+  };
