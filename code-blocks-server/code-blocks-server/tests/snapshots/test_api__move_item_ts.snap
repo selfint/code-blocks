@@ -1,6 +1,6 @@
 ---
 source: code-blocks-server/tests/test_api.rs
-expression: "code_blocks_server::move_block(MoveBlockArgs {\n            queries: get_query_strings(&lang),\n            text: r#\"\nclass TsClass {\n    constructor() {}\n\n    foo() {}\n/*  ^src */\n\n    /**\n    * bar docs\n    */\n    bar() {}\n/*  ^dst */\n}\n\nfunction baz() {}\n    \"#.to_string(),\n            language: lang.get_language(),\n            src_block: src_block.into(),\n            dst_block: dst_block.into(),\n            assert_move_legal_fn: Some(check_fn),\n            force: false,\n        }).unwrap()"
+expression: snapshot
 ---
 
 class TsClass {
@@ -18,3 +18,5 @@ class TsClass {
 
 function baz() {}
     
+
+New src start:107

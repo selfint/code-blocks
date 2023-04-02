@@ -1,8 +1,8 @@
 ---
 source: code-blocks-server/tests/test_api.rs
-expression: "code_blocks_server::move_block(MoveBlockArgs {\n                queries: get_query_strings(&lang),\n                text: r#\"\n        #Vsrc\n        @decor1\n        @decor2\n        class A:\n            ...\n           \n        class C:\n            \"\"\"class docstring\"\"\"\n        \n            #Vfail\n            def __init__(self):\n                pass\n        \n            @staticmethod()\n            def foo():\n                \"\"\"method docstring\"\"\"\n                \n            def bar():\n                ...\n                \n        def func():\n            ...\n\"#.to_string(),\n                language: lang.get_language(),\n                src_block: src_block.into(),\n                dst_block: fail_block.into(),\n                assert_move_legal_fn: Some(check_fn),\n                force: false,\n            }).err().unwrap()"
+expression: snapshot
 ---
-Error {
-    context: "Illegal move operation",
-    source: "Blocks have different parents",
-}
+Illegal move operation
+
+Caused by:
+    Blocks have different parents

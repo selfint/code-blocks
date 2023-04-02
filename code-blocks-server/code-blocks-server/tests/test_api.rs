@@ -271,8 +271,8 @@ macro_rules! check {
         let dst_block = copy_target_item("dst", $text, &items, &lang);
         let fail_block = copy_target_item("fail", $text, &items, &lang);
 
-        if let Some(dst_block) = dst_block {
-            insta::assert_display_snapshot!(code_blocks_server::move_block(MoveBlockArgs {
+        let snapshot = if let Some(dst_block) = dst_block {
+            let result = code_blocks_server::move_block(MoveBlockArgs {
                 queries: get_query_strings(&lang),
                 text: $text.to_string(),
                 language: lang.get_language(),
@@ -281,9 +281,10 @@ macro_rules! check {
                 assert_move_legal_fn: $check_fn,
                 force: $force,
             })
-            .unwrap());
+            .unwrap();
+            format!("{}\n\nNew src start:{}", result.text, result.new_src_start)
         } else if let Some(fail_block) = fail_block {
-            insta::assert_debug_snapshot!(code_blocks_server::move_block(MoveBlockArgs {
+            let err = code_blocks_server::move_block(MoveBlockArgs {
                 queries: get_query_strings(&lang),
                 text: $text.to_string(),
                 language: lang.get_language(),
@@ -293,10 +294,14 @@ macro_rules! check {
                 force: $force,
             })
             .err()
-            .unwrap());
+            .unwrap();
+
+            format!("{:?}", err)
         } else {
             unreachable!("No dst/fail block");
-        }
+        };
+
+        insta::assert_display_snapshot!(snapshot);
     };
 }
 

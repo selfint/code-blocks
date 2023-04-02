@@ -1,6 +1,6 @@
 ---
 source: code-blocks/tests/rust/main.rs
-expression: "code_blocks::move_block(src_block, dst_item,\n        r#\"\n    mod m1 {\n/*  ^src */\n        fn foo() {}\n    }\n\n    mod m2 {\n        fn bar() {}\n    }\n\n    mod m3 {\n/*  ^dst */\n        fn baz() {}\n    }\n\"#,\n        Some(check_fn), false).unwrap()"
+expression: snapshot
 ---
 
     mod m2 {
@@ -17,3 +17,5 @@ expression: "code_blocks::move_block(src_block, dst_item,\n        r#\"\n    mod
         fn foo() {}
     }
 
+
+New src start: 143

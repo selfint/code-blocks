@@ -1,6 +1,6 @@
 ---
 source: code-blocks/tests/python/main.rs
-expression: "code_blocks::move_block(src_block, dst_item,\n        r#\"\n        #Vsrc\n        @decor1\n        @decor2\n        class A:\n            ...\n           \n        #Vdst\n        class C:\n            \"\"\"class docstring\"\"\"\n        \n            def __init__(self):\n                pass\n        \n            @staticmethod()\n            def foo():\n                \"\"\"method docstring\"\"\"\n                \n            def bar():\n                ...\n                \n        def func():\n            ...\n\"#,\n        Some(check_fn), false).unwrap()"
+expression: snapshot
 ---
 
         #Vsrc
@@ -26,3 +26,5 @@ expression: "code_blocks::move_block(src_block, dst_item,\n        r#\"\n       
         def func():
             ...
 
+
+New src start: 377

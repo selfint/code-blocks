@@ -1,6 +1,6 @@
 ---
 source: code-blocks-server/tests/test_api.rs
-expression: "code_blocks_server::move_block(MoveBlockArgs {\n            queries: get_query_strings(&lang),\n            text: r#\"\n    mod m1 {\n/*  ^src */\n        fn foo() {}\n    }\n\n    mod m2 {\n        fn bar() {}\n    }\n\n    mod m3 {\n/*  ^dst */\n        fn baz() {}\n    }\n\"#.to_string(),\n            language: lang.get_language(),\n            src_block: src_block.into(),\n            dst_block: dst_block.into(),\n            assert_move_legal_fn: Some(check_fn),\n            force: false,\n        }).unwrap()"
+expression: snapshot
 ---
 
     mod m2 {
@@ -17,3 +17,5 @@ expression: "code_blocks_server::move_block(MoveBlockArgs {\n            queries
         fn foo() {}
     }
 
+
+New src start:143

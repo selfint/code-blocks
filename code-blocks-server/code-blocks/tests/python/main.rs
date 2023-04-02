@@ -97,17 +97,19 @@ macro_rules! check {
         let dst_item = copy_item_below("Vdst", $text, &items);
         let fail_item = copy_item_below("Vfail", $text, &items);
 
-        if let Some(dst_item) = dst_item {
-            insta::assert_display_snapshot!(code_blocks::move_block(
-                src_block, dst_item, $text, $check_fn, $force
-            )
-            .unwrap());
+        let snapshot = if let Some(dst_item) = dst_item {
+            let (new_text, new_src_start) =
+                code_blocks::move_block(src_block, dst_item, $text, $check_fn, $force).unwrap();
+            format!("{}\n\nNew src start: {}", new_text, new_src_start)
         } else if let Some(fail_item) = fail_item {
             let result = code_blocks::move_block(src_block, fail_item, $text, $check_fn, $force);
             assert!(result.is_err());
+            format!("{}\n\n{:?}", $text, result.err().unwrap())
+        } else {
+            panic!("no dst/fail item in input");
+        };
 
-            insta::assert_display_snapshot!(format!("{}\n\n{:?}", $text, result.err().unwrap()));
-        }
+        insta::assert_display_snapshot!(snapshot);
     };
 }
 

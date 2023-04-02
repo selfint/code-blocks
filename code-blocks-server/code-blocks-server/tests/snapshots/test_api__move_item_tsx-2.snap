@@ -1,8 +1,8 @@
 ---
 source: code-blocks-server/tests/test_api.rs
-expression: "code_blocks_server::move_block(MoveBlockArgs {\n                queries: get_query_strings(&lang),\n                text: r#\"\n    export default function App() {\n      return (\n          <div>\n      {/* ^fail */}\n            <button className=\"card\" onClick={readFile}>\n        {/* ^src */}\n              Choose file\n            </button>\n            <button className=\"card\" onClick={() => writeFile(filePath, content)}>\n              Write file\n            </button>\n          </div>\n      );\n    }\n    \"#.to_string(),\n                language: lang.get_language(),\n                src_block: src_block.into(),\n                dst_block: fail_block.into(),\n                assert_move_legal_fn: Some(check_fn),\n                force: false,\n            }).err().unwrap()"
+expression: snapshot
 ---
-Error {
-    context: "Illegal move operation",
-    source: "Blocks have different parents",
-}
+Illegal move operation
+
+Caused by:
+    Blocks have different parents
