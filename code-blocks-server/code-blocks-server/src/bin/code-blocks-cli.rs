@@ -39,6 +39,7 @@ pub enum CliRequest {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct SerdeMoveBlockResponse {
     text: String,
     new_src_start: usize,
@@ -406,7 +407,7 @@ mod tests {
           "status": "ok",
           "result": {
             "text": "fn foo() {}\nfn main() {}",
-            "new_src_start": 24
+            "newSrcStart": 24
           }
         }
         "###
