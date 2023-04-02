@@ -1,6 +1,6 @@
-import * as core from "./newCore";
+import * as core from "./core";
 import * as vscode from "vscode";
-import { BlockLocation, BlockLocationTree } from "../codeBlocks/types";
+import { BlockLocation, BlockLocationTree, GetSubtreesArgs, MoveBlockArgs } from "./codeBlocksWrapper/types";
 import { join } from "path";
 
 const decoration = vscode.window.createTextEditorDecorationType({
@@ -27,18 +27,24 @@ async function updateBlocks(binDir: string, parsersDir: string): Promise<void> {
   }
 
   const libraryPath = await core.installLanguage(
+    binDir,
     {
       installDir: join(parsersDir, languageSupport.parserInstaller.libraryName),
       ...languageSupport.parserInstaller,
     },
-    binDir
   );
   if (libraryPath === undefined) {
     return undefined;
   }
 
-  const text = textDocument.getText();
-  const newBlocks = await core.getBlocks(text, languageId, languageSupport, libraryPath);
+  const args: GetSubtreesArgs = {
+    languageFnSymbol: languageSupport.parserInstaller.languageFnSymbol,
+    queries: languageSupport.queries,
+    text: textDocument.getText(),
+    libraryPath
+  };
+
+  const newBlocks = await core.getBlocks(binDir, args);
   if (newBlocks === undefined) {
     console.log("failed to get blocks");
     return undefined;
@@ -123,11 +129,11 @@ async function moveSelectedBlock(binDir: string, parsersDir: string, direction: 
   }
 
   const libraryPath = await core.installLanguage(
+    binDir,
     {
       installDir: join(parsersDir, languageSupport.parserInstaller.libraryName),
       ...languageSupport.parserInstaller,
     },
-    binDir
   );
   if (libraryPath === undefined) {
     return undefined;
@@ -168,8 +174,8 @@ async function moveSelectedBlock(binDir: string, parsersDir: string, direction: 
 
   const [prev, next] = siblings;
 
-  let srcBlock;
-  let dstBlock;
+  let srcBlock: BlockLocation | undefined = undefined;
+  let dstBlock: BlockLocation | undefined = undefined;
 
   switch (direction) {
     case "up":
@@ -196,10 +202,15 @@ async function moveSelectedBlock(binDir: string, parsersDir: string, direction: 
     queries: languageSupport.queries,
     libraryPath,
     text: editor.document.getText()
+  } as MoveBlockArgs);
+
+  const newBlocks = await core.getBlocks(binDir, {
+    languageFnSymbol: languageSupport.parserInstaller.languageFnSymbol,
+    queries: languageSupport.queries,
+    libraryPath,
+    text: textDocument.getText()
   });
 
-  const text = textDocument.getText();
-  const newBlocks = await core.getBlocks(text, languageId, languageSupport, libraryPath);
   if (newBlocks === undefined) {
     console.log("failed to get blocks");
     return undefined;

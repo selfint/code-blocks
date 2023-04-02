@@ -1,6 +1,6 @@
 import { ExtensionContext, Uri, commands, window } from "vscode";
-import { CodeBlocksEditorProvider } from "./CodeBlocksEditorProvider";
-import { getBlockModeHooks } from "./blockMode/command";
+import { CodeBlocksEditorProvider } from "./editor/CodeBlocksEditorProvider";
+import { getBlockModeHooks } from "./blockMode";
 
 async function reopenWithCodeBocksEditor(): Promise<void> {
   const activeTabInput = window.tabGroups.activeTabGroup.activeTab?.input as {

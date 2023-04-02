@@ -1,18 +1,37 @@
-import * as codeBlocksCliClient from "./codeBlocks/codeBlocksCliClient";
+import * as codeBlocksCliClient from "./codeBlocksWrapper/codeBlocksCliClient";
 import * as vscode from "vscode";
 import {
-  GetSubtreesArgs,
+  GetSubtreesArgs, GetSubtreesResponse,
   InstallLanguageArgs,
   InstallLanguageResponse,
   MoveBlockArgs,
-} from "./codeBlocks/types";
-import { UpdateMessage } from "./messages";
+} from "./codeBlocksWrapper/types";
+import { getOrInstallCli } from "./codeBlocksWrapper/installer/installer";
+
+export type LanguageSupport = {
+  parserInstaller: {
+    downloadCmd: string;
+    libraryName: string;
+    languageFnSymbol: string;
+  };
+  queries: string[];
+};
+
+export type CodeBlocksExtensionSettings = {
+  languageSupport: Map<string, LanguageSupport>;
+  codeBlocksCliPath: string | undefined;
+};
 
 export async function installLanguage(
-  codeBlocksCliPath: string,
-  args: InstallLanguageArgs
+  binDir: string,
+  args: InstallLanguageArgs,
 ): Promise<InstallLanguageResponse | undefined> {
   console.log(`Install language args: ${JSON.stringify(args)}`);
+
+  const codeBlocksCliPath = await getCodeBlocksCliPath(binDir);
+  if (codeBlocksCliPath === undefined) {
+    return undefined;
+  }
 
   const response = await vscode.window.withProgress(
     {
@@ -39,35 +58,39 @@ export async function installLanguage(
   }
 }
 
-export async function drawBlocks(
-  codeBlocksCliPath: string,
-  webview: vscode.Webview,
-  args: GetSubtreesArgs
-): Promise<void> {
+export async function getBlocks(
+  binDir: string,
+  args: GetSubtreesArgs,
+): Promise<GetSubtreesResponse | undefined> {
+  const codeBlocksCliPath = await getCodeBlocksCliPath(binDir);
+  if (codeBlocksCliPath === undefined) {
+    return undefined;
+  }
+
   console.log(`Get subtrees args: ${JSON.stringify(args)}`);
 
   const response = await codeBlocksCliClient.getSubtrees(codeBlocksCliPath, args);
 
   switch (response.status) {
     case "ok":
-      await webview.postMessage({
-        type: "update",
-        text: args.text,
-        blockTrees: response.result,
-      } as UpdateMessage);
-      break;
+      return response.result;
 
     case "error":
       await vscode.window.showErrorMessage(`Failed to get blocks: ${response.result}`);
-      break;
+      return undefined;
   }
 }
 
 export async function moveBlock(
-  codeBlocksCliPath: string,
+  binDir: string,
   document: vscode.TextDocument,
-  moveArgs: MoveBlockArgs
+  moveArgs: MoveBlockArgs,
 ): Promise<void> {
+  const codeBlocksCliPath = await getCodeBlocksCliPath(binDir);
+  if (codeBlocksCliPath === undefined) {
+    return undefined;
+  }
+
   const response = await codeBlocksCliClient.moveBlock(codeBlocksCliPath, moveArgs);
   const differentScopeErrorMsg =
     "Illegal move operation\n\nCaused by:\n    Can't move block to different scope";
@@ -96,10 +119,39 @@ export async function moveBlock(
 
       if (choice === "Try force") {
         moveArgs.force = true;
-        await moveBlock(codeBlocksCliPath, document, moveArgs);
+        await moveBlock(binDir, document, moveArgs);
       }
 
       break;
     }
+  }
+}
+
+export async function getCodeBlocksCliPath(binDir: string): Promise<string | undefined> {
+  const codeBlocksCliPath: string | undefined | null = vscode.workspace
+    .getConfiguration("codeBlocks")
+    .get("binPath");
+
+  if (codeBlocksCliPath === null || codeBlocksCliPath === undefined || codeBlocksCliPath.length === 0) {
+    return await getOrInstallCli(binDir);
+  } else {
+    return codeBlocksCliPath;
+  }
+
+}
+
+export function getLanguageSupport(languageId: string): LanguageSupport | undefined {
+  const languageSupportConfig: Record<string, LanguageSupport> | undefined | null = vscode.workspace
+    .getConfiguration("codeBlocks")
+    .get("languageSupport");
+
+  if (languageSupportConfig === null || languageSupportConfig === undefined) {
+    return undefined;
+  }
+
+  if (languageId in languageSupportConfig) {
+    return languageSupportConfig[languageId];
+  } else {
+    return undefined;
   }
 }
