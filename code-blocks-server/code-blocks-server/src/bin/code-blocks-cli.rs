@@ -43,6 +43,7 @@ pub enum CliRequest {
 pub struct SerdeMoveBlockResponse {
     text: String,
     new_src_start: usize,
+    new_dst_start: usize,
 }
 
 impl From<MoveBlockResponse> for SerdeMoveBlockResponse {
@@ -50,6 +51,7 @@ impl From<MoveBlockResponse> for SerdeMoveBlockResponse {
         Self {
             text: from.text,
             new_src_start: from.new_src_start,
+            new_dst_start: from.new_dst_start,
         }
     }
 }
@@ -407,7 +409,8 @@ mod tests {
           "status": "ok",
           "result": {
             "text": "fn foo() {}\nfn main() {}",
-            "newSrcStart": 24
+            "newSrcStart": 25,
+            "newDstStart": 0
           }
         }
         "###

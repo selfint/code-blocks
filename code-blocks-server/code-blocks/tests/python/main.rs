@@ -98,9 +98,12 @@ macro_rules! check {
         let fail_item = copy_item_below("Vfail", $text, &items);
 
         let snapshot = if let Some(dst_item) = dst_item {
-            let (new_text, new_src_start) =
+            let (new_text, new_src_start, new_dst_start) =
                 code_blocks::move_block(src_block, dst_item, $text, $check_fn, $force).unwrap();
-            format!("{}\n\nNew src start: {}", new_text, new_src_start)
+            format!(
+                "{}\n\nNew src start: {}\nNew dst start: {}",
+                new_text, new_src_start, new_dst_start
+            )
         } else if let Some(fail_item) = fail_item {
             let result = code_blocks::move_block(src_block, fail_item, $text, $check_fn, $force);
             assert!(result.is_err());

@@ -56,7 +56,7 @@ pub fn move_block<'tree>(
     text: &str,
     assert_move_legal_fn: Option<impl Fn(&Block, &Block) -> Result<()>>,
     force: bool,
-) -> Result<(String, usize)> {
+) -> Result<(String, usize, usize)> {
     if !force {
         if let Some(move_is_legal) = assert_move_legal_fn {
             move_is_legal(&src_block, &dst_block).context("Illegal move operation")?;
@@ -68,7 +68,11 @@ pub fn move_block<'tree>(
     let src_block_range = src_block.byte_range();
 
     if src_head.start_position() == dst_head.start_position() {
-        return Ok((text.to_string(), src_head.start_byte()));
+        return Ok((
+            text.to_string(),
+            src_head.start_byte(),
+            dst_head.start_byte(),
+        ));
     }
 
     let mut new_text = text.to_string();
@@ -114,19 +118,30 @@ pub fn move_block<'tree>(
 
     // move src to be below dst
     // move down
-    if src_head.end_byte() < dst_head.end_byte() {
+    let (new_src_start, new_dst_start) = if src_head.end_byte() < dst_head.end_byte() {
         new_text.insert_str(dst_tail.end_byte(), src_text);
         new_text.insert_str(dst_tail.end_byte(), max_space);
-        new_text.replace_range(src_range, "");
+        new_text.replace_range(src_range.clone(), "");
+
+        (
+            dst_tail.end_byte() + max_space.len(),
+            if src_head.start_byte() < dst_head.start_byte() {
+                dst_head.start_byte() - (src_range.end - src_range.start)
+            } else {
+                dst_head.start_byte() + (src_range.end - src_range.start)
+            },
+        )
     }
     // move up
     else {
         new_text.replace_range(src_range, "");
         new_text.insert_str(dst_tail.end_byte(), src_text);
         new_text.insert_str(dst_tail.end_byte(), max_space);
-    }
 
-    Ok((new_text, dst_tail.end_byte()))
+        (dst_tail.end_byte() + max_space.len(), dst_head.start_byte())
+    };
+
+    Ok((new_text, new_src_start, new_dst_start))
 }
 
 fn get_blocks<'tree>(queries: &[Query], tree: &'tree Tree, text: &str) -> Vec<Block<'tree>> {

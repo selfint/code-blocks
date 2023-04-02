@@ -77,6 +77,7 @@ pub struct MoveBlockArgs<C: Fn(&Block, &Block) -> Result<()>> {
 pub struct MoveBlockResponse {
     pub text: String,
     pub new_src_start: usize,
+    pub new_dst_start: usize,
 }
 
 pub fn move_block<C: Fn(&Block, &Block) -> Result<()>>(
@@ -114,7 +115,7 @@ pub fn move_block<C: Fn(&Block, &Block) -> Result<()>>(
     let src_block = copy_item_at(&args.src_block, &subtrees).context("Failed to find src item")?;
     let dst_item = copy_item_at(&args.dst_block, &subtrees).context("Failed to find dst item")?;
 
-    let (text, new_src_start) = code_blocks::move_block(
+    let (text, new_src_start, new_dst_start) = code_blocks::move_block(
         src_block,
         dst_item,
         &args.text,
@@ -125,5 +126,6 @@ pub fn move_block<C: Fn(&Block, &Block) -> Result<()>>(
     Ok(MoveBlockResponse {
         text,
         new_src_start,
+        new_dst_start,
     })
 }

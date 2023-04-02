@@ -14,4 +14,5 @@ mod m {
 fn baz() {}
 
 
-New src start:53
+New src start: 59
+New dst start: 26

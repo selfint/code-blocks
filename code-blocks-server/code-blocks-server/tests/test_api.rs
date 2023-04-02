@@ -282,7 +282,10 @@ macro_rules! check {
                 force: $force,
             })
             .unwrap();
-            format!("{}\n\nNew src start:{}", result.text, result.new_src_start)
+            format!(
+                "{}\n\nNew src start: {}\nNew dst start: {}",
+                result.text, result.new_src_start, result.new_dst_start
+            )
         } else if let Some(fail_block) = fail_block {
             let err = code_blocks_server::move_block(MoveBlockArgs {
                 queries: get_query_strings(&lang),
