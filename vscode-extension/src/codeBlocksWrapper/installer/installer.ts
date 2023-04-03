@@ -25,7 +25,7 @@ export async function getOrInstallCli(binDirPath: string): Promise<string | unde
 }
 
 async function getExecutableBinString(binary: string, extensionBinDirPath: string): Promise<string | undefined> {
-  if (await cargoUtils.cmdInstalledWithCargo(binary)) {
+  if (await cargoUtils.cmdInstalledWithCargo()) {
     console.log(`${binary} is installed with cargo`);
     return binary;
   }

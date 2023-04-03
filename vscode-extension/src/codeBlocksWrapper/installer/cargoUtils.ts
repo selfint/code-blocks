@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { exec } from "child_process";
 import { promisify } from "util";
 
+const PACKAGE_NAME_VERSION = "code-blocks-server v0.6.0";
 const CARGO_INSTALL_CMD = `cargo install code-blocks-server --features=cli --version 0.6.0`;
 
 export async function cargoIsInstalled(): Promise<boolean> {
@@ -19,13 +20,13 @@ export async function cargoIsInstalled(): Promise<boolean> {
   }
 }
 
-export async function cmdInstalledWithCargo(cmd: string): Promise<boolean> {
+export async function cmdInstalledWithCargo(): Promise<boolean> {
   try {
     const installedList = await promisify(exec)("cargo install --list");
     if (installedList.stderr.length > 0) {
       return false;
     } else {
-      return installedList.stdout.includes(cmd);
+      return installedList.stdout.includes(PACKAGE_NAME_VERSION);
     }
   } catch (exception) {
     console.log(`Got exception ${JSON.stringify(exception)}`);
