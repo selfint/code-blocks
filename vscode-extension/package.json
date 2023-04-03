@@ -68,6 +68,14 @@
       {
         "command": "codeBlocks.moveDown",
         "title": "Code Blocks: Move selected block down"
+      },
+      {
+        "command": "codeBlocks.moveUpForce",
+        "title": "Code Blocks: Force move selected block up"
+      },
+      {
+        "command": "codeBlocks.moveDownForce",
+        "title": "Code Blocks: Force move selected block down"
       }
     ],
     "configuration": {

@@ -5,6 +5,7 @@ import {
   InstallLanguageArgs,
   InstallLanguageResponse,
   MoveBlockArgs,
+  MoveBlockResponse,
 } from "./codeBlocksWrapper/types";
 import { getOrInstallCli } from "./codeBlocksWrapper/installer/installer";
 
@@ -85,7 +86,7 @@ export async function moveBlock(
   binDir: string,
   document: vscode.TextDocument,
   args: MoveBlockArgs,
-): Promise<number | undefined> {
+): Promise<MoveBlockResponse | undefined> {
   console.log(`Move block args: ${JSON.stringify(args)}`);
 
   const codeBlocksCliPath = await getCodeBlocksCliPath(binDir);
@@ -101,11 +102,7 @@ export async function moveBlock(
     case "ok": {
       const moveBlockResponse = response.result;
 
-      const edit = new vscode.WorkspaceEdit();
-      edit.replace(document.uri, new vscode.Range(0, 0, document.lineCount, 0), moveBlockResponse.text);
-
-      await vscode.workspace.applyEdit(edit);
-      return moveBlockResponse.newSrcStart;
+      return moveBlockResponse;
     }
 
     case "error": {

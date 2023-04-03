@@ -55,7 +55,14 @@ export class CodeBlocksEditor {
       force: false,
     };
 
-    await core.moveBlock(this.codeBlocksCliPath, this.document, args);
+    const response = await core.moveBlock(this.codeBlocksCliPath, this.document, args);
+    if (response === undefined) {
+      return;
+    }
+
+    const edit = new vscode.WorkspaceEdit();
+    edit.replace(this.document.uri, new vscode.Range(0, 0, this.document.lineCount, 0), response.text);
+    await vscode.workspace.applyEdit(edit);
   }
 
   private initWebview(): void {

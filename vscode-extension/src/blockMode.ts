@@ -22,7 +22,6 @@ let selectedBlockSiblings: [BlockLocation | undefined, BlockLocation | undefined
 
 async function updateBlocks(binDir: string, parsersDir: string): Promise<void> {
   const editor = vscode.window.activeTextEditor;
-  console.log(`editor: ${JSON.stringify(editor === undefined)}`);
   if (editor === undefined) {
     return undefined;
   }
@@ -64,6 +63,7 @@ async function updateBlocks(binDir: string, parsersDir: string): Promise<void> {
   }
 
   blocks = newBlocks;
+  updateSelection();
 }
 
 function updateSelection(): void {
@@ -198,10 +198,10 @@ async function moveSelectedBlock(binDir: string, parsersDir: string, direction: 
     return;
   }
 
-  const cursorByte = editor.document.offsetAt(editor.selection.start);
-  const cursorSrcBlockOffset = cursorByte - srcBlock.startByte;
+  const cursorByte = editor.document.offsetAt(editor.selection.active);
+  const cursorSelectedBlockOffset = cursorByte - selectedBlock.startByte;
 
-  const newSrcOffset = await core.moveBlock(binDir, editor.document, {
+  const moveBlockResponse = await core.moveBlock(binDir, editor.document, {
     srcBlock,
     dstBlock,
     force,
@@ -211,25 +211,35 @@ async function moveSelectedBlock(binDir: string, parsersDir: string, direction: 
     text: editor.document.getText()
   } as MoveBlockArgs);
 
+  if (moveBlockResponse === undefined) {
+    console.log("failed to move block");
+    return;
+  }
+
   const newBlocks = await core.getBlocks(binDir, {
     languageFnSymbol: languageSupport.parserInstaller.languageFnSymbol,
     queries: languageSupport.queries,
     libraryPath,
-    text: textDocument.getText()
+    text: moveBlockResponse.text
   });
-
-  if (newSrcOffset === undefined) {
-    console.log("failed to get new src offset");
-  } else {
-    const newPosition = editor.document.positionAt(newSrcOffset + cursorSrcBlockOffset);
-    const newSelection = new vscode.Selection(newPosition, newPosition);
-    // editor.selection = newSelection;
-  }
 
   if (newBlocks === undefined) {
     console.log("failed to get blocks");
     return undefined;
   }
+
+  const edit = new vscode.WorkspaceEdit();
+  edit.replace(editor.document.uri, new vscode.Range(0, 0, editor.document.lineCount, 0), moveBlockResponse.text);
+
+  await vscode.workspace.applyEdit(edit);
+
+  const newOffset = direction === "down" ? moveBlockResponse.newSrcStart : moveBlockResponse.newDstStart;
+
+  const newPosition = editor.document.positionAt(newOffset + cursorSelectedBlockOffset);
+  const newSelection = new vscode.Selection(newPosition, newPosition);
+  editor.selection = newSelection;
+
+  updateSelection();
 }
 
 
@@ -245,6 +255,8 @@ async function toggle(binDir: string, parsersDir: string): Promise<void> {
   if (!enabled) {
     disposables = [
       vscode.workspace.onDidChangeTextDocument(doUpdateBlocks),
+      vscode.workspace.onDidSaveTextDocument(doUpdateBlocks),
+      vscode.workspace.onDidOpenTextDocument(doUpdateBlocks),
       vscode.window.onDidChangeActiveTextEditor(doUpdateBlocks),
       vscode.window.onDidChangeTextEditorSelection(doUpdateSelectedBlock),
     ];

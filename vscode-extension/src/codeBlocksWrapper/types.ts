@@ -44,6 +44,7 @@ export type MoveBlockArgs = {
 export type MoveBlockResponse = {
   text: string;
   newSrcStart: number;
+  newDstStart: number;
 };
 
 export type CliRequest =
