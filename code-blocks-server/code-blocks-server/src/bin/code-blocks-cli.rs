@@ -9,8 +9,6 @@ use code_blocks_server::{
 use serde::{Deserialize, Serialize};
 use tree_sitter_installer::{parser_installer::InstallationStatus, DynamicParser};
 
-const VERSION: &str = "0.6.1";
-
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "method", content = "params")]
@@ -86,24 +84,6 @@ impl<T> From<Result<T>> for JsonResult<T> {
 }
 
 fn main() {
-    let args = std::env::args().collect::<Vec<_>>();
-    if args.len() > 1 {
-        let args = args.iter().skip(1).map(String::as_ref).collect::<Vec<_>>();
-        match args.as_slice() {
-            ["-v" | "--version"] => {
-                println!("{}", VERSION);
-                return;
-            }
-            args => {
-                println!("Invalid args: {:?}", args);
-                println!("Run command without args to start server.\n");
-                println!("Other usage:");
-                println!("\t-v / --version\tPrint code-blocks-server version");
-                return;
-            }
-        }
-    }
-
     for line in std::io::stdin().lines() {
         let Ok(line) = line else { continue; };
 
