@@ -8,10 +8,10 @@ const decoration = vscode.window.createTextEditorDecorationType({
   backgroundColor: "var(--vscode-editor-selectionBackground)",
 });
 const decoration1 = vscode.window.createTextEditorDecorationType({
-  backgroundColor: "#00AA00",
+  backgroundColor: "var(--vscode-editor-selectionHighlightBackground)",
 });
 const decoration2 = vscode.window.createTextEditorDecorationType({
-  backgroundColor: "#AA0000",
+  backgroundColor: "var(--vscode-editor-selectionHighlightBackground)",
 });
 
 let enabled = false;
@@ -275,6 +275,9 @@ async function toggle(codeBlocksCliPath: string | undefined, parsersDir: string)
     enabled = true;
   } else if (disposables !== undefined) {
     disposables.map(async (d) => { await d.dispose(); });
+    vscode.window.activeTextEditor?.setDecorations(decoration, []);
+    vscode.window.activeTextEditor?.setDecorations(decoration1, []);
+    vscode.window.activeTextEditor?.setDecorations(decoration2, []);
     enabled = false;
   } else {
     throw new Error("Illegal state");
