@@ -1,11 +1,11 @@
 use anyhow::{ensure, Result};
 use code_blocks::{get_query_subtrees, Block, BlockTree};
 
-use tree_sitter::{Parser, Point, Query, Tree};
+use tree_sitter::{Point, Query};
 
 #[path = "../test_utils.rs"]
 mod test_utils;
-use test_utils::{build_tree, copy_item_above};
+use test_utils::build_tree;
 
 const PYTHON_QUERY_STRINGS: [&str; 3] = [
     "(class_definition) @item",
