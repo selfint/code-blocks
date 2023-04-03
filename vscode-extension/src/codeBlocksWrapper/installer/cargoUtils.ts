@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { exec } from "child_process";
 import { promisify } from "util";
 
-const CARGO_INSTALL_CMD = `cargo install code-blocks-server --features=cli --version 0.5.1`;
+const CARGO_INSTALL_CMD = `cargo install code-blocks-server --features=cli --version 0.6.0`;
 
 export async function cargoIsInstalled(): Promise<boolean> {
   try {
