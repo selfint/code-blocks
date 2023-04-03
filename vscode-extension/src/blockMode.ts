@@ -1,8 +1,8 @@
 import * as core from "./core";
 import * as vscode from "vscode";
 import { BlockLocation, BlockLocationTree, GetSubtreesArgs, MoveBlockArgs } from "./codeBlocksWrapper/types";
-import { join } from "path";
 import { getCodeBlocksCliPath } from "./core";
+import { join } from "path";
 
 const decoration = vscode.window.createTextEditorDecorationType({
   backgroundColor: "var(--vscode-editor-selectionBackground)",

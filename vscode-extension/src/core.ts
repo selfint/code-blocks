@@ -8,8 +8,8 @@ import {
   MoveBlockArgs,
   MoveBlockResponse,
 } from "./codeBlocksWrapper/types";
-import { join } from "path";
 import { getOrInstallCli } from "./codeBlocksWrapper/installer/installer";
+import { join } from "path";
 
 export type LanguageSupport = {
   parserInstaller: {
