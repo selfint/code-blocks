@@ -1,15 +1,11 @@
 use anyhow::{ensure, Result};
+use tree_sitter::Query;
+
 use code_blocks::{get_query_subtrees, Block, BlockTree};
 
-use tree_sitter::{Parser, Point, Query, Tree};
-
-fn build_tree(text: &str) -> Tree {
-    let mut parser = Parser::new();
-    parser
-        .set_language(tree_sitter_typescript::language_tsx())
-        .unwrap();
-    parser.parse(text, None).unwrap()
-}
+#[path = "../test_utils.rs"]
+mod test_utils;
+use test_utils::{build_tree, copy_item_above};
 
 const TSX_QUERY_STRINGS: [&str; 6] = [
     "( (comment)* @header . (class_declaration) @item)",
@@ -21,7 +17,8 @@ const TSX_QUERY_STRINGS: [&str; 6] = [
 ];
 
 fn tsx_queries() -> [Query; 6] {
-    TSX_QUERY_STRINGS.map(|q| Query::new(tree_sitter_typescript::language_tsx(), q).unwrap())
+    TSX_QUERY_STRINGS
+        .map(|q| Query::new(tree_sitter_typescript::language_tsx(), q).expect("invalid query"))
 }
 
 #[test]
@@ -41,7 +38,7 @@ fn test_get_query_subtrees() {
     }
 "#;
 
-    let tree = build_tree(text);
+    let tree = build_tree(text, tree_sitter_typescript::language_tsx());
     let subtrees = get_query_subtrees(&tsx_queries(), &tree, text);
 
     fn get_tree_blocks(subtree: &BlockTree, blocks: &mut Vec<String>, text: &str) {
@@ -59,58 +56,7 @@ fn test_get_query_subtrees() {
     insta::assert_yaml_snapshot!(blocks);
 }
 
-fn copy_item_above<'tree>(
-    ident: &str,
-    text: &str,
-    trees: &Vec<BlockTree<'tree>>,
-) -> Option<Block<'tree>> {
-    let pos = text
-        .lines()
-        .enumerate()
-        .find_map(|(row, line)| line.find(ident).map(|col| Point::new(row - 1, col)))?;
-
-    for tree in trees {
-        if tree.block.tail().start_position() == pos {
-            return Some(tree.block.clone());
-        }
-
-        if let Some(node) = copy_item_above(ident, text, &tree.children) {
-            return Some(node);
-        }
-    }
-
-    None
-}
-
-macro_rules! check {
-    (check: $check_fn:expr, force: $force:literal, $text:literal) => {
-        let tree = build_tree($text);
-
-        let items = get_query_subtrees(&tsx_queries(), &tree, $text);
-        let src_block = copy_item_above("^src", $text, &items).unwrap();
-        let dst_item = copy_item_above("^dst", $text, &items);
-        let fail_item = copy_item_above("^fail", $text, &items);
-
-        let snapshot = if let Some(dst_item) = dst_item {
-            let (new_text, new_src_start, new_dst_start) =
-                code_blocks::move_block(src_block, dst_item, $text, $check_fn, $force).unwrap();
-            format!(
-                "{}\n\nNew src start: {}\nNew dst start: {}",
-                new_text, new_src_start, new_dst_start
-            )
-        } else if let Some(fail_item) = fail_item {
-            let result = code_blocks::move_block(src_block, fail_item, $text, $check_fn, $force);
-            assert!(result.is_err());
-            format!("{}\n\n{:?}", $text, result.err().unwrap())
-        } else {
-            panic!("no dst/fail item in input");
-        };
-
-        insta::assert_display_snapshot!(snapshot);
-    };
-}
-
-fn check_fn(s: &Block, d: &Block) -> Result<()> {
+fn preserve_scope(s: &Block, d: &Block) -> Result<()> {
     ensure!(
         s.head().parent() == d.head().parent(),
         "Blocks have different parents"
@@ -119,12 +65,12 @@ fn check_fn(s: &Block, d: &Block) -> Result<()> {
     Ok(())
 }
 
-#[test]
-fn test_move_block() {
-    check!(
-        check: Some(check_fn),
-        force: false,
-        r#"
+snapshot!(
+    test_move_block,
+    tree_sitter_typescript::language_tsx(),
+    tsx_queries(),
+    preserve_scope,
+    r#"
     export default function App() {
         return (
             <>
@@ -140,5 +86,28 @@ fn test_move_block() {
           );
     }
 "#
-    );
-}
+);
+
+snapshot!(
+    test_move_block_outside_scope,
+    tree_sitter_typescript::language_tsx(),
+    tsx_queries(),
+    r#"
+    export default function App() {
+        return (
+            <>
+              <div>
+                <button>
+            {/* ^src */}
+                  Choose file
+                </button>!!! stuff in here is also part of the syntax tree !!!
+              </div>
+              <button>
+          {/* ^dst */}
+                Write file
+              </button>!!! stuff in here is also part of the syntax tree !!!
+            </>
+          );
+    }
+"#
+);

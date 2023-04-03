@@ -2,6 +2,25 @@
 source: code-blocks-server/tests/test_api.rs
 expression: snapshot
 ---
+input:
+
+    export default function App() {
+      return (
+          <div>
+      {/* ^dst */}
+            <button className="card" onClick={readFile}>
+        {/* ^src */}
+              Choose file
+            </button>
+            <button className="card" onClick={() => writeFile(filePath, content)}>
+              Write file
+            </button>
+          </div>
+      );
+    }
+    
+---
+output:
 
     export default function App() {
       return (
@@ -9,6 +28,7 @@ expression: snapshot
       {/* ^dst */}
             
             <button className="card" onClick={() => writeFile(filePath, content)}>
+                                                                           ^ Dest
               Write file
             </button>
           </div>
@@ -19,6 +39,3 @@ expression: snapshot
       );
     }
     
-
-New src start: 370
-New dst start: 175

@@ -409,7 +409,7 @@ mod tests {
           "status": "ok",
           "result": {
             "text": "fn foo() {}\nfn main() {}",
-            "newSrcStart": 25,
+            "newSrcStart": 12,
             "newDstStart": 0
           }
         }

@@ -2,6 +2,18 @@
 source: code-blocks-server/tests/test_api.rs
 expression: snapshot
 ---
+input:
+
+    mod m {
+/*  ^fail */
+        fn foo() {}
+     /* ^src */
+    }
+
+    fn baz() {}
+
+---
+output:
 Illegal move operation
 
 Caused by:

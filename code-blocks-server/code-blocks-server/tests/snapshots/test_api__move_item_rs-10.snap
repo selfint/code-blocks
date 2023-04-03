@@ -2,10 +2,15 @@
 source: code-blocks-server/tests/test_api.rs
 expression: snapshot
 ---
+input:
 
     mod m1 {
 /*  ^dst */
         fn foo() {}
+    }
+
+    mod m2 {
+        fn bar() {}
     }
 
     #[cfg(test)]
@@ -17,10 +22,25 @@ expression: snapshot
         fn baz() {}
     }
 
+---
+output:
+
+    mod m1 {
+    ^ Dest
+/*  ^dst */
+        fn foo() {}
+    }
+
+    #[cfg(test)]
+    ^ Source
+    #[test]
+    /// a test module
+    #[ignore]
+    mod m3 {
+/*  ^src */
+        fn baz() {}
+    }
+
     mod m2 {
         fn bar() {}
     }
-
-
-New src start: 57
-New dst start: 5

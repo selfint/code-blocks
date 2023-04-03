@@ -2,6 +2,12 @@
 source: code-blocks/tests/rust/main.rs
 expression: snapshot
 ---
+input:
+
+    mod m1 {
+/*  ^src */
+        fn foo() {}
+    }
 
     mod m2 {
         fn bar() {}
@@ -12,11 +18,21 @@ expression: snapshot
         fn baz() {}
     }
 
+---
+output:
+
+    mod m2 {
+        fn bar() {}
+    }
+
+    mod m3 {
+    ^ Dest
+/*  ^dst */
+        fn baz() {}
+    }
+
     mod m1 {
+    ^ Source
 /*  ^src */
         fn foo() {}
     }
-
-
-New src start: 149
-New dst start: 45

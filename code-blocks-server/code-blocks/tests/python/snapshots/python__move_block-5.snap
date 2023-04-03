@@ -2,6 +2,33 @@
 source: code-blocks/tests/python/main.rs
 expression: snapshot
 ---
+input:
+
+        @decor1
+        @decor2
+        class A:
+            ...
+           
+        class C:
+            """class docstring"""
+        
+            def __init__(self):
+                pass
+        
+            #Vsrc
+            @staticmethod()
+            def foo():
+                """method docstring"""
+                
+            #Vdst
+            def bar():
+                ...
+                
+        def func():
+            ...
+
+---
+output:
 
         @decor1
         @decor2
@@ -17,15 +44,13 @@ expression: snapshot
             #Vsrc
             #Vdst
             def bar():
+            ^ Dest
                 ...
                 
             @staticmethod()
+            ^ Source
             def foo():
                 """method docstring"""
                 
         def func():
             ...
-
-
-New src start: 415
-New dst start: 248

@@ -2,8 +2,14 @@
 source: code-blocks-server/tests/test_api.rs
 expression: snapshot
 ---
+input:
 
         #Vsrc
+        @decor1
+        @decor2
+        class A:
+            ...
+           
         #Vdst
         class C:
             """class docstring"""
@@ -18,14 +24,33 @@ expression: snapshot
             def bar():
                 ...
                 
+        def func():
+            ...
+
+---
+output:
+
+        #Vsrc
+        #Vdst
+        class C:
+        ^ Dest
+            """class docstring"""
+        
+            def __init__(self):
+                pass
+        
+            @staticmethod()
+            def foo():
+                """method docstring"""
+                
+            def bar():
+                ...
+                
         @decor1
+        ^ Source
         @decor2
         class A:
             ...
                 
         def func():
             ...
-
-
-New src start: 403
-New dst start: 37

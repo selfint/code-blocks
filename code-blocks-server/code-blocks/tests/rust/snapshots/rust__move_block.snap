@@ -2,8 +2,7 @@
 source: code-blocks/tests/rust/main.rs
 expression: snapshot
 ---
-
-    fn bar() {}
+input:
 
     fn foo() {
  /* ^src */
@@ -11,8 +10,21 @@ expression: snapshot
             bar();
         }
     }
+
+    fn bar() {}
  /* ^dst */
 
+---
+output:
 
-New src start: 107
-New dst start: 5
+    fn bar() {}
+    ^ Dest
+
+    fn foo() {
+    ^ Source
+ /* ^src */
+        fn in_foo() {
+            bar();
+        }
+    }
+ /* ^dst */

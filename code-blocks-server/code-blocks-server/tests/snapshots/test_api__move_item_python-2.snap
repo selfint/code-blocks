@@ -2,6 +2,33 @@
 source: code-blocks-server/tests/test_api.rs
 expression: snapshot
 ---
+input:
+
+        #Vsrc
+        @decor1
+        @decor2
+        class A:
+            ...
+           
+        class C:
+            """class docstring"""
+        
+            #Vfail
+            def __init__(self):
+                pass
+        
+            @staticmethod()
+            def foo():
+                """method docstring"""
+                
+            def bar():
+                ...
+                
+        def func():
+            ...
+
+---
+output:
 Illegal move operation
 
 Caused by:

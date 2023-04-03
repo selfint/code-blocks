@@ -259,22 +259,23 @@ export default function baz2() {}
 
 macro_rules! check {
     (language: $lang:expr, check with: $check_fn:expr, force: $force:literal, $text:literal) => {
+        let text = $text;
         let lang = $lang;
         let mut parser = Parser::new();
         parser.set_language(lang.get_language()).unwrap();
 
         let tree = parser.parse($text, None).unwrap();
 
-        let items = get_query_subtrees(&get_queries(&lang), &tree, $text);
-        let src_block = copy_target_item("src", $text, &items, &lang)
-            .unwrap_or_else(|| panic!("failed to find src block in: {}", $text));
-        let dst_block = copy_target_item("dst", $text, &items, &lang);
-        let fail_block = copy_target_item("fail", $text, &items, &lang);
+        let items = get_query_subtrees(&get_queries(&lang), &tree, text);
+        let src_block = copy_target_item("src", text, &items, &lang)
+            .unwrap_or_else(|| panic!("failed to find src block in: {}", text));
+        let dst_block = copy_target_item("dst", text, &items, &lang);
+        let fail_block = copy_target_item("fail", text, &items, &lang);
 
         let snapshot = if let Some(dst_block) = dst_block {
             let result = code_blocks_server::move_block(MoveBlockArgs {
                 queries: get_query_strings(&lang),
-                text: $text.to_string(),
+                text: text.to_string(),
                 language: lang.get_language(),
                 src_block: src_block.into(),
                 dst_block: dst_block.into(),
@@ -282,10 +283,31 @@ macro_rules! check {
                 force: $force,
             })
             .unwrap();
-            format!(
-                "{}\n\nNew src start: {}\nNew dst start: {}",
-                result.text, result.new_src_start, result.new_dst_start
-            )
+            let (new_text, mut new_src_start, mut new_dst_start) =
+                (result.text, result.new_src_start, result.new_dst_start);
+
+            let mut new_lines = vec![];
+            let mut added_src = false;
+            let mut added_dst = false;
+            for line in new_text.lines() {
+                new_lines.push(line.to_string());
+                if new_src_start > line.len() {
+                    new_src_start -= line.len() + 1;
+                } else if !added_src {
+                    new_lines.push(" ".repeat(new_src_start) + "^ Source");
+                    added_src = true;
+                }
+
+                if new_dst_start > line.len() {
+                    new_dst_start -= line.len() + 1;
+                } else if !added_dst {
+                    new_lines.push(" ".repeat(new_dst_start) + "^ Dest");
+                    added_dst = true;
+                }
+            }
+
+            let new_text = new_lines.join("\n");
+            format!("input:\n{}\n---\noutput:\n{}", text, new_text)
         } else if let Some(fail_block) = fail_block {
             let err = code_blocks_server::move_block(MoveBlockArgs {
                 queries: get_query_strings(&lang),
@@ -299,7 +321,7 @@ macro_rules! check {
             .err()
             .unwrap();
 
-            format!("{:?}", err)
+            format!("input:\n{}\n---\noutput:\n{:?}", text, err)
         } else {
             unreachable!("No dst/fail block");
         };

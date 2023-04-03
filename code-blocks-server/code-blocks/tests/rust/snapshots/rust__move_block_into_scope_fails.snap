@@ -1,7 +1,8 @@
 ---
 source: code-blocks/tests/rust/main.rs
-expression: "format!(\"{}\\n\\n{:?}\",\n    r#\"\n    mod m1 {\n        fn foo() {}\n    }\n\n    mod m2 {\n        fn bar() {}\n    /*  ^fail */\n    }\n\n    mod m3 {\n/*  ^src */\n        fn baz() {}\n    }\n\"#,\n    result.err().unwrap())"
+expression: snapshot
 ---
+input:
 
     mod m1 {
         fn foo() {}
@@ -17,7 +18,8 @@ expression: "format!(\"{}\\n\\n{:?}\",\n    r#\"\n    mod m1 {\n        fn foo()
         fn baz() {}
     }
 
-
+---
+output:
 Illegal move operation
 
 Caused by:

@@ -2,14 +2,37 @@
 source: code-blocks-server/tests/test_api.rs
 expression: snapshot
 ---
+input:
+
+class TsClass {
+    constructor() {}
+
+    /**
+    * bar docs
+    */
+    foo() {}
+/*  ^src */
+
+    bar() {}
+/*  ^dst */
+
+    baz() {}
+}
+
+function baz() {}
+    
+---
+output:
 
 class TsClass {
     constructor() {}
 /*  ^src */
+^ Dest
 
     bar() {}
 
     /**
+    ^ Source
     * bar docs
     */
     foo() {}
@@ -20,6 +43,3 @@ class TsClass {
 
 function baz() {}
     
-
-New src start: 113
-New dst start: 38

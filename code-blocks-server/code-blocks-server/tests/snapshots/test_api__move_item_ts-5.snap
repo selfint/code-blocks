@@ -2,13 +2,7 @@
 source: code-blocks-server/tests/test_api.rs
 expression: snapshot
 ---
-
-    class TsClass2 {
-/*  ^dst */
-        constructor() {}
-
-        foo() {}
-    }
+input:
 
     /**
     * class docs
@@ -23,7 +17,37 @@ expression: snapshot
 
         baz() {}
     }
-    
 
-New src start: 238
-New dst start: 5
+    class TsClass2 {
+/*  ^dst */
+        constructor() {}
+
+        foo() {}
+    }
+    
+---
+output:
+
+    class TsClass2 {
+    ^ Dest
+/*  ^dst */
+        constructor() {}
+
+        foo() {}
+    }
+
+    /**
+    ^ Source
+    * class docs
+    */
+    class TsClass {
+/*  ^src */
+        constructor() {}
+
+        foo() {}
+
+        bar() {}
+
+        baz() {}
+    }
+    

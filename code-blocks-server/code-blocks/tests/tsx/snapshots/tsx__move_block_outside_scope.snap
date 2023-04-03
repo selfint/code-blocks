@@ -7,10 +7,12 @@ input:
     export default function App() {
         return (
             <>
-              <button>
-          {/* ^src */}
-                Choose file
-              </button>!!! stuff in here is also part of the syntax tree !!!
+              <div>
+                <button>
+            {/* ^src */}
+                  Choose file
+                </button>!!! stuff in here is also part of the syntax tree !!!
+              </div>
               <button>
           {/* ^dst */}
                 Write file
@@ -25,16 +27,18 @@ output:
     export default function App() {
         return (
             <>
-              !!! stuff in here is also part of the syntax tree !!!
+              <div>
+                !!! stuff in here is also part of the syntax tree !!!
+              </div>
               <button>
               ^ Dest
           {/* ^dst */}
                 Write file
               </button><button>
                        ^ Source
-          {/* ^src */}
-                Choose file
-              </button>!!! stuff in here is also part of the syntax tree !!!
+            {/* ^src */}
+                  Choose file
+                </button>!!! stuff in here is also part of the syntax tree !!!
             </>
           );
     }

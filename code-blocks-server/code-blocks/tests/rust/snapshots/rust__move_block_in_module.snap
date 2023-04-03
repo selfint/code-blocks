@@ -1,9 +1,10 @@
 ---
-source: code-blocks/tests/test_utils.rs
+source: code-blocks/tests/rust/main.rs
 expression: snapshot
 ---
 input:
 
+mod m {
     fn foo() {
  /* ^src */
         fn in_foo() {
@@ -13,10 +14,14 @@ input:
 
     fn bar() {}
  /* ^dst */
+}
+
+fn baz() {}
 
 ---
 output:
 
+mod m {
     fn bar() {}
     ^ Dest
 
@@ -28,3 +33,6 @@ output:
         }
     }
  /* ^dst */
+}
+
+fn baz() {}
