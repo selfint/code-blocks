@@ -116,36 +116,34 @@ pub fn move_block<'tree>(
         (None, None) => src_block_range,
     };
 
+    let src_range_len = src_range.end - src_range.start;
+
     // move src to be below dst
     // move down
     let (new_src_start, new_dst_start) = if src_head.end_byte() < dst_head.end_byte() {
         new_text.insert_str(dst_tail.end_byte(), src_text);
         new_text.insert_str(dst_tail.end_byte(), max_space);
-        new_text.replace_range(src_range.clone(), "");
+        new_text.replace_range(src_range, "");
 
-        (
-            if src_head.start_byte() < dst_head.start_byte() {
-                dst_tail.end_byte() + max_space.len() - (src_range.end - src_range.start) - 3
-            } else {
-                dst_tail.end_byte() + max_space.len() + (src_range.end - src_range.start)
-            },
-            if src_head.start_byte() < dst_head.start_byte() {
-                dst_head.start_byte() - (src_range.end - src_range.start + 1)
-            } else {
-                dst_head.start_byte() + (src_range.end - src_range.start + 1)
-            },
-        )
+        if src_head.start_byte() < dst_head.start_byte() {
+            (
+                dst_tail.end_byte() + max_space.len() - src_range_len,
+                dst_head.start_byte() - src_range_len,
+            )
+        } else {
+            (
+                dst_tail.end_byte() + max_space.len() + src_range_len,
+                dst_head.start_byte() + src_range_len,
+            )
+        }
     }
     // move up
     else {
-        new_text.replace_range(src_range.clone(), "");
+        new_text.replace_range(src_range, "");
         new_text.insert_str(dst_tail.end_byte(), src_text);
         new_text.insert_str(dst_tail.end_byte(), max_space);
 
-        (
-            dst_tail.end_byte() - (src_range.end - src_range.start - 1),
-            dst_head.start_byte(),
-        )
+        (dst_tail.end_byte() + max_space.len(), dst_head.start_byte())
     };
 
     Ok((new_text, new_src_start, new_dst_start))

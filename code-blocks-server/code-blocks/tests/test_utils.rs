@@ -116,14 +116,14 @@ macro_rules! snapshot {
                 for line in new_text.lines() {
                     new_lines.push(line.to_string());
                     if new_src_start > line.len() {
-                        new_src_start -= line.len();
+                        new_src_start -= line.len() + 1;
                     } else if !added_src {
                         new_lines.push(" ".repeat(new_src_start) + "^ Source");
                         added_src = true;
                     }
 
                     if new_dst_start > line.len() {
-                        new_dst_start -= line.len();
+                        new_dst_start -= line.len() + 1;
                     } else if !added_dst {
                         new_lines.push(" ".repeat(new_dst_start) + "^ Dest");
                         added_dst = true;
@@ -148,7 +148,7 @@ macro_rules! snapshot {
 }
 
 snapshot! {
-    test_move2_down,
+    test_move_down,
 r#"
     fn foo() {
  /* ^src */
@@ -163,13 +163,13 @@ r#"
 }
 
 snapshot! {
-    test_move2_up,
+    test_move_up,
 r#"
     fn foo() {
         fn baz() {}
+     /* ^dst */
 
         fn spam() {}
-     /* ^dst */
 
         fn in_foo() {
      /* ^src */
