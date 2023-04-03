@@ -1,12 +1,12 @@
 import * as core from "./core";
 import * as vscode from "vscode";
 import { BlockLocation, BlockLocationTree, GetSubtreesArgs, MoveBlockArgs } from "./codeBlocksWrapper/types";
+import { getInstalledCliPath, getOrInstallCli } from "./codeBlocksWrapper/installer/installer";
 import { join } from "path";
 
 const decoration = vscode.window.createTextEditorDecorationType({
   backgroundColor: "var(--vscode-editor-selectionBackground)",
 });
-
 const decoration1 = vscode.window.createTextEditorDecorationType({
   backgroundColor: "#00AA00",
 });
@@ -20,7 +20,12 @@ let blocks: BlockLocationTree[] | undefined = undefined;
 let selectedBlock: BlockLocation | undefined = undefined;
 let selectedBlockSiblings: [BlockLocation | undefined, BlockLocation | undefined] = [undefined, undefined];
 
-async function updateBlocks(binDir: string, parsersDir: string): Promise<void> {
+/**
+ * This is used to ensure that events only trigger one action.
+ */
+let runningLock = false;
+
+async function updateBlocks(codeBlocksCliPath: string, parsersDir: string): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   if (editor === undefined) {
     return undefined;
@@ -33,8 +38,8 @@ async function updateBlocks(binDir: string, parsersDir: string): Promise<void> {
     return undefined;
   }
 
-  const libraryPath = await core.installLanguage(
-    binDir,
+  const libraryPath = await core.cachedInstallLanguage(
+    codeBlocksCliPath,
     {
       installDir: join(parsersDir, languageSupport.parserInstaller.libraryName),
       ...languageSupport.parserInstaller,
@@ -51,7 +56,7 @@ async function updateBlocks(binDir: string, parsersDir: string): Promise<void> {
     libraryPath
   };
 
-  const newBlocks = await core.getBlocks(binDir, args);
+  const newBlocks = await core.getBlocks(codeBlocksCliPath, args);
   if (newBlocks === undefined) {
     console.log("failed to get blocks");
     return undefined;
@@ -143,9 +148,12 @@ function highlightSelections(): void {
 
 }
 
-async function moveSelectedBlock(binDir: string, parsersDir: string, direction: "up" | "down", force: boolean): Promise<void> {
+async function moveSelectedBlock(codeBlocksCliPath: string | undefined, parsersDir: string, direction: "up" | "down", force: boolean): Promise<void> {
+  if (codeBlocksCliPath === undefined) {
+    return;
+  }
+
   const editor = vscode.window.activeTextEditor;
-  console.log(`editor: ${JSON.stringify(editor === undefined)}`);
   if (editor === undefined) {
     return undefined;
   }
@@ -165,8 +173,8 @@ async function moveSelectedBlock(binDir: string, parsersDir: string, direction: 
     return undefined;
   }
 
-  const libraryPath = await core.installLanguage(
-    binDir,
+  const libraryPath = await core.cachedInstallLanguage(
+    codeBlocksCliPath,
     {
       installDir: join(parsersDir, languageSupport.parserInstaller.libraryName),
       ...languageSupport.parserInstaller,
@@ -201,7 +209,7 @@ async function moveSelectedBlock(binDir: string, parsersDir: string, direction: 
   const cursorByte = editor.document.offsetAt(editor.selection.active);
   const cursorSelectedBlockOffset = cursorByte - selectedBlock.startByte;
 
-  const moveBlockResponse = await core.moveBlock(binDir, editor.document, {
+  const moveBlockResponse = await core.moveBlock(codeBlocksCliPath, editor.document, {
     srcBlock,
     dstBlock,
     force,
@@ -216,7 +224,7 @@ async function moveSelectedBlock(binDir: string, parsersDir: string, direction: 
     return;
   }
 
-  const newBlocks = await core.getBlocks(binDir, {
+  const newBlocks = await core.getBlocks(codeBlocksCliPath, {
     languageFnSymbol: languageSupport.parserInstaller.languageFnSymbol,
     queries: languageSupport.queries,
     libraryPath,
@@ -243,13 +251,17 @@ async function moveSelectedBlock(binDir: string, parsersDir: string, direction: 
 }
 
 
-async function toggle(binDir: string, parsersDir: string): Promise<void> {
+async function toggle(codeBlocksCliPath: string | undefined, parsersDir: string): Promise<void> {
+  if (codeBlocksCliPath === undefined) {
+    return;
+  }
+
   const activeTabInput = vscode.window.tabGroups.activeTabGroup.activeTab?.input as {
     [key: string]: unknown;
     uri: vscode.Uri | undefined;
   };
 
-  const doUpdateBlocks = async (): Promise<void> => await updateBlocks(binDir, parsersDir);
+  const doUpdateBlocks = async (): Promise<void> => await updateBlocks(codeBlocksCliPath, parsersDir);
   const doUpdateSelectedBlock = (): void => updateSelection();
 
   if (!enabled) {
@@ -274,16 +286,38 @@ async function toggle(binDir: string, parsersDir: string): Promise<void> {
   }
 }
 
+async function raceGuard(promise: () => Promise<void>): Promise<void> {
+  if (runningLock) {
+    return;
+  }
+
+  runningLock = true;
+  try {
+    await promise();
+  }
+
+  finally {
+    runningLock = false;
+  }
+
+}
+
 export function getBlockModeHooks(context: vscode.ExtensionContext): Map<string, () => Promise<void>> {
   const binDir = join(context.extensionPath, "bin");
   const parsersDir = join(context.extensionPath, "parsers");
 
+  const guarded = (foo: () => Promise<void>) => async (): Promise<void> => await raceGuard(() => foo());
+  const toggleHook = guarded(async () => toggle(await getInstalledCliPath(binDir), parsersDir));
+  const moveHook = (direction: "up" | "down", force: boolean): () => Promise<void> => {
+    return guarded(async (): Promise<void> => moveSelectedBlock(await getOrInstallCli(binDir), parsersDir, direction, force));
+  };
+
   const hooks = new Map<string, () => Promise<void>>();
-  hooks.set("toggle", async (): Promise<void> => await toggle(binDir, parsersDir));
-  hooks.set("moveUp", async (): Promise<void> => await moveSelectedBlock(binDir, parsersDir, "up", false));
-  hooks.set("moveDown", async (): Promise<void> => await moveSelectedBlock(binDir, parsersDir, "down", false));
-  hooks.set("moveUpForce", async (): Promise<void> => await moveSelectedBlock(binDir, parsersDir, "up", true));
-  hooks.set("moveDownForce", async (): Promise<void> => await moveSelectedBlock(binDir, parsersDir, "down", true));
+  hooks.set("toggle", toggleHook);
+  hooks.set("moveUp", moveHook("up", false));
+  hooks.set("moveDown", moveHook("down", false));
+  hooks.set("moveUpForce", moveHook("up", true));
+  hooks.set("moveDownForce", moveHook("down", true));
 
   return hooks;
 }

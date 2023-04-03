@@ -1,4 +1,5 @@
 import * as codeBlocksCliClient from "./codeBlocksWrapper/codeBlocksCliClient";
+import * as fs from "fs";
 import * as vscode from "vscode";
 import {
   GetSubtreesArgs, GetSubtreesResponse,
@@ -7,7 +8,8 @@ import {
   MoveBlockArgs,
   MoveBlockResponse,
 } from "./codeBlocksWrapper/types";
-import { getOrInstallCli } from "./codeBlocksWrapper/installer/installer";
+import { join } from "path";
+import { getInstalledCliPath, getOrInstallCli } from "./codeBlocksWrapper/installer/installer";
 
 export type LanguageSupport = {
   parserInstaller: {
@@ -23,16 +25,29 @@ export type CodeBlocksExtensionSettings = {
   codeBlocksCliPath: string | undefined;
 };
 
+export async function cachedInstallLanguage(
+  codeBlocksCliPath: string,
+  args: InstallLanguageArgs,
+): Promise<InstallLanguageResponse | undefined> {
+  const cachedResultFile = join(args.installDir, "codeBlocksCachedResult.json");
+  if (fs.existsSync(cachedResultFile)) {
+    const cachedResultContent: Buffer = await fs.promises.readFile(cachedResultFile);
+    const cachedResult = JSON.parse(cachedResultContent.toString()) as InstallLanguageResponse;
+
+    return cachedResult;
+  }
+
+  const result = await installLanguage(codeBlocksCliPath, args);
+  await fs.promises.writeFile(cachedResultFile, JSON.stringify(result));
+
+  return result;
+}
+
 export async function installLanguage(
-  binDir: string,
+  codeBlocksCliPath: string,
   args: InstallLanguageArgs,
 ): Promise<InstallLanguageResponse | undefined> {
   console.log(`Install language args: ${JSON.stringify(args)}`);
-
-  const codeBlocksCliPath = await getCodeBlocksCliPath(binDir);
-  if (codeBlocksCliPath === undefined) {
-    return undefined;
-  }
 
   const response = await vscode.window.withProgress(
     {
@@ -60,14 +75,9 @@ export async function installLanguage(
 }
 
 export async function getBlocks(
-  binDir: string,
+  codeBlocksCliPath: string,
   args: GetSubtreesArgs,
 ): Promise<GetSubtreesResponse | undefined> {
-  const codeBlocksCliPath = await getCodeBlocksCliPath(binDir);
-  if (codeBlocksCliPath === undefined) {
-    return undefined;
-  }
-
   console.log(`Get subtrees args: ${JSON.stringify(args)}`);
 
   const response = await codeBlocksCliClient.getSubtrees(codeBlocksCliPath, args);
@@ -83,16 +93,11 @@ export async function getBlocks(
 }
 
 export async function moveBlock(
-  binDir: string,
+  codeBlocksCliPath: string,
   document: vscode.TextDocument,
   args: MoveBlockArgs,
 ): Promise<MoveBlockResponse | undefined> {
   console.log(`Move block args: ${JSON.stringify(args)}`);
-
-  const codeBlocksCliPath = await getCodeBlocksCliPath(binDir);
-  if (codeBlocksCliPath === undefined) {
-    return undefined;
-  }
 
   const response = await codeBlocksCliClient.moveBlock(codeBlocksCliPath, args);
   const differentScopeErrorMsg =
@@ -118,7 +123,7 @@ export async function moveBlock(
 
       if (choice === "Try force") {
         args.force = true;
-        await moveBlock(binDir, document, args);
+        await moveBlock(codeBlocksCliPath, document, args);
       }
 
       break;
@@ -132,7 +137,7 @@ export async function getCodeBlocksCliPath(binDir: string): Promise<string | und
     .get("binPath");
 
   if (codeBlocksCliPath === null || codeBlocksCliPath === undefined || codeBlocksCliPath.length === 0) {
-    return await getOrInstallCli(binDir);
+    return await getInstalledCliPath(binDir);
   } else {
     return codeBlocksCliPath;
   }
