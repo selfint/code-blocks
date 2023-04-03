@@ -20,7 +20,7 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v3
         with:
@@ -29,6 +29,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: "code-blocks-server"
+          shared-key: "code-blocks-server"
       - name: Setup rust
         uses: actions-rs/toolchain@v1
         with:
@@ -73,7 +74,7 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
         with:
-          prefix-key: "${{ matrix.target }}"
+          shared-key: "code-blocks-server-${{ matrix.target }}"
           workspaces: "code-blocks-server"
       - name: Setup rust
         uses: actions-rs/toolchain@v1
@@ -149,7 +150,7 @@ jobs:
           mv x86_64-apple-darwin/code-blocks-cli         artifacts/x86_64-apple-darwin-code-blocks-cli 
           mv aarch64-apple-darwin/code-blocks-cli        artifacts/aarch64-apple-darwin-code-blocks-cli 
           mv x86_64-pc-windows-msvc/code-blocks-cli.exe  artifacts/x86_64-pc-windows-msvc-code-blocks-cli.exe 
-          # mv aarch64-pc-windows-msv/code-blocks-cli.exe  artifacts/aarch64-pc-windows-msv-code-blocks-cli.exe 
+          # mv aarch64-pc-windows-msv/code-blocks-cli.exe  artifacts/aarch64-pc-windows-msv-code-blocks-cli.exe
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
