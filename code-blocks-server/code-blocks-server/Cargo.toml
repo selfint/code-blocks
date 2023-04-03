@@ -1,6 +1,6 @@
 [package]
 name = "code-blocks-server"
-version = "0.6.1"
+version = "0.6.0"
 edition = "2021"
 authors = ["Tom Selfin selfint@gmail.com"]
 description = "A tool to re-order your code"
