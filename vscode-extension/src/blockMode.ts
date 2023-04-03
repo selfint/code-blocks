@@ -1,8 +1,8 @@
 import * as core from "./core";
 import * as vscode from "vscode";
 import { BlockLocation, BlockLocationTree, GetSubtreesArgs, MoveBlockArgs } from "./codeBlocksWrapper/types";
-import { getInstalledCliPath, getOrInstallCli } from "./codeBlocksWrapper/installer/installer";
 import { join } from "path";
+import { getCodeBlocksCliPath } from "./core";
 
 const decoration = vscode.window.createTextEditorDecorationType({
   backgroundColor: "var(--vscode-editor-selectionBackground)",
@@ -310,9 +310,9 @@ export function getBlockModeHooks(context: vscode.ExtensionContext): Map<string,
   const parsersDir = join(context.extensionPath, "parsers");
 
   const guarded = (foo: () => Promise<void>) => async (): Promise<void> => await raceGuard(() => foo());
-  const toggleHook = guarded(async () => toggle(await getInstalledCliPath(binDir), parsersDir));
+  const toggleHook = guarded(async () => toggle(await getCodeBlocksCliPath(binDir), parsersDir));
   const moveHook = (direction: "up" | "down", force: boolean): () => Promise<void> => {
-    return guarded(async (): Promise<void> => moveSelectedBlock(await getOrInstallCli(binDir), parsersDir, direction, force));
+    return guarded(async (): Promise<void> => moveSelectedBlock(await getCodeBlocksCliPath(binDir), parsersDir, direction, force));
   };
 
   const hooks = new Map<string, () => Promise<void>>();

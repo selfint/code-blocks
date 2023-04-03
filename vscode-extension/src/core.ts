@@ -9,7 +9,7 @@ import {
   MoveBlockResponse,
 } from "./codeBlocksWrapper/types";
 import { join } from "path";
-import { getInstalledCliPath, getOrInstallCli } from "./codeBlocksWrapper/installer/installer";
+import { getOrInstallCli } from "./codeBlocksWrapper/installer/installer";
 
 export type LanguageSupport = {
   parserInstaller: {
@@ -137,7 +137,7 @@ export async function getCodeBlocksCliPath(binDir: string): Promise<string | und
     .get("binPath");
 
   if (codeBlocksCliPath === null || codeBlocksCliPath === undefined || codeBlocksCliPath.length === 0) {
-    return await getInstalledCliPath(binDir);
+    return await getOrInstallCli(binDir);
   } else {
     return codeBlocksCliPath;
   }

@@ -12,13 +12,6 @@ const INSTALLED_PERM =
   fs.constants.S_IROTH |
   fs.constants.S_IXOTH;
 
-export async function getInstalledCliPath(binDir: string): Promise<string | undefined> {
-  const binary = os.platform() === "win32" ? "code-blocks-cli.exe" : "code-blocks-cli";
-  const installationPath = await getExecutableBinString(binary, binDir);
-
-  return installationPath;
-}
-
 export async function getOrInstallCli(binDirPath: string): Promise<string | undefined> {
   const binary = os.platform() === "win32" ? "code-blocks-cli.exe" : "code-blocks-cli";
   const installationPath = await getExecutableBinString(binary, binDirPath);
