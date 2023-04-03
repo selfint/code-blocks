@@ -132,8 +132,8 @@ pub fn move_block<'tree>(
             )
         } else {
             (
-                dst_tail.end_byte() + max_space.len() + src_range_len,
-                dst_head.start_byte() + src_range_len,
+                dst_tail.end_byte() + max_space.len() - src_range_len,
+                dst_head.start_byte(),
             )
         }
     }
