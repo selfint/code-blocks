@@ -1,11 +1,11 @@
 ---
-source: code-blocks-server/tests/test_api.rs
+source: code-blocks/tests/rust/main.rs
 expression: snapshot
 ---
 input:
 
     mod m1 {
-/*  ^dst */
+/*  ^src */
         fn foo() {}
     }
 
@@ -14,25 +14,25 @@ input:
     }
 
     mod m3 {
-/*  ^src */
+/*  ^dst */
         fn baz() {}
     }
 
 ---
 output:
 
-    mod m1 {
-    ^ Dest
-/*  ^dst */
-        fn foo() {}
+    mod m2 {
+        fn bar() {}
     }
 
     mod m3 {
-    ^ Source
-/*  ^src */
+    ^ Dest
+/*  ^dst */
         fn baz() {}
     }
 
-    mod m2 {
-        fn bar() {}
+    mod m1 {
+    ^ Source
+/*  ^src */
+        fn foo() {}
     }

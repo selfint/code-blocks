@@ -1,9 +1,8 @@
 ---
 source: code-blocks/tests/rust/main.rs
-expression: "code_blocks::move_block(src_block, dst_item,\n        r#\"\n    fn foo() {\n /* ^src */\n        fn in_foo() {\n            bar();\n        }\n    }\n\n    fn bar() {}\n /* ^dst */\n\"#,\n        Some(check_fn), false).unwrap()"
+expression: snapshot
 ---
-
-    fn bar() {}
+input:
 
     fn foo() {
  /* ^src */
@@ -11,5 +10,21 @@ expression: "code_blocks::move_block(src_block, dst_item,\n        r#\"\n    fn 
             bar();
         }
     }
+
+    fn bar() {}
  /* ^dst */
 
+---
+output:
+
+    fn bar() {}
+    ^ Dest
+
+    fn foo() {
+    ^ Source
+ /* ^src */
+        fn in_foo() {
+            bar();
+        }
+    }
+ /* ^dst */

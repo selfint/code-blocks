@@ -1,13 +1,11 @@
 use anyhow::{ensure, Result};
 use code_blocks::{get_query_subtrees, Block, BlockTree};
 
-use tree_sitter::{Parser, Point, Query, Tree};
+use tree_sitter::{Point, Query};
 
-fn build_tree(text: &str) -> Tree {
-    let mut parser = Parser::new();
-    parser.set_language(tree_sitter_python::language()).unwrap();
-    parser.parse(text, None).unwrap()
-}
+#[path = "../test_utils.rs"]
+mod test_utils;
+use test_utils::build_tree;
 
 const PYTHON_QUERY_STRINGS: [&str; 3] = [
     "(class_definition) @item",
@@ -47,7 +45,7 @@ fn test_get_query_subtrees() {
     
 "#;
 
-    let tree = build_tree(text);
+    let tree = build_tree(text, tree_sitter_python::language());
     let subtrees = get_query_subtrees(&python_queries(), &tree, text);
 
     fn get_tree_blocks(subtree: &BlockTree, blocks: &mut Vec<String>, text: &str) {
@@ -90,24 +88,50 @@ fn copy_item_below<'tree>(
 
 macro_rules! check {
     (check: $check_fn:expr, force: $force:literal, $text:literal) => {
-        let tree = build_tree($text);
+        let text = $text;
+        let force = false;
+        let tree = build_tree($text, tree_sitter_python::language());
 
         let items = get_query_subtrees(&python_queries(), &tree, $text);
         let src_block = copy_item_below("Vsrc", $text, &items).unwrap();
         let dst_item = copy_item_below("Vdst", $text, &items);
         let fail_item = copy_item_below("Vfail", $text, &items);
 
-        if let Some(dst_item) = dst_item {
-            insta::assert_display_snapshot!(code_blocks::move_block(
-                src_block, dst_item, $text, $check_fn, $force
-            )
-            .unwrap());
+        let snapshot = if let Some(dst_item) = dst_item {
+            let (new_text, mut new_src_start, mut new_dst_start) =
+                code_blocks::move_block(src_block, dst_item, text, Some(check_fn), force).unwrap();
+
+            let mut new_lines = vec![];
+            let mut added_src = false;
+            let mut added_dst = false;
+            for line in new_text.lines() {
+                new_lines.push(line.to_string());
+                if new_src_start > line.len() {
+                    new_src_start -= line.len() + 1;
+                } else if !added_src {
+                    new_lines.push(" ".repeat(new_src_start) + "^ Source");
+                    added_src = true;
+                }
+
+                if new_dst_start > line.len() {
+                    new_dst_start -= line.len() + 1;
+                } else if !added_dst {
+                    new_lines.push(" ".repeat(new_dst_start) + "^ Dest");
+                    added_dst = true;
+                }
+            }
+
+            let new_text = new_lines.join("\n");
+            format!("input:\n{}\n---\noutput:\n{}", text, new_text)
         } else if let Some(fail_item) = fail_item {
             let result = code_blocks::move_block(src_block, fail_item, $text, $check_fn, $force);
             assert!(result.is_err());
+            format!("{}\n\n{:?}", $text, result.err().unwrap())
+        } else {
+            panic!("no dst/fail item in input");
+        };
 
-            insta::assert_display_snapshot!(format!("{}\n\n{:?}", $text, result.err().unwrap()));
-        }
+        insta::assert_display_snapshot!(snapshot);
     };
 }
 

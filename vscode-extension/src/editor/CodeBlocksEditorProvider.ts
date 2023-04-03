@@ -1,9 +1,9 @@
-import * as core from "./core";
+import * as core from "../core";
 import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 import { CodeBlocksEditor } from "./CodeBlocksEditor";
-import { getOrInstallCli } from "./codeBlocks/installer/installer";
+import { getOrInstallCli } from "../codeBlocksWrapper/installer/installer";
 
 export type LanguageSupport = {
   parserInstaller: {

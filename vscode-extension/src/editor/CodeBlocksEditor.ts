@@ -1,9 +1,9 @@
-import * as core from "./core";
+import * as core from "../core";
 import * as vscode from "vscode";
-import { GetSubtreesArgs, MoveBlockArgs } from "./codeBlocks/types";
-import { MoveCommand } from "./messages";
-import { getNonce } from "./utilities/getNonce";
-import { getUri } from "./utilities/getUri";
+import { GetSubtreesArgs, MoveBlockArgs } from "../codeBlocksWrapper/types";
+import { MoveCommand, UpdateMessage } from "./messages";
+import { getNonce } from "../utilities/getNonce";
+import { getUri } from "../utilities/getUri";
 
 export class CodeBlocksEditor {
   constructor(
@@ -31,7 +31,17 @@ export class CodeBlocksEditor {
       libraryPath: this.libraryPath,
       languageFnSymbol: this.languageFnSymbol,
     };
-    await core.drawBlocks(this.codeBlocksCliPath, this.webviewPanel.webview, args);
+
+    const blocks = await core.getBlocks(this.codeBlocksCliPath, args);
+    if (blocks === undefined) {
+      return;
+    }
+
+    await this.webviewPanel.webview.postMessage({
+      type: "update",
+      text: args.text,
+      blockTrees: blocks,
+    } as UpdateMessage);
   }
 
   private async moveBlock(message: MoveCommand): Promise<void> {
@@ -45,7 +55,14 @@ export class CodeBlocksEditor {
       force: false,
     };
 
-    await core.moveBlock(this.codeBlocksCliPath, this.document, args);
+    const response = await core.moveBlock(this.codeBlocksCliPath, this.document, args);
+    if (response === undefined) {
+      return;
+    }
+
+    const edit = new vscode.WorkspaceEdit();
+    edit.replace(this.document.uri, new vscode.Range(0, 0, this.document.lineCount, 0), response.text);
+    await vscode.workspace.applyEdit(edit);
   }
 
   private initWebview(): void {
@@ -68,9 +85,8 @@ export class CodeBlocksEditor {
           <title>Code Blocks editor</title>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${
-            webview.cspSource
-          }; script-src 'nonce-${nonce}';">
+          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource
+      }; script-src 'nonce-${nonce}';">
           <link rel="stylesheet" type="text/css" href="${stylesUri.toString()}">
           <script defer nonce="${nonce}" src="${scriptUri.toString()}"></script>
         </head>

@@ -1,4 +1,4 @@
-import { BlockLocation, BlockLocationTree } from "./codeBlocks/types";
+import { BlockLocation, BlockLocationTree } from "../codeBlocksWrapper/types";
 
 export type UpdateMessage = {
   type: "update";

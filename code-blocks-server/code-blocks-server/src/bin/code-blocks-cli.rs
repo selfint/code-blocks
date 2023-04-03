@@ -40,11 +40,29 @@ pub enum CliRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+pub struct SerdeMoveBlockResponse {
+    text: String,
+    new_src_start: usize,
+    new_dst_start: usize,
+}
+
+impl From<MoveBlockResponse> for SerdeMoveBlockResponse {
+    fn from(from: MoveBlockResponse) -> Self {
+        Self {
+            text: from.text,
+            new_src_start: from.new_src_start,
+            new_dst_start: from.new_dst_start,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 #[serde(untagged)]
 pub enum CliResponse {
     InstallLanguage(InstallLanguageResponse),
     GetSubtrees(GetSubtreesResponse),
-    MoveBlock(MoveBlockResponse),
+    MoveBlock(SerdeMoveBlockResponse),
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -141,8 +159,8 @@ fn handle_line(line: &str) -> Result<CliResponse> {
                 DynamicParser::load_from(&library_path, language_fn_symbol.as_bytes())?;
             let language = dynamic_parser.get_language();
 
-            Ok(CliResponse::MoveBlock(code_blocks_server::move_block(
-                MoveBlockArgs {
+            Ok(CliResponse::MoveBlock(
+                code_blocks_server::move_block(MoveBlockArgs {
                     queries,
                     text,
                     language,
@@ -150,8 +168,9 @@ fn handle_line(line: &str) -> Result<CliResponse> {
                     dst_block,
                     assert_move_legal_fn: Some(assert_move_legal_fn),
                     force,
-                },
-            )?))
+                })?
+                .into(),
+            ))
         }
     }
 }
@@ -382,13 +401,17 @@ mod tests {
         })
         .unwrap();
 
-        let response = JsonResult::Ok(CliResponse::MoveBlock(server_response));
+        let response = JsonResult::Ok(CliResponse::MoveBlock(server_response.into()));
 
         insta::assert_json_snapshot!(response,
             @r###"
         {
           "status": "ok",
-          "result": "fn foo() {}\nfn main() {}"
+          "result": {
+            "text": "fn foo() {}\nfn main() {}",
+            "newSrcStart": 12,
+            "newDstStart": 0
+          }
         }
         "###
         );

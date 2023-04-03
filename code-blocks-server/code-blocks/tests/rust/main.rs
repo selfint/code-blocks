@@ -1,80 +1,43 @@
 use anyhow::{ensure, Result};
-use code_blocks::{get_query_subtrees, Block, BlockTree};
+use tree_sitter::Query;
 
-use tree_sitter::{Parser, Point, Query, Tree};
+use code_blocks::{get_query_subtrees, Block};
 
-fn build_tree(text: &str) -> Tree {
-    let mut parser = Parser::new();
-    parser.set_language(tree_sitter_rust::language()).unwrap();
-    parser.parse(text, None).unwrap()
+#[path = "../test_utils.rs"]
+mod test_utils;
+use test_utils::{build_tree, copy_item_above};
+
+fn preserve_scope(s: &Block, d: &Block) -> Result<()> {
+    ensure!(
+        s.head().parent() == d.head().parent(),
+        "Blocks have different parents"
+    );
+
+    Ok(())
 }
 
 fn rust_queries() -> [Query; 4] {
     [
         Query::new(
             tree_sitter_rust::language(),
-            r#"
-        (
-            (
-                [
-                    (attribute_item)
-                    (line_comment)
-                ] @header
-                .
-                [
-                    (attribute_item)
-                    (line_comment)
-                ]* @header
-            )?
-            .
-            (function_item) @item
-        )
-        "#,
+            "(([(attribute_item) (line_comment)] @header . [(attribute_item) (line_comment)]* @header)? . (function_item) @item)",
         )
         .unwrap(),
         Query::new(
             tree_sitter_rust::language(),
-            r#"
-        (
-            (
-                [
-                    (attribute_item)
-                    (line_comment)
-                ] @header
-                .
-                [
-                    (attribute_item)
-                    (line_comment)
-                ]* @header
-            )?
-            .
-            (mod_item) @item
-        )
-        "#,
+            "(([(attribute_item) (line_comment)] @header . [(attribute_item) (line_comment)]* @header)? . (mod_item) @item)",
         )
         .unwrap(),
         Query::new(
             tree_sitter_rust::language(),
-            r#"
-        (
-            (
-                [
-                    (attribute_item)
-                    (line_comment)
-                ] @header
-                .
-                [
-                    (attribute_item)
-                    (line_comment)
-                ]* @header
-            )?
-            .
-            (struct_item) @item
-        )
-        "#,
+            "(([(attribute_item) (line_comment)] @header . [(attribute_item) (line_comment)]* @header)? . (struct_item) @item)",
         )
         .unwrap(),
-        Query::new(tree_sitter_rust::language(), r#"(impl_item) @item"#).unwrap(),
+        Query::new(
+            tree_sitter_rust::language(),
+            "(([(attribute_item) (line_comment)] @header . [(attribute_item) (line_comment)]* @header)? . (impl_item) @item)",
+        )
+        .unwrap(),
     ]
 }
 
@@ -105,7 +68,7 @@ mod tests {
     }
 }
 "#;
-    let tree = build_tree(text);
+    let tree = build_tree(text, tree_sitter_rust::language());
     let subtrees = get_query_subtrees(&rust_queries(), &tree, text);
 
     for t in &subtrees {
@@ -115,66 +78,10 @@ mod tests {
     insta::assert_debug_snapshot!(subtrees);
 }
 
-fn copy_item_above<'tree>(
-    ident: &str,
-    text: &str,
-    trees: &Vec<BlockTree<'tree>>,
-) -> Option<Block<'tree>> {
-    let pos = text
-        .lines()
-        .enumerate()
-        .find_map(|(row, line)| line.find(ident).map(|col| Point::new(row - 1, col)))?;
-
-    for tree in trees {
-        if tree.block.tail().start_position() == pos {
-            return Some(tree.block.clone());
-        }
-
-        if let Some(node) = copy_item_above(ident, text, &tree.children) {
-            return Some(node);
-        }
-    }
-
-    None
-}
-
-macro_rules! check {
-    (check: $check_fn:expr, force: $force:literal, $text:literal) => {
-        let tree = build_tree($text);
-
-        let items = get_query_subtrees(&rust_queries(), &tree, $text);
-        let src_block = copy_item_above("^src", $text, &items).unwrap();
-        let dst_item = copy_item_above("^dst", $text, &items);
-        let fail_item = copy_item_above("^fail", $text, &items);
-
-        if let Some(dst_item) = dst_item {
-            insta::assert_display_snapshot!(code_blocks::move_block(
-                src_block, dst_item, $text, $check_fn, $force
-            )
-            .unwrap());
-        } else if let Some(fail_item) = fail_item {
-            let result = code_blocks::move_block(src_block, fail_item, $text, $check_fn, $force);
-            assert!(result.is_err());
-
-            insta::assert_display_snapshot!(format!("{}\n\n{:?}", $text, result.err().unwrap()));
-        }
-    };
-}
-
-fn check_fn(s: &Block, d: &Block) -> Result<()> {
-    ensure!(
-        s.head().parent() == d.head().parent(),
-        "Blocks have different parents"
-    );
-
-    Ok(())
-}
-
-#[test]
-fn test_move_block() {
-    check!(
-        check: Some(check_fn),
-        force: false,
+snapshot! {
+    test_move_block,
+    tree_sitter_rust::language(),
+    rust_queries(),
         r#"
     fn foo() {
  /* ^src */
@@ -186,12 +93,13 @@ fn test_move_block() {
     fn bar() {}
  /* ^dst */
 "#
-    );
+}
 
-    check!(
-        check: Some(check_fn),
-        force: false,
-        r#"
+snapshot!(
+    test_move_block_in_module,
+    tree_sitter_rust::language(),
+    rust_queries(),
+    r#"
 mod m {
     fn foo() {
  /* ^src */
@@ -206,12 +114,13 @@ mod m {
 
 fn baz() {}
 "#
-    );
+);
 
-    check!(
-        check: Some(check_fn),
-        force: false,
-        r#"
+snapshot!(
+    test_move_block_in_module2,
+    tree_sitter_rust::language(),
+    rust_queries(),
+    r#"
 mod m {
     fn foo() {}
  /* ^src */
@@ -221,12 +130,14 @@ mod m {
 
 fn baz() {}
 "#
-    );
+);
 
-    check!(
-        check: Some(check_fn),
-        force: false,
-        r#"
+snapshot!(
+    test_move_block_outside_scope_fails,
+    tree_sitter_rust::language(),
+    rust_queries(),
+    preserve_scope,
+    r#"
     mod m {
         fn foo() {}
      /* ^src */
@@ -235,12 +146,14 @@ fn baz() {}
     fn baz() {}
 /*  ^fail */
 "#
-    );
+);
 
-    check!(
-        check: Some(check_fn),
-        force: false,
-        r#"
+snapshot!(
+    test_move_block_outside_scope_fails2,
+    tree_sitter_rust::language(),
+    rust_queries(),
+    preserve_scope,
+    r#"
     mod m {
 /*  ^fail */
         fn foo() {}
@@ -249,12 +162,13 @@ fn baz() {}
 
     fn baz() {}
 "#
-    );
+);
 
-    check!(
-        check: Some(check_fn),
-        force: false,
-        r#"
+snapshot!(
+    test_move_block_up,
+    tree_sitter_rust::language(),
+    rust_queries(),
+    r#"
     fn foo() {}
  /* ^dst */
 
@@ -263,12 +177,13 @@ fn baz() {}
     fn baz() {}
  /* ^src */
 "#
-    );
+);
 
-    check!(
-        check: Some(check_fn),
-        force: false,
-        r#"
+snapshot!(
+    test_move_block_down,
+    tree_sitter_rust::language(),
+    rust_queries(),
+    r#"
     mod m1 {
 /*  ^src */
         fn foo() {}
@@ -283,12 +198,13 @@ fn baz() {}
         fn baz() {}
     }
 "#
-    );
+);
 
-    check!(
-        check: Some(check_fn),
-        force: false,
-        r#"
+snapshot!(
+    test_move_block_up2,
+    tree_sitter_rust::language(),
+    rust_queries(),
+    r#"
     mod m1 {
 /*  ^dst */
         fn foo() {}
@@ -303,12 +219,14 @@ fn baz() {}
         fn baz() {}
     }
 "#
-    );
+);
 
-    check!(
-        check: Some(check_fn),
-        force: false,
-        r#"
+snapshot!(
+    test_move_block_into_scope_fails,
+    tree_sitter_rust::language(),
+    rust_queries(),
+    preserve_scope,
+    r#"
     mod m1 {
         fn foo() {}
     }
@@ -323,12 +241,13 @@ fn baz() {}
         fn baz() {}
     }
 "#
-    );
+);
 
-    check!(
-        check: Some(check_fn),
-        force: false,
-        r#"
+snapshot!(
+    test_move_block_with_attributes,
+    tree_sitter_rust::language(),
+    rust_queries(),
+    r#"
     #[test]
     fn foo() {}
 /*  ^src */
@@ -336,5 +255,4 @@ fn baz() {}
     fn bar() {}
 /*  ^dst */
 "#
-    );
-}
+);

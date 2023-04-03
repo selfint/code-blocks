@@ -1,16 +1,51 @@
-import * as codeBlocksCliClient from "./codeBlocks/codeBlocksCliClient";
+import * as codeBlocksCliClient from "./codeBlocksWrapper/codeBlocksCliClient";
+import * as fs from "fs";
 import * as vscode from "vscode";
 import {
-  GetSubtreesArgs,
+  GetSubtreesArgs, GetSubtreesResponse,
   InstallLanguageArgs,
   InstallLanguageResponse,
   MoveBlockArgs,
-} from "./codeBlocks/types";
-import { UpdateMessage } from "./messages";
+  MoveBlockResponse,
+} from "./codeBlocksWrapper/types";
+import { getOrInstallCli } from "./codeBlocksWrapper/installer/installer";
+import { join } from "path";
+
+export type LanguageSupport = {
+  parserInstaller: {
+    downloadCmd: string;
+    libraryName: string;
+    languageFnSymbol: string;
+  };
+  queries: string[];
+};
+
+export type CodeBlocksExtensionSettings = {
+  languageSupport: Map<string, LanguageSupport>;
+  codeBlocksCliPath: string | undefined;
+};
+
+export async function cachedInstallLanguage(
+  codeBlocksCliPath: string,
+  args: InstallLanguageArgs,
+): Promise<InstallLanguageResponse | undefined> {
+  const cachedResultFile = join(args.installDir, "codeBlocksCachedResult.json");
+  if (fs.existsSync(cachedResultFile)) {
+    const cachedResultContent: Buffer = await fs.promises.readFile(cachedResultFile);
+    const cachedResult = JSON.parse(cachedResultContent.toString()) as InstallLanguageResponse;
+
+    return cachedResult;
+  }
+
+  const result = await installLanguage(codeBlocksCliPath, args);
+  await fs.promises.writeFile(cachedResultFile, JSON.stringify(result));
+
+  return result;
+}
 
 export async function installLanguage(
   codeBlocksCliPath: string,
-  args: InstallLanguageArgs
+  args: InstallLanguageArgs,
 ): Promise<InstallLanguageResponse | undefined> {
   console.log(`Install language args: ${JSON.stringify(args)}`);
 
@@ -39,53 +74,45 @@ export async function installLanguage(
   }
 }
 
-export async function drawBlocks(
+export async function getBlocks(
   codeBlocksCliPath: string,
-  webview: vscode.Webview,
-  args: GetSubtreesArgs
-): Promise<void> {
+  args: GetSubtreesArgs,
+): Promise<GetSubtreesResponse | undefined> {
   console.log(`Get subtrees args: ${JSON.stringify(args)}`);
 
   const response = await codeBlocksCliClient.getSubtrees(codeBlocksCliPath, args);
 
   switch (response.status) {
     case "ok":
-      await webview.postMessage({
-        type: "update",
-        text: args.text,
-        blockTrees: response.result,
-      } as UpdateMessage);
-      break;
+      return response.result;
 
     case "error":
       await vscode.window.showErrorMessage(`Failed to get blocks: ${response.result}`);
-      break;
+      return undefined;
   }
 }
 
 export async function moveBlock(
   codeBlocksCliPath: string,
   document: vscode.TextDocument,
-  moveArgs: MoveBlockArgs
-): Promise<void> {
-  const response = await codeBlocksCliClient.moveBlock(codeBlocksCliPath, moveArgs);
+  args: MoveBlockArgs,
+): Promise<MoveBlockResponse | undefined> {
+  console.log(`Move block args: ${JSON.stringify(args)}`);
+
+  const response = await codeBlocksCliClient.moveBlock(codeBlocksCliPath, args);
   const differentScopeErrorMsg =
     "Illegal move operation\n\nCaused by:\n    Can't move block to different scope";
 
   switch (response.status) {
     case "ok": {
-      const newContent = response.result;
+      const moveBlockResponse = response.result;
 
-      const edit = new vscode.WorkspaceEdit();
-      edit.replace(document.uri, new vscode.Range(0, 0, document.lineCount, 0), newContent);
-
-      await vscode.workspace.applyEdit(edit);
-      break;
+      return moveBlockResponse;
     }
 
     case "error": {
       const options: "Try force"[] = [];
-      if (response.result === differentScopeErrorMsg && !moveArgs.force) {
+      if (response.result === differentScopeErrorMsg && !args.force) {
         options.push("Try force");
       }
 
@@ -95,11 +122,40 @@ export async function moveBlock(
       );
 
       if (choice === "Try force") {
-        moveArgs.force = true;
-        await moveBlock(codeBlocksCliPath, document, moveArgs);
+        args.force = true;
+        await moveBlock(codeBlocksCliPath, document, args);
       }
 
       break;
     }
+  }
+}
+
+export async function getCodeBlocksCliPath(binDir: string): Promise<string | undefined> {
+  const codeBlocksCliPath: string | undefined | null = vscode.workspace
+    .getConfiguration("codeBlocks")
+    .get("binPath");
+
+  if (codeBlocksCliPath === null || codeBlocksCliPath === undefined || codeBlocksCliPath.length === 0) {
+    return await getOrInstallCli(binDir);
+  } else {
+    return codeBlocksCliPath;
+  }
+
+}
+
+export function getLanguageSupport(languageId: string): LanguageSupport | undefined {
+  const languageSupportConfig: Record<string, LanguageSupport> | undefined | null = vscode.workspace
+    .getConfiguration("codeBlocks")
+    .get("languageSupport");
+
+  if (languageSupportConfig === null || languageSupportConfig === undefined) {
+    return undefined;
+  }
+
+  if (languageId in languageSupportConfig) {
+    return languageSupportConfig[languageId];
+  } else {
+    return undefined;
   }
 }

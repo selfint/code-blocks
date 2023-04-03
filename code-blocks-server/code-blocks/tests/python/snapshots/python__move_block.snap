@@ -1,9 +1,15 @@
 ---
 source: code-blocks/tests/python/main.rs
-expression: "code_blocks::move_block(src_block, dst_item,\n        r#\"\n        #Vsrc\n        @decor1\n        @decor2\n        class A:\n            ...\n           \n        #Vdst\n        class C:\n            \"\"\"class docstring\"\"\"\n        \n            def __init__(self):\n                pass\n        \n            @staticmethod()\n            def foo():\n                \"\"\"method docstring\"\"\"\n                \n            def bar():\n                ...\n                \n        def func():\n            ...\n\"#,\n        Some(check_fn), false).unwrap()"
+expression: snapshot
 ---
+input:
 
         #Vsrc
+        @decor1
+        @decor2
+        class A:
+            ...
+           
         #Vdst
         class C:
             """class docstring"""
@@ -18,11 +24,33 @@ expression: "code_blocks::move_block(src_block, dst_item,\n        r#\"\n       
             def bar():
                 ...
                 
+        def func():
+            ...
+
+---
+output:
+
+        #Vsrc
+        #Vdst
+        class C:
+        ^ Dest
+            """class docstring"""
+        
+            def __init__(self):
+                pass
+        
+            @staticmethod()
+            def foo():
+                """method docstring"""
+                
+            def bar():
+                ...
+                
         @decor1
+        ^ Source
         @decor2
         class A:
             ...
                 
         def func():
             ...
-

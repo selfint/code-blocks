@@ -1,8 +1,20 @@
 ---
 source: code-blocks-server/tests/test_api.rs
-expression: "code_blocks_server::move_block(MoveBlockArgs {\n                queries: get_query_strings(&lang),\n                text: r#\"\n    mod m {\n/*  ^fail */\n        fn foo() {}\n     /* ^src */\n    }\n\n    fn baz() {}\n\"#.to_string(),\n                language: lang.get_language(),\n                src_block: src_block.into(),\n                dst_block: fail_block.into(),\n                assert_move_legal_fn: Some(check_fn),\n                force: false,\n            }).err().unwrap()"
+expression: snapshot
 ---
-Error {
-    context: "Illegal move operation",
-    source: "Blocks have different parents",
-}
+input:
+
+    mod m {
+/*  ^fail */
+        fn foo() {}
+     /* ^src */
+    }
+
+    fn baz() {}
+
+---
+output:
+Illegal move operation
+
+Caused by:
+    Blocks have different parents

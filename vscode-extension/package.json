@@ -56,6 +56,26 @@
       {
         "command": "codeBlocks.openToTheSide",
         "title": "Code Blocks: Open active file in Code Blocks editor to the side"
+      },
+      {
+        "command": "codeBlocks.toggle",
+        "title": "Code Blocks: Toggle block mode"
+      },
+      {
+        "command": "codeBlocks.moveUp",
+        "title": "Code Blocks: Move selected block up"
+      },
+      {
+        "command": "codeBlocks.moveDown",
+        "title": "Code Blocks: Move selected block down"
+      },
+      {
+        "command": "codeBlocks.moveUpForce",
+        "title": "Code Blocks: Force move selected block up"
+      },
+      {
+        "command": "codeBlocks.moveDownForce",
+        "title": "Code Blocks: Force move selected block down"
       }
     ],
     "configuration": {
@@ -80,7 +100,8 @@
                 "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (mod_item) @item)",
                 "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (struct_item) @item)",
                 "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (impl_item) @item)",
-                "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (enum_item) @item)"
+                "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (enum_item) @item)",
+                "(match_arm) @arm"
               ]
             },
             "typescript": {

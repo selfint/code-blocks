@@ -1,0 +1,25 @@
+---
+source: code-blocks/tests/rust/main.rs
+expression: snapshot
+---
+input:
+
+    #[test]
+    fn foo() {}
+/*  ^src */
+
+    fn bar() {}
+/*  ^dst */
+
+---
+output:
+
+    /*  ^src */
+
+    fn bar() {}
+    ^ Dest
+
+    #[test]
+    ^ Source
+    fn foo() {}
+/*  ^dst */
