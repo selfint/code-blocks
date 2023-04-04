@@ -25,31 +25,84 @@ The next time you open a file in the same language, everything will already be s
 
 If you open a file in a new language, the appropriate tree sitter grammar will be downloaded and compiled again.
 
-### Installation demo
+### Installation from GitHub release demo
 
 ![installation video](./assets/Code-Blocks-Installation-Demo.gif)
 
 ## Examples
 
-### TypeScript + JSX
+### Block mode
+
+In this mode, the current, previous, and next blocks are highlighted inside the editor.
+Then, by running the "Move block up/down" commands, the current block is moved in the
+appropriate direction.
+
+#### Rust Example
+
+> Moving method in and around `impl` block
+
+![rust-2](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20rust%202.gif)
+
+> Moving `match` arms
+
+![rust-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20rust%201.gif)
+
+#### Svelte Example
+
+> Rapidly changing UI look
+
+![svelte-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20svelte%201.gif)
+
+#### TypeScript + JSX Example
+
+> Rapidly changing UI look
+
+![tsx-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20tsx%201.gif)
+
+#### Python Example
+
+**NOTE**: Force moving in Python almost never works correctly,
+since whitespace is meaningful
+
+> Moving methods and classes with decorators
+
+![python-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20python%201.gif)
+
+#### Keybindings
+
+No keybinding are set by default, by these are the recommended settings:
+
+| Command                    | Keybinding     |
+| -------------------------- | -------------- |
+| `codeBlocks.moveUp`        | `ctrl+k`       |
+| `codeBlocks.moveDown`      | `ctrl+j`       |
+| `codeBlocks.moveUpForce`   | `ctrl+shift+j` |
+| `codeBlocks.moveDownForce` | `ctrl+shift+k` |
+
+### Code Blocks editor
+
+This editor displays all blocks in the current file, in a custom editor.
+To move a block, click the source block, and then the block to move it under.
+
+#### TypeScript + JSX Example
 
 ![example](./assets/Code-Blocks-Demo-9.gif)
 
-### Svelte
+#### Svelte Example
 
 ![example](./assets/Code-Blocks-Demo-10.gif)
 
-### Rust
+#### Rust Example
 
-#### Code blocks moving function attributes and documentation
+> Code blocks moving function attributes and documentation
 
 ![example](./assets/Code-Blocks-Demo-8.gif)
 
-#### Code blocks not moving blocks between scopes
+> Code blocks not moving blocks between scopes
 
 ![example](./assets/Code-Blocks-Demo-7.gif)
 
-### Python
+#### Python Example
 
 ![example](./assets/Code-Blocks-Demo-11.gif)
 
