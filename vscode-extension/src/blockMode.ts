@@ -16,6 +16,7 @@ let disposables: vscode.Disposable[] | undefined = undefined;
 let blocks: BlockLocationTree[] | undefined = undefined;
 let selectedBlock: BlockLocation | undefined = undefined;
 let selectedBlockSiblings: [BlockLocation | undefined, BlockLocation | undefined] = [undefined, undefined];
+let previousEditor: vscode.TextEditor | undefined = undefined;
 
 /**
  * This is used to ensure that events only trigger one action.
@@ -24,6 +25,13 @@ let runningLock = false;
 
 async function updateBlocks(codeBlocksCliPath: string, parsersDir: string): Promise<void> {
   const editor = vscode.window.activeTextEditor;
+  if (editor !== previousEditor) {
+    previousEditor?.setDecorations(selectedDecoration, []);
+    previousEditor?.setDecorations(targetsDecoration, []);
+  }
+
+  previousEditor = editor;
+
   if (editor === undefined) {
     return undefined;
   }
