@@ -10,5 +10,6 @@
     font-size: var(--vscode-editor-font-size);
     font-weight: var(--vscode-editor-font-weight);
     white-space: pre-wrap;
+    line-height: 1.125rem;
   }
 </style>
