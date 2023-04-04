@@ -4,13 +4,10 @@ import { BlockLocation, BlockLocationTree, GetSubtreesArgs, MoveBlockArgs } from
 import { getCodeBlocksCliPath } from "./core";
 import { join } from "path";
 
-const decoration = vscode.window.createTextEditorDecorationType({
+const selectedDecoration = vscode.window.createTextEditorDecorationType({
   backgroundColor: "var(--vscode-editor-selectionBackground)",
 });
-const decoration1 = vscode.window.createTextEditorDecorationType({
-  backgroundColor: "var(--vscode-editor-selectionHighlightBackground)",
-});
-const decoration2 = vscode.window.createTextEditorDecorationType({
+const targetsDecoration = vscode.window.createTextEditorDecorationType({
   backgroundColor: "var(--vscode-editor-selectionHighlightBackground)",
 });
 
@@ -19,6 +16,7 @@ let disposables: vscode.Disposable[] | undefined = undefined;
 let blocks: BlockLocationTree[] | undefined = undefined;
 let selectedBlock: BlockLocation | undefined = undefined;
 let selectedBlockSiblings: [BlockLocation | undefined, BlockLocation | undefined] = [undefined, undefined];
+let previousEditor: vscode.TextEditor | undefined = undefined;
 
 /**
  * This is used to ensure that events only trigger one action.
@@ -27,6 +25,13 @@ let runningLock = false;
 
 async function updateBlocks(codeBlocksCliPath: string, parsersDir: string): Promise<void> {
   const editor = vscode.window.activeTextEditor;
+  if (editor !== previousEditor) {
+    previousEditor?.setDecorations(selectedDecoration, []);
+    previousEditor?.setDecorations(targetsDecoration, []);
+  }
+
+  previousEditor = editor;
+
   if (editor === undefined) {
     return undefined;
   }
@@ -129,22 +134,21 @@ function highlightSelections(): void {
 
   if (selected !== undefined) {
     const range = new vscode.Range(selected.startRow, selected.startCol, selected.endRow, selected.endCol);
-    editor.setDecorations(decoration, [range]);
+    editor.setDecorations(selectedDecoration, [range]);
   } else {
-    editor.setDecorations(decoration, []);
+    editor.setDecorations(selectedDecoration, []);
   }
 
+  const targetRanges = [];
   if (prev !== undefined) {
-    editor.setDecorations(decoration1, [new vscode.Range(prev.startRow, prev.startCol, prev.endRow, prev.endCol)]);
-  } else {
-    editor.setDecorations(decoration1, []);
+    targetRanges.push(new vscode.Range(prev.startRow, prev.startCol, prev.endRow, prev.endCol));
   }
 
   if (next !== undefined) {
-    editor.setDecorations(decoration2, [new vscode.Range(next.startRow, next.startCol, next.endRow, next.endCol)]);
-  } else {
-    editor.setDecorations(decoration2, []);
+    targetRanges.push(new vscode.Range(next.startRow, next.startCol, next.endRow, next.endCol));
   }
+
+  editor.setDecorations(targetsDecoration, targetRanges);
 
 }
 
@@ -275,9 +279,8 @@ async function toggle(codeBlocksCliPath: string | undefined, parsersDir: string)
     enabled = true;
   } else if (disposables !== undefined) {
     disposables.map(async (d) => { await d.dispose(); });
-    vscode.window.activeTextEditor?.setDecorations(decoration, []);
-    vscode.window.activeTextEditor?.setDecorations(decoration1, []);
-    vscode.window.activeTextEditor?.setDecorations(decoration2, []);
+    vscode.window.activeTextEditor?.setDecorations(selectedDecoration, []);
+    vscode.window.activeTextEditor?.setDecorations(targetsDecoration, []);
     enabled = false;
   } else {
     throw new Error("Illegal state");
