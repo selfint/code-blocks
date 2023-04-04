@@ -8,11 +8,11 @@ Rust (technically just `cargo`) is required for this extension to work, go to [r
 
 ## Installation
 
-
 1. Install the extension from:
-    - Inside vscode, search for the `selfint.code-blocks` extension.
-    - The [vscode marketplace](https://marketplace.visualstudio.com/items?itemName=selfint.code-blocks).
-    - The GitHub [releases](https://github.com/selfint/code-blocks/releases?q=vscode-extension&expanded=true) page.
+
+   - Inside vscode, search for the `selfint.code-blocks` extension.
+   - The [vscode marketplace](https://marketplace.visualstudio.com/items?itemName=selfint.code-blocks).
+   - The GitHub [releases](https://github.com/selfint/code-blocks/releases?q=vscode-extension&expanded=true) page.
 
 2. Open a file with the Code Blocks Editor, the `code-blocks-cli` will need to be downloaded
    by the method of your choosing (using `cargo` or downloading from the latest release).
@@ -25,33 +25,93 @@ The next time you open a file in the same language, everything will already be s
 
 If you open a file in a new language, the appropriate tree sitter grammar will be downloaded and compiled again.
 
-### Installation demo
+### Installation from GitHub release demo
 
 ![installation video](./assets/Code-Blocks-Installation-Demo.gif)
 
-## Examples
+## Examples - Block mode
 
-### TypeScript + JSX
-
-![example](./assets/Code-Blocks-Demo-9.gif)
-
-### Svelte
-
-![example](./assets/Code-Blocks-Demo-10.gif)
+In this mode, the current, previous, and next blocks are highlighted inside the editor.
+Then, by running the "Move block up/down" commands, the current block is moved in the
+appropriate direction.
 
 ### Rust
 
-#### Code blocks moving function attributes and documentation
+> Moving method in and around `impl` block
 
-![example](./assets/Code-Blocks-Demo-8.gif)
+![rust-2](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20rust%202.gif)
 
-#### Code blocks not moving blocks between scopes
+> Moving `match` arms
 
-![example](./assets/Code-Blocks-Demo-7.gif)
+![rust-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20rust%201.gif)
+
+### Svelte
+
+> Rapidly changing UI look
+
+![svelte-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20svelte%201.gif)
+
+### TypeScript + JSX
+
+> Rapidly changing UI look
+
+![tsx-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20tsx%201.gif)
 
 ### Python
 
-![example](./assets/Code-Blocks-Demo-11.gif)
+**NOTE**: Force moving in Python almost never works correctly,
+since whitespace is meaningful
+
+> Moving methods and classes with decorators
+
+![python-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20python%201.gif)
+
+### Keybindings
+
+No keybinding are set by default, by these are the recommended settings:
+
+| Command                    | Keybinding     |
+| -------------------------- | -------------- |
+| `codeBlocks.moveUp`        | `ctrl+k`       |
+| `codeBlocks.moveDown`      | `ctrl+j`       |
+| `codeBlocks.moveUpForce`   | `ctrl+shift+j` |
+| `codeBlocks.moveDownForce` | `ctrl+shift+k` |
+
+## Code Blocks editor
+
+This editor displays all blocks in the current file, in a custom editor.
+To move a block, click the source block, and then the block to move it under.
+
+### Rust
+
+> Moving method in and around `impl` block
+
+![rust-1](./assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20rust%201.gif)
+
+> Moving `match` arms
+
+![rust-2](./assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20rust%202.gif)
+
+### Svelte
+
+> Rapidly changing UI look
+
+![svelte-1](./assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20svelte%201.gif)
+
+### TypeScript + JSX
+
+> Rapidly changing UI look
+
+![tsx-1](./assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20react%201.gif)
+
+### Python
+
+**NOTE**: Force moving in Python almost never works correctly,
+since whitespace is meaningful
+
+> Moving methods and classes with decorators
+
+![python-1](./assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20python%201.gif)
 
 ## \*Supported languages
 
