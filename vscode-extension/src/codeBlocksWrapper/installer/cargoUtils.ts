@@ -47,7 +47,7 @@ export async function installViaCargo(): Promise<void> {
           if (err !== null) {
             const errString = JSON.stringify(err);
             resolve(errString);
-          } else if (!stderr.includes("Installed package")) {
+          } else if (!(stderr.includes("Installed package") || stderr.includes("Replaced package"))) {
             resolve(stderr);
           } else {
             resolve(undefined);
