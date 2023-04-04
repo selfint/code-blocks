@@ -123,10 +123,10 @@ export async function moveBlock(
 
       if (choice === "Try force") {
         args.force = true;
-        await moveBlock(codeBlocksCliPath, document, args);
+        return await moveBlock(codeBlocksCliPath, document, args);
+      } else {
+        return undefined;
       }
-
-      break;
     }
   }
 }
