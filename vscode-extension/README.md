@@ -8,11 +8,11 @@ Rust (technically just `cargo`) is required for this extension to work, go to [r
 
 ## Installation
 
-
 1. Install the extension from:
-    - Inside vscode, search for the `selfint.code-blocks` extension.
-    - The [vscode marketplace](https://marketplace.visualstudio.com/items?itemName=selfint.code-blocks).
-    - The GitHub [releases](https://github.com/selfint/code-blocks/releases?q=vscode-extension&expanded=true) page.
+
+   - Inside vscode, search for the `selfint.code-blocks` extension.
+   - The [vscode marketplace](https://marketplace.visualstudio.com/items?itemName=selfint.code-blocks).
+   - The GitHub [releases](https://github.com/selfint/code-blocks/releases?q=vscode-extension&expanded=true) page.
 
 2. Open a file with the Code Blocks Editor, the `code-blocks-cli` will need to be downloaded
    by the method of your choosing (using `cargo` or downloading from the latest release).
