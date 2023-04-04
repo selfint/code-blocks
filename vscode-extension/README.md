@@ -29,15 +29,13 @@ If you open a file in a new language, the appropriate tree sitter grammar will b
 
 ![installation video](./assets/Code-Blocks-Installation-Demo.gif)
 
-## Examples
-
-### Block mode
+## Examples - Block mode
 
 In this mode, the current, previous, and next blocks are highlighted inside the editor.
 Then, by running the "Move block up/down" commands, the current block is moved in the
 appropriate direction.
 
-#### Rust Example
+### Rust
 
 > Moving method in and around `impl` block
 
@@ -47,19 +45,19 @@ appropriate direction.
 
 ![rust-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20rust%201.gif)
 
-#### Svelte Example
+### Svelte
 
 > Rapidly changing UI look
 
 ![svelte-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20svelte%201.gif)
 
-#### TypeScript + JSX Example
+### TypeScript + JSX
 
 > Rapidly changing UI look
 
 ![tsx-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20tsx%201.gif)
 
-#### Python Example
+### Python
 
 **NOTE**: Force moving in Python almost never works correctly,
 since whitespace is meaningful
@@ -68,7 +66,7 @@ since whitespace is meaningful
 
 ![python-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20python%201.gif)
 
-#### Keybindings
+### Keybindings
 
 No keybinding are set by default, by these are the recommended settings:
 
@@ -79,32 +77,41 @@ No keybinding are set by default, by these are the recommended settings:
 | `codeBlocks.moveUpForce`   | `ctrl+shift+j` |
 | `codeBlocks.moveDownForce` | `ctrl+shift+k` |
 
-### Code Blocks editor
+## Code Blocks editor
 
 This editor displays all blocks in the current file, in a custom editor.
 To move a block, click the source block, and then the block to move it under.
 
-#### TypeScript + JSX Example
+### Rust
 
-![example](./assets/Code-Blocks-Demo-9.gif)
+> Moving method in and around `impl` block
 
-#### Svelte Example
+![rust-1](./assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20rust%201.gif)
 
-![example](./assets/Code-Blocks-Demo-10.gif)
+> Moving `match` arms
 
-#### Rust Example
+![rust-2](./assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20rust%202.gif)
 
-> Code blocks moving function attributes and documentation
+### Svelte
 
-![example](./assets/Code-Blocks-Demo-8.gif)
+> Rapidly changing UI look
 
-> Code blocks not moving blocks between scopes
+![svelte-1](./assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20svelte%201.gif)
 
-![example](./assets/Code-Blocks-Demo-7.gif)
+### TypeScript + JSX
 
-#### Python Example
+> Rapidly changing UI look
 
-![example](./assets/Code-Blocks-Demo-11.gif)
+![tsx-1](./assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20react%201.gif)
+
+### Python
+
+**NOTE**: Force moving in Python almost never works correctly,
+since whitespace is meaningful
+
+> Moving methods and classes with decorators
+
+![python-1](./assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20python%201.gif)
 
 ## \*Supported languages
 
