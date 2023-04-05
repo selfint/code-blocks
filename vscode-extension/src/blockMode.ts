@@ -9,6 +9,11 @@ const selectedDecoration = vscode.window.createTextEditorDecorationType({
 const targetsDecoration = vscode.window.createTextEditorDecorationType({
   backgroundColor: "var(--vscode-editor-selectionHighlightBackground)",
 });
+const forceTargetsDecoration = vscode.window.createTextEditorDecorationType({
+  backgroundColor: "var(--vscode-editor-linkedEditingBackground)",
+  // backgroundColor: "var(--vscode-editor-findMatchHighlightBackground)",
+  // backgroundColor: "var(--vscode-inputValidation-errorBackground)",
+});
 
 /**
  * Either a selected block and possible siblings OR no selections.
@@ -182,11 +187,14 @@ class BlockMode implements vscode.Disposable {
       return;
     }
 
-    let srcBlock: BlockLocation | undefined = undefined;
-    let dstBlock: BlockLocation | undefined = undefined;
 
+    const editor = this.editorState.ofEditor;
+    const document = this.editorState.ofEditor.document;
+    const coreWrapper = this.editorState.editorCoreWrapper;
     const [prev, selected, next] = this.editorState.selections;
 
+    let srcBlock: BlockLocation | undefined = undefined;
+    let dstBlock: BlockLocation | undefined = undefined;
     switch (direction) {
       case "up":
         srcBlock = prev;
@@ -204,12 +212,6 @@ class BlockMode implements vscode.Disposable {
       return;
     }
 
-    const editor = this.editorState.ofEditor;
-    const document = this.editorState.ofEditor.document;
-    const coreWrapper = this.editorState.editorCoreWrapper;
-    const cursorByte = document.offsetAt(editor.selection.active);
-    const cursorSelectedBlockOffset = cursorByte - selected.startByte;
-
     const moveBlockResponse = await coreWrapper.moveBlock(
       document.getText(), srcBlock, dstBlock, force
     );
@@ -226,12 +228,15 @@ class BlockMode implements vscode.Disposable {
       moveBlockResponse.text
     );
 
+    const cursorByte = document.offsetAt(editor.selection.active);
+    const cursorSelectedBlockOffset = cursorByte - selected.startByte;
+
     await vscode.workspace.applyEdit(edit);
 
     const newOffset = direction === "down" ? moveBlockResponse.newSrcStart : moveBlockResponse.newDstStart;
-
     const newPosition = document.positionAt(newOffset + cursorSelectedBlockOffset);
     const newSelection = new vscode.Selection(newPosition, newPosition);
+
     editor.selection = newSelection;
   }
 }
