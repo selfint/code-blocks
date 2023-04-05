@@ -10,40 +10,74 @@ const targetsDecoration = vscode.window.createTextEditorDecorationType({
   backgroundColor: "var(--vscode-editor-selectionHighlightBackground)",
 });
 
+class EditorLanguageSupport {
+  parsersDir: string;
+  languageSupport: core.LanguageSupport;
+  libraryPath: string;
+
+  public static async build(
+    editor: vscode.TextEditor | undefined,
+    codeBlocksCliPath: string,
+    parsersDir: string
+  ): Promise<EditorLanguageSupport | undefined> {
+    if (editor === undefined) {
+      return undefined;
+    }
+
+    const languageSupport = core.getLanguageSupport(editor.document.languageId);
+    if (languageSupport === undefined) {
+      return undefined;
+    }
+
+    const libraryPath = await core.cachedInstallLanguage(
+      codeBlocksCliPath,
+      {
+        installDir: join(parsersDir, languageSupport.parserInstaller.libraryName),
+        ...languageSupport.parserInstaller,
+      },
+    );
+    if (libraryPath === undefined) {
+      return undefined;
+    }
+
+    return new EditorLanguageSupport(parsersDir, languageSupport, libraryPath);
+  }
+
+  constructor(
+    parsersDir: string,
+    languageSupport: core.LanguageSupport,
+    libraryPath: string,
+  ) {
+    this.parsersDir = parsersDir;
+    this.languageSupport = languageSupport;
+    this.libraryPath = libraryPath;
+  }
+
+}
+
+
 class BlockModeExtension {
   /**
    * This is used to ensure that events only trigger one action.
    */
   private runningLock = false;
 
-  private editorState: EditorState | undefined;
+  private editorLanguageSupport: EditorLanguageSupport | undefined;
   private enabled = false;
   private parsersDir: string;
   private codeBlocksCliPath: string;
 
   private activeEditor: vscode.TextEditor | undefined = undefined;
   private disposables: vscode.Disposable[] | undefined = undefined;
+  private blocks: BlockLocationTree[] | undefined = undefined;
+  private selectedBlock: BlockLocation | undefined = undefined;
+  private selectedBlockSiblings: [BlockLocation | undefined, BlockLocation | undefined] = [undefined, undefined];
 
   private static instance: BlockModeExtension | undefined = undefined;
 
   private constructor(codeBlocksCliPath: string, parsersDir: string) {
     this.codeBlocksCliPath = codeBlocksCliPath;
     this.parsersDir = parsersDir;
-  }
-
-  public isEnabled(): boolean {
-    return this.enabled;
-  }
-
-  async syncStateWithActiveEditor(): Promise<EditorState | undefined> {
-    const editor = vscode.window.activeTextEditor;
-    if (this.activeEditor === editor) {
-      return this.editorState;
-    } else {
-      clearDecorations(this.activeEditor);
-      this.activeEditor = editor;
-      this.editorState = await EditorState.build(editor, this.codeBlocksCliPath, this.parsersDir);
-    }
   }
 
   public static async getInstance(context: vscode.ExtensionContext): Promise<BlockModeExtension | undefined> {
@@ -62,17 +96,32 @@ class BlockModeExtension {
     return this.instance;
   }
 
+  public isEnabled(): boolean {
+    return this.enabled;
+  }
+
+  async syncStateWithActiveEditor(): Promise<EditorLanguageSupport | undefined> {
+    const editor = vscode.window.activeTextEditor;
+    if (this.activeEditor === editor) {
+      return this.editorLanguageSupport;
+    } else {
+      clearDecorations(this.activeEditor);
+      this.activeEditor = editor;
+      this.editorLanguageSupport = await EditorLanguageSupport.build(editor, this.codeBlocksCliPath, this.parsersDir);
+    }
+  }
+
   async updateBlocks(): Promise<void> {
-    if (this.editorState?.editor === undefined) {
+    if (this.activeEditor === undefined || this.editorLanguageSupport === undefined) {
       return;
     }
 
-    const editor = this.editorState.editor;
-    const codeBlocksCliPath = this.editorState.codeBlocksCliPath;
-    const libraryPath = this.editorState.libraryPath;
+    const editor = this.activeEditor;
+    const codeBlocksCliPath = this.codeBlocksCliPath;
+    const libraryPath = this.editorLanguageSupport.libraryPath;
 
     const textDocument = editor.document;
-    const languageSupport = this.editorState.languageSupport;
+    const languageSupport = this.editorLanguageSupport.languageSupport;
 
     const args: GetSubtreesArgs = {
       languageFnSymbol: languageSupport.parserInstaller.languageFnSymbol,
@@ -92,20 +141,20 @@ class BlockModeExtension {
       return undefined;
     }
 
-    this.editorState.blocks = newBlocks;
+    this.blocks = newBlocks;
     this.updateSelection();
   }
 
   updateSelection(): void {
-    if (this.editorState === undefined) {
+    if (this.activeEditor === undefined || this.editorLanguageSupport === undefined) {
       return undefined;
     }
 
-    if (this.editorState.blocks === undefined) {
+    if (this.blocks === undefined) {
       return undefined;
     }
 
-    const cursor = this.editorState.editor.selection.active;
+    const cursor = this.activeEditor.selection.active;
 
     function cursorInBlock(block: BlockLocation): boolean {
       return cursor.isAfterOrEqual(new vscode.Position(block.startRow, block.startCol))
@@ -134,38 +183,38 @@ class BlockModeExtension {
       return [undefined, undefined, undefined];
     }
 
-    const [prev, selected, next] = findTreesSelections(this.editorState.blocks);
+    const [prev, selected, next] = findTreesSelections(this.blocks);
 
-    this.editorState.selectedBlock = selected;
-    this.editorState.selectedBlockSiblings = [prev, next];
+    this.selectedBlock = selected;
+    this.selectedBlockSiblings = [prev, next];
 
-    highlightSelections(this.editorState.editor, this.editorState.selectedBlock, this.editorState.selectedBlockSiblings);
+    highlightSelections(this.activeEditor, this.selectedBlock, this.selectedBlockSiblings);
   }
 
   async moveSelectedBlock(direction: "up" | "down", force: boolean): Promise<void> {
-    if (this.editorState === undefined) {
+    if (this.activeEditor === undefined || this.editorLanguageSupport === undefined) {
       return undefined;
     }
 
-    if (this.editorState.selectedBlock === undefined) {
+    if (this.selectedBlock === undefined) {
       return undefined;
     }
 
-    const languageSupport = this.editorState.languageSupport;
+    const languageSupport = this.editorLanguageSupport.languageSupport;
 
     let srcBlock: BlockLocation | undefined = undefined;
     let dstBlock: BlockLocation | undefined = undefined;
 
-    const [prev, next] = this.editorState.selectedBlockSiblings;
+    const [prev, next] = this.selectedBlockSiblings;
 
     switch (direction) {
       case "up":
         srcBlock = prev;
-        dstBlock = this.editorState.selectedBlock;
+        dstBlock = this.selectedBlock;
         break;
 
       case "down":
-        srcBlock = this.editorState.selectedBlock;
+        srcBlock = this.selectedBlock;
         dstBlock = next;
         break;
     }
@@ -175,17 +224,17 @@ class BlockModeExtension {
       return;
     }
 
-    const cursorByte = this.editorState.editor.document.offsetAt(this.editorState.editor.selection.active);
-    const cursorSelectedBlockOffset = cursorByte - this.editorState.selectedBlock.startByte;
+    const cursorByte = this.activeEditor.document.offsetAt(this.activeEditor.selection.active);
+    const cursorSelectedBlockOffset = cursorByte - this.selectedBlock.startByte;
 
-    const moveBlockResponse = await core.moveBlock(this.editorState.codeBlocksCliPath, this.editorState.editor.document, {
+    const moveBlockResponse = await core.moveBlock(this.codeBlocksCliPath, this.activeEditor.document, {
       srcBlock,
       dstBlock,
       force,
       languageFnSymbol: languageSupport.parserInstaller.languageFnSymbol,
       queries: languageSupport.queries,
-      libraryPath: this.editorState.libraryPath,
-      text: this.editorState.editor.document.getText()
+      libraryPath: this.editorLanguageSupport.libraryPath,
+      text: this.activeEditor.document.getText()
     } as MoveBlockArgs);
 
     if (moveBlockResponse === undefined) {
@@ -193,10 +242,10 @@ class BlockModeExtension {
       return;
     }
 
-    const newBlocks = await core.getBlocks(this.editorState.codeBlocksCliPath, {
+    const newBlocks = await core.getBlocks(this.codeBlocksCliPath, {
       languageFnSymbol: languageSupport.parserInstaller.languageFnSymbol,
       queries: languageSupport.queries,
-      libraryPath: this.editorState.libraryPath,
+      libraryPath: this.editorLanguageSupport.libraryPath,
       text: moveBlockResponse.text
     });
 
@@ -206,15 +255,15 @@ class BlockModeExtension {
     }
 
     const edit = new vscode.WorkspaceEdit();
-    edit.replace(this.editorState.editor.document.uri, new vscode.Range(0, 0, this.editorState.editor.document.lineCount, 0), moveBlockResponse.text);
+    edit.replace(this.activeEditor.document.uri, new vscode.Range(0, 0, this.activeEditor.document.lineCount, 0), moveBlockResponse.text);
 
     await vscode.workspace.applyEdit(edit);
 
     const newOffset = direction === "down" ? moveBlockResponse.newSrcStart : moveBlockResponse.newDstStart;
 
-    const newPosition = this.editorState.editor.document.positionAt(newOffset + cursorSelectedBlockOffset);
+    const newPosition = this.activeEditor.document.positionAt(newOffset + cursorSelectedBlockOffset);
     const newSelection = new vscode.Selection(newPosition, newPosition);
-    this.editorState.editor.selection = newSelection;
+    this.activeEditor.selection = newSelection;
 
     this.updateSelection();
   }
@@ -260,63 +309,6 @@ class BlockModeExtension {
       this.runningLock = false;
     }
   }
-
-}
-
-
-class EditorState {
-  blocks: BlockLocationTree[] | undefined = undefined;
-  selectedBlock: BlockLocation | undefined = undefined;
-  selectedBlockSiblings: [BlockLocation | undefined, BlockLocation | undefined] = [undefined, undefined];
-
-  editor: vscode.TextEditor;
-  codeBlocksCliPath: string;
-  parsersDir: string;
-  languageSupport: core.LanguageSupport;
-  libraryPath: string;
-
-  public static async build(
-    editor: vscode.TextEditor | undefined,
-    codeBlocksCliPath: string,
-    parsersDir: string
-  ): Promise<EditorState | undefined> {
-    if (editor === undefined) {
-      return undefined;
-    }
-
-    const languageSupport = core.getLanguageSupport(editor.document.languageId);
-    if (languageSupport === undefined) {
-      return undefined;
-    }
-
-    const libraryPath = await core.cachedInstallLanguage(
-      codeBlocksCliPath,
-      {
-        installDir: join(parsersDir, languageSupport.parserInstaller.libraryName),
-        ...languageSupport.parserInstaller,
-      },
-    );
-    if (libraryPath === undefined) {
-      return undefined;
-    }
-
-    return new EditorState(editor, codeBlocksCliPath, parsersDir, languageSupport, libraryPath);
-  }
-
-  constructor(
-    editor: vscode.TextEditor,
-    codeBlocksCliPath: string,
-    parsersDir: string,
-    languageSupport: core.LanguageSupport,
-    libraryPath: string,
-  ) {
-    this.editor = editor;
-    this.codeBlocksCliPath = codeBlocksCliPath;
-    this.parsersDir = parsersDir;
-    this.languageSupport = languageSupport;
-    this.libraryPath = libraryPath;
-  }
-
 }
 
 function clearDecorations(editor: vscode.TextEditor | undefined): void {
