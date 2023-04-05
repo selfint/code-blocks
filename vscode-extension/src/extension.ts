@@ -25,7 +25,7 @@ async function openCodeBlocksEditorToTheSide(): Promise<void> {
   }
 }
 
-export function activate(context: ExtensionContext): void {
+export async function activate(context: ExtensionContext): Promise<void> {
   context.subscriptions.push(
     window.registerCustomEditorProvider(
       CodeBlocksEditorProvider.viewType,
@@ -38,7 +38,7 @@ export function activate(context: ExtensionContext): void {
     commands.registerCommand("codeBlocks.openToTheSide", openCodeBlocksEditorToTheSide)
   );
 
-  const hooks = getBlockModeHooks(context);
+  const hooks = await getBlockModeHooks(context);
   for (const [hookName, hook] of hooks) {
     context.subscriptions.push(commands.registerCommand(`codeBlocks.${hookName}`, hook));
   }
