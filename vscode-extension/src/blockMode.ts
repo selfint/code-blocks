@@ -192,8 +192,6 @@ class BlockMode implements vscode.Disposable {
     const newPosition = document.positionAt(newOffset + cursorSelectedBlockOffset);
     const newSelection = new vscode.Selection(newPosition, newPosition);
     editor.selection = newSelection;
-
-    this.updateEditorSelections(editor.selection.active);
   }
 }
 
