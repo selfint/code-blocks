@@ -132,7 +132,48 @@ class BlockMode implements vscode.Disposable {
       selection,
     );
 
-    highlightSelections(this.editorState.ofEditor, this.editorState.selections);
+    this.highlightSelections();
+    this.focusSelection();
+  }
+
+  focusSelection(): void {
+    if (this.editorState?.selections === undefined) {
+      return;
+    }
+
+    for (const visibleRange of this.editorState.ofEditor.visibleRanges) {
+      if (visibleRange.contains(this.editorState.ofEditor.selection.active)) {
+        return;
+      }
+    }
+
+    const activeSelection = this.editorState.ofEditor.selection.active;
+    this.editorState.ofEditor.revealRange(
+      new vscode.Range(activeSelection, activeSelection),
+      vscode.TextEditorRevealType.Default
+    );
+  }
+
+  highlightSelections(): void {
+    if (this.editorState?.selections !== undefined) {
+      const [prev, selected, next] = this.editorState.selections;
+      const range = new vscode.Range(selected.startRow, selected.startCol, selected.endRow, selected.endCol);
+      this.editorState.ofEditor.setDecorations(selectedDecoration, [range]);
+
+      const targetRanges = [];
+      if (prev !== undefined) {
+        targetRanges.push(new vscode.Range(prev.startRow, prev.startCol, prev.endRow, prev.endCol));
+      }
+
+      if (next !== undefined) {
+        targetRanges.push(new vscode.Range(next.startRow, next.startCol, next.endRow, next.endCol));
+      }
+
+      this.editorState.ofEditor.setDecorations(targetsDecoration, targetRanges);
+    } else {
+      this.editorState?.ofEditor.setDecorations(selectedDecoration, []);
+      this.editorState?.ofEditor.setDecorations(targetsDecoration, []);
+    }
   }
 
   public async moveBlock(direction: "up" | "down", force: boolean): Promise<void> {
@@ -321,30 +362,5 @@ function findSelections(blocks: BlockLocationTree[] | undefined, cursor: vscode.
     return undefined;
   } else {
     return [prev, selected, next];
-  }
-}
-
-function highlightSelections(
-  editor: vscode.TextEditor,
-  selections: [BlockLocation | undefined, BlockLocation, BlockLocation | undefined] | undefined,
-): void {
-  if (selections !== undefined) {
-    const [prev, selected, next] = selections;
-    const range = new vscode.Range(selected.startRow, selected.startCol, selected.endRow, selected.endCol);
-    editor.setDecorations(selectedDecoration, [range]);
-
-    const targetRanges = [];
-    if (prev !== undefined) {
-      targetRanges.push(new vscode.Range(prev.startRow, prev.startCol, prev.endRow, prev.endCol));
-    }
-
-    if (next !== undefined) {
-      targetRanges.push(new vscode.Range(next.startRow, next.startCol, next.endRow, next.endCol));
-    }
-
-    editor.setDecorations(targetsDecoration, targetRanges);
-  } else {
-    editor.setDecorations(selectedDecoration, []);
-    editor.setDecorations(targetsDecoration, []);
   }
 }
