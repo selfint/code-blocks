@@ -1,6 +1,6 @@
 import * as core from "./core";
 import * as vscode from "vscode";
-import { BlockLocation, BlockLocationTree, GetSubtreesArgs, MoveBlockArgs } from "./codeBlocksWrapper/types";
+import { BlockLocation, BlockLocationTree, GetSubtreesArgs, GetSubtreesResponse, MoveBlockArgs, MoveBlockResponse } from "./codeBlocksWrapper/types";
 import { join } from "path";
 
 const selectedDecoration = vscode.window.createTextEditorDecorationType({
@@ -10,16 +10,16 @@ const targetsDecoration = vscode.window.createTextEditorDecorationType({
   backgroundColor: "var(--vscode-editor-selectionHighlightBackground)",
 });
 
-class EditorLanguageSupport {
-  parsersDir: string;
-  languageSupport: core.LanguageSupport;
-  libraryPath: string;
+class EditorCoreWrapper {
+  private codeBlocksCliPath: string;
+  private languageSupport: core.LanguageSupport;
+  private libraryPath: string;
 
   public static async build(
     editor: vscode.TextEditor | undefined,
     codeBlocksCliPath: string,
     parsersDir: string
-  ): Promise<EditorLanguageSupport | undefined> {
+  ): Promise<EditorCoreWrapper | undefined> {
     if (editor === undefined) {
       return undefined;
     }
@@ -40,19 +40,48 @@ class EditorLanguageSupport {
       return undefined;
     }
 
-    return new EditorLanguageSupport(parsersDir, languageSupport, libraryPath);
+    return new EditorCoreWrapper(codeBlocksCliPath, languageSupport, libraryPath);
   }
 
   constructor(
-    parsersDir: string,
+    codeBlocksCliPath: string,
     languageSupport: core.LanguageSupport,
     libraryPath: string,
   ) {
-    this.parsersDir = parsersDir;
+    this.codeBlocksCliPath = codeBlocksCliPath;
     this.languageSupport = languageSupport;
     this.libraryPath = libraryPath;
   }
 
+  public async getBlocks(text: string): Promise<GetSubtreesResponse | undefined> {
+    const args: GetSubtreesArgs = {
+      languageFnSymbol: this.languageSupport.parserInstaller.languageFnSymbol,
+      queries: this.languageSupport.queries,
+      text,
+      libraryPath: this.libraryPath,
+    };
+
+    return await core.getBlocks(this.codeBlocksCliPath, args);
+  }
+
+  public async moveBlock(
+    text: string,
+    srcBlock: BlockLocation,
+    dstBlock: BlockLocation,
+    force: boolean,
+  ): Promise<MoveBlockResponse | undefined> {
+    const args: MoveBlockArgs = {
+      srcBlock,
+      dstBlock,
+      force,
+      languageFnSymbol: this.languageSupport.parserInstaller.languageFnSymbol,
+      queries: this.languageSupport.queries,
+      libraryPath: this.libraryPath,
+      text
+    };
+
+    return await core.moveBlock(this.codeBlocksCliPath, args);
+  }
 }
 
 
@@ -62,22 +91,24 @@ class BlockModeExtension {
    */
   private runningLock = false;
 
-  private editorLanguageSupport: EditorLanguageSupport | undefined;
+  private editorCoreWrapper: EditorCoreWrapper | undefined;
   private enabled = false;
   private parsersDir: string;
   private codeBlocksCliPath: string;
 
   private activeEditor: vscode.TextEditor | undefined = undefined;
-  private disposables: vscode.Disposable[] | undefined = undefined;
   private blocks: BlockLocationTree[] | undefined = undefined;
   private selectedBlock: BlockLocation | undefined = undefined;
   private selectedBlockSiblings: [BlockLocation | undefined, BlockLocation | undefined] = [undefined, undefined];
+
+  private disposables: vscode.Disposable[];
 
   private static instance: BlockModeExtension | undefined = undefined;
 
   private constructor(codeBlocksCliPath: string, parsersDir: string) {
     this.codeBlocksCliPath = codeBlocksCliPath;
     this.parsersDir = parsersDir;
+    this.disposables = [];
   }
 
   public static async getInstance(context: vscode.ExtensionContext): Promise<BlockModeExtension | undefined> {
@@ -100,58 +131,32 @@ class BlockModeExtension {
     return this.enabled;
   }
 
-  async syncStateWithActiveEditor(): Promise<EditorLanguageSupport | undefined> {
+  async syncWrapperWithActiveEditor(): Promise<EditorCoreWrapper | undefined> {
     const editor = vscode.window.activeTextEditor;
     if (this.activeEditor === editor) {
-      return this.editorLanguageSupport;
+      return this.editorCoreWrapper;
     } else {
       clearDecorations(this.activeEditor);
       this.activeEditor = editor;
-      this.editorLanguageSupport = await EditorLanguageSupport.build(editor, this.codeBlocksCliPath, this.parsersDir);
+      this.editorCoreWrapper = await EditorCoreWrapper.build(editor, this.codeBlocksCliPath, this.parsersDir);
+      this.blocks = undefined;
+      this.selectedBlock = undefined;
+      this.selectedBlockSiblings = [undefined, undefined];
     }
   }
 
   async updateBlocks(): Promise<void> {
-    if (this.activeEditor === undefined || this.editorLanguageSupport === undefined) {
+    if (this.activeEditor === undefined || this.editorCoreWrapper === undefined) {
       return;
     }
 
-    const editor = this.activeEditor;
-    const codeBlocksCliPath = this.codeBlocksCliPath;
-    const libraryPath = this.editorLanguageSupport.libraryPath;
-
-    const textDocument = editor.document;
-    const languageSupport = this.editorLanguageSupport.languageSupport;
-
-    const args: GetSubtreesArgs = {
-      languageFnSymbol: languageSupport.parserInstaller.languageFnSymbol,
-      queries: languageSupport.queries,
-      text: textDocument.getText(),
-      libraryPath
-    };
-
-    const newBlocks = await core.getBlocks(codeBlocksCliPath, args);
-    if (newBlocks === undefined) {
-      console.log("failed to get blocks");
-      return undefined;
-    }
-
-    if (newBlocks.length === 0) {
-      console.log("got no blocks");
-      return undefined;
-    }
-
-    this.blocks = newBlocks;
+    this.blocks = await this.editorCoreWrapper.getBlocks(this.activeEditor.document.getText());
     this.updateSelection();
   }
 
   updateSelection(): void {
-    if (this.activeEditor === undefined || this.editorLanguageSupport === undefined) {
-      return undefined;
-    }
-
-    if (this.blocks === undefined) {
-      return undefined;
+    if (this.activeEditor === undefined || this.blocks === undefined) {
+      return;
     }
 
     const cursor = this.activeEditor.selection.active;
@@ -192,15 +197,9 @@ class BlockModeExtension {
   }
 
   async moveSelectedBlock(direction: "up" | "down", force: boolean): Promise<void> {
-    if (this.activeEditor === undefined || this.editorLanguageSupport === undefined) {
-      return undefined;
+    if (this.activeEditor === undefined || this.editorCoreWrapper === undefined || this.selectedBlock === undefined) {
+      return;
     }
-
-    if (this.selectedBlock === undefined) {
-      return undefined;
-    }
-
-    const languageSupport = this.editorLanguageSupport.languageSupport;
 
     let srcBlock: BlockLocation | undefined = undefined;
     let dstBlock: BlockLocation | undefined = undefined;
@@ -227,31 +226,16 @@ class BlockModeExtension {
     const cursorByte = this.activeEditor.document.offsetAt(this.activeEditor.selection.active);
     const cursorSelectedBlockOffset = cursorByte - this.selectedBlock.startByte;
 
-    const moveBlockResponse = await core.moveBlock(this.codeBlocksCliPath, this.activeEditor.document, {
+    const moveBlockResponse = await this.editorCoreWrapper.moveBlock(
+      this.activeEditor.document.getText(),
       srcBlock,
       dstBlock,
-      force,
-      languageFnSymbol: languageSupport.parserInstaller.languageFnSymbol,
-      queries: languageSupport.queries,
-      libraryPath: this.editorLanguageSupport.libraryPath,
-      text: this.activeEditor.document.getText()
-    } as MoveBlockArgs);
+      force
+    );
 
     if (moveBlockResponse === undefined) {
       console.log("failed to move block");
       return;
-    }
-
-    const newBlocks = await core.getBlocks(this.codeBlocksCliPath, {
-      languageFnSymbol: languageSupport.parserInstaller.languageFnSymbol,
-      queries: languageSupport.queries,
-      libraryPath: this.editorLanguageSupport.libraryPath,
-      text: moveBlockResponse.text
-    });
-
-    if (newBlocks === undefined) {
-      console.log("failed to get blocks");
-      return undefined;
     }
 
     const edit = new vscode.WorkspaceEdit();
@@ -268,31 +252,37 @@ class BlockModeExtension {
     this.updateSelection();
   }
 
-  async toggle(): Promise<void> {
+  async enable(): Promise<void> {
+    this.enabled = true;
+
     const onActiveContentChanged = async (): Promise<void> => {
-      await this.syncStateWithActiveEditor();
+      await this.syncWrapperWithActiveEditor();
       return await this.updateBlocks();
     };
     const onSelectionChanged = (): void => this.updateSelection();
+    this.disposables = [
+      vscode.workspace.onDidChangeTextDocument(onActiveContentChanged),
+      vscode.workspace.onDidSaveTextDocument(onActiveContentChanged),
+      vscode.workspace.onDidOpenTextDocument(onActiveContentChanged),
+      vscode.window.onDidChangeActiveTextEditor(onActiveContentChanged),
+      vscode.window.onDidChangeTextEditorSelection(onSelectionChanged),
+    ];
 
-    if (!this.enabled) {
-      this.enabled = true;
-      this.disposables = [
-        vscode.workspace.onDidChangeTextDocument(onActiveContentChanged),
-        vscode.workspace.onDidSaveTextDocument(onActiveContentChanged),
-        vscode.workspace.onDidOpenTextDocument(onActiveContentChanged),
-        vscode.window.onDidChangeActiveTextEditor(onActiveContentChanged),
-        vscode.window.onDidChangeTextEditorSelection(onSelectionChanged),
-      ];
-    } else {
-      this.enabled = false;
-      this.disposables?.map(async d => { await d.dispose(); });
-    }
+    await onActiveContentChanged();
+    onSelectionChanged();
+  }
 
-    if (this.enabled) {
-      await onActiveContentChanged();
-      onSelectionChanged();
-    }
+  async disable(): Promise<void> {
+    this.enabled = false;
+
+    await Promise.all(this.disposables.map(async d => { await d.dispose(); }));
+    this.disposables = [];
+
+    clearDecorations(this.activeEditor);
+  }
+
+  async toggle(): Promise<void> {
+    this.enabled ? await this.disable() : await this.enable();
   }
 
   async raceGuard(promise: () => Promise<void>): Promise<void> {
