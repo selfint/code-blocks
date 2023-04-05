@@ -95,6 +95,7 @@ export async function getBlocks(
 export async function moveBlock(
   codeBlocksCliPath: string,
   args: MoveBlockArgs,
+  allowRetry = true,
 ): Promise<MoveBlockResponse | undefined> {
   console.log(`Move block args: ${JSON.stringify(args)}`);
 
@@ -111,20 +112,22 @@ export async function moveBlock(
 
     case "error": {
       const options: "Try force"[] = [];
-      if (response.result === differentScopeErrorMsg && !args.force) {
+      if (response.result === differentScopeErrorMsg && !args.force && allowRetry) {
         options.push("Try force");
-      }
 
-      const choice = await vscode.window.showErrorMessage(
-        `Failed to move block: ${response.result}`,
-        ...options
-      );
+        const choice = await vscode.window.showErrorMessage(
+          `Failed to move block: ${response.result}`,
+          ...options
+        );
 
-      if (choice === "Try force") {
-        args.force = true;
-        return await moveBlock(codeBlocksCliPath, args);
-      } else {
-        return undefined;
+        if (choice === "Try force") {
+          args.force = true;
+          return await moveBlock(codeBlocksCliPath, args);
+        } else {
+          return undefined;
+        }
+      } else if (response.result !== differentScopeErrorMsg) {
+        await vscode.window.showErrorMessage(`Failed to move block: ${response.result}`);
       }
     }
   }

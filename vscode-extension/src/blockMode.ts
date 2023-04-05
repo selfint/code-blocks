@@ -338,7 +338,7 @@ class EditorCoreWrapper {
       force,
     };
 
-    return await core.moveBlock(this.codeBlocksCliPath, args);
+    return await core.moveBlock(this.codeBlocksCliPath, args, false);
   }
 }
 
