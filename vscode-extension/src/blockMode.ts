@@ -94,12 +94,6 @@ class BlockMode implements vscode.Disposable {
     this.closeEditor();
   }
 
-  private closeEditor(): void {
-    this.editorState?.ofEditor.setDecorations(selectedDecoration, []);
-    this.editorState?.ofEditor.setDecorations(targetsDecoration, []);
-    this.editorState = undefined;
-  }
-
   private async openEditor(editor: vscode.TextEditor): Promise<void> {
     const wrapper = await EditorCoreWrapper.build(editor, this.codeBlocksCliPath, this.parsersDir);
     if (wrapper === undefined) {
@@ -108,6 +102,12 @@ class BlockMode implements vscode.Disposable {
 
     this.editorState = new EditorState(editor, wrapper);
     await this.updateEditorState();
+  }
+
+  private closeEditor(): void {
+    this.editorState?.ofEditor.setDecorations(selectedDecoration, []);
+    this.editorState?.ofEditor.setDecorations(targetsDecoration, []);
+    this.editorState = undefined;
   }
 
   private async updateEditorState(): Promise<void> {
