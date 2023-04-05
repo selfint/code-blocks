@@ -10,22 +10,220 @@ const targetsDecoration = vscode.window.createTextEditorDecorationType({
   backgroundColor: "var(--vscode-editor-selectionHighlightBackground)",
 });
 
+/**
+ * Either a selected block and possible siblings OR no selections.
+ */
+type Selections = [BlockLocation | undefined, BlockLocation, BlockLocation | undefined] | undefined;
+
+export function getBlockModeCommands(context: vscode.ExtensionContext): Map<string, () => unknown> {
+  let blockMode: BlockMode | undefined = undefined;
+
+  const commands = new Map<string, () => unknown>();
+
+  commands.set("toggle", async () => {
+    if (blockMode === undefined) {
+      blockMode = await BlockMode.build(context);
+    } else {
+      await blockMode.dispose();
+      blockMode = undefined;
+    }
+  });
+
+  commands.set("moveUp", async () => await blockMode?.moveBlock("up", false));
+  commands.set("moveDown", async () => await blockMode?.moveBlock("down", false));
+  commands.set("moveUpForce", async () => await blockMode?.moveBlock("up", true));
+  commands.set("moveDownForce", async () => await blockMode?.moveBlock("down", true));
+
+  return commands;
+}
+
+
+class BlockMode implements vscode.Disposable {
+  codeBlocksCliPath: string;
+  parsersDir: string;
+
+  editorState: EditorState | undefined = undefined;
+
+  disposables: vscode.Disposable[];
+
+  public static async build(context: vscode.ExtensionContext): Promise<BlockMode | undefined> {
+    const parsersDir = join(context.extensionPath, "parsers");
+    const binDir = join(context.extensionPath, "bin");
+    const codeBlocksCliPath = await core.getCodeBlocksCliPath(binDir);
+    if (codeBlocksCliPath === undefined) {
+      console.log("Didn't get code blocks cli path");
+      return undefined;
+    }
+
+    const blockMode = new BlockMode(parsersDir, codeBlocksCliPath);
+    if (vscode.window.activeTextEditor !== undefined) {
+      await blockMode.openEditor(vscode.window.activeTextEditor);
+    }
+
+    return blockMode;
+  }
+
+  private constructor(parsersDir: string, codeBlocksCliPath: string) {
+    this.parsersDir = parsersDir;
+    this.codeBlocksCliPath = codeBlocksCliPath;
+
+    this.disposables = [
+      vscode.window.onDidChangeActiveTextEditor(async editor => {
+        if (editor === undefined) {
+          this.closeEditor();
+        } else if (this.editorState?.ofEditor !== editor) {
+          this.closeEditor();
+          await this.openEditor(editor);
+        }
+      }),
+
+      vscode.workspace.onDidChangeTextDocument(async documentChanged => {
+        if (this.editorState?.ofEditor.document === documentChanged.document) {
+          await this.updateEditorState();
+        }
+      }),
+
+      vscode.window.onDidChangeTextEditorSelection(selection => {
+        this.updateEditorSelections(selection.selections[0].active);
+      })
+    ];
+  }
+
+  async dispose(): Promise<void> {
+    await Promise.all(this.disposables.map(async d => { await d.dispose(); }));
+    this.closeEditor();
+  }
+
+  private closeEditor(): void {
+    this.editorState?.ofEditor.setDecorations(selectedDecoration, []);
+    this.editorState?.ofEditor.setDecorations(targetsDecoration, []);
+    this.editorState = undefined;
+  }
+
+  private async openEditor(editor: vscode.TextEditor): Promise<void> {
+    const wrapper = await EditorCoreWrapper.build(editor, this.codeBlocksCliPath, this.parsersDir);
+    if (wrapper === undefined) {
+      return;
+    }
+
+    this.editorState = new EditorState(editor, wrapper);
+    await this.updateEditorState();
+  }
+
+  private async updateEditorState(): Promise<void> {
+    if (this.editorState === undefined) {
+      return;
+    }
+
+    this.editorState.blocks = await this.editorState.editorCoreWrapper.getBlocks(
+      this.editorState.ofEditor.document.getText()
+    );
+
+    this.updateEditorSelections(this.editorState.ofEditor.selection.active);
+  }
+
+  private updateEditorSelections(selection: vscode.Position): void {
+    if (this.editorState === undefined) {
+      return;
+    }
+
+    this.editorState.selections = findSelections(
+      this.editorState.blocks,
+      selection,
+    );
+
+    highlightSelections(this.editorState.ofEditor, this.editorState.selections);
+  }
+
+  public async moveBlock(direction: "up" | "down", force: boolean): Promise<void> {
+    if (this.editorState?.selections === undefined) {
+      console.log("No selected block to move");
+      return;
+    }
+
+    let srcBlock: BlockLocation | undefined = undefined;
+    let dstBlock: BlockLocation | undefined = undefined;
+
+    const [prev, selected, next] = this.editorState.selections;
+
+    switch (direction) {
+      case "up":
+        srcBlock = prev;
+        dstBlock = selected;
+        break;
+
+      case "down":
+        srcBlock = selected;
+        dstBlock = next;
+        break;
+    }
+
+    if (srcBlock === undefined || dstBlock === undefined) {
+      console.log("Missing move target block");
+      return;
+    }
+
+    const editor = this.editorState.ofEditor;
+    const document = this.editorState.ofEditor.document;
+    const coreWrapper = this.editorState.editorCoreWrapper;
+    const cursorByte = document.offsetAt(editor.selection.active);
+    const cursorSelectedBlockOffset = cursorByte - selected.startByte;
+
+    const moveBlockResponse = await coreWrapper.moveBlock(
+      document.getText(), srcBlock, dstBlock, force
+    );
+
+    if (moveBlockResponse === undefined) {
+      console.log("Failed to move block");
+      return;
+    }
+
+    const edit = new vscode.WorkspaceEdit();
+    edit.replace(
+      editor.document.uri,
+      new vscode.Range(0, 0, document.lineCount, 0),
+      moveBlockResponse.text
+    );
+
+    await vscode.workspace.applyEdit(edit);
+
+    const newOffset = direction === "down" ? moveBlockResponse.newSrcStart : moveBlockResponse.newDstStart;
+
+    const newPosition = document.positionAt(newOffset + cursorSelectedBlockOffset);
+    const newSelection = new vscode.Selection(newPosition, newPosition);
+    editor.selection = newSelection;
+
+    this.updateEditorSelections(editor.selection.active);
+  }
+}
+
+
+class EditorState {
+  ofEditor: vscode.TextEditor;
+  editorCoreWrapper: EditorCoreWrapper;
+  blocks: BlockLocationTree[] | undefined;
+  selections: Selections = undefined;
+
+  constructor(editor: vscode.TextEditor, editorCoreWrapper: EditorCoreWrapper) {
+    this.ofEditor = editor;
+    this.editorCoreWrapper = editorCoreWrapper;
+  }
+}
+
+
 class EditorCoreWrapper {
   private codeBlocksCliPath: string;
   private languageSupport: core.LanguageSupport;
   private libraryPath: string;
 
   public static async build(
-    editor: vscode.TextEditor | undefined,
+    editor: vscode.TextEditor,
     codeBlocksCliPath: string,
     parsersDir: string
   ): Promise<EditorCoreWrapper | undefined> {
-    if (editor === undefined) {
-      return undefined;
-    }
-
     const languageSupport = core.getLanguageSupport(editor.document.languageId);
     if (languageSupport === undefined) {
+      console.log(`Got unsupported languageId: ${editor.document.languageId}`);
       return undefined;
     }
 
@@ -37,6 +235,7 @@ class EditorCoreWrapper {
       },
     );
     if (libraryPath === undefined) {
+      console.log(`Failed to install language: ${languageSupport.parserInstaller.libraryName}`);
       return undefined;
     }
 
@@ -55,10 +254,10 @@ class EditorCoreWrapper {
 
   public async getBlocks(text: string): Promise<GetSubtreesResponse | undefined> {
     const args: GetSubtreesArgs = {
-      languageFnSymbol: this.languageSupport.parserInstaller.languageFnSymbol,
       queries: this.languageSupport.queries,
       text,
       libraryPath: this.libraryPath,
+      languageFnSymbol: this.languageSupport.parserInstaller.languageFnSymbol,
     };
 
     return await core.getBlocks(this.codeBlocksCliPath, args);
@@ -71,13 +270,13 @@ class EditorCoreWrapper {
     force: boolean,
   ): Promise<MoveBlockResponse | undefined> {
     const args: MoveBlockArgs = {
+      queries: this.languageSupport.queries,
+      text,
+      libraryPath: this.libraryPath,
+      languageFnSymbol: this.languageSupport.parserInstaller.languageFnSymbol,
       srcBlock,
       dstBlock,
       force,
-      languageFnSymbol: this.languageSupport.parserInstaller.languageFnSymbol,
-      queries: this.languageSupport.queries,
-      libraryPath: this.libraryPath,
-      text
     };
 
     return await core.moveBlock(this.codeBlocksCliPath, args);
@@ -85,269 +284,69 @@ class EditorCoreWrapper {
 }
 
 
-class BlockModeExtension {
-  /**
-   * This is used to ensure that events only trigger one action.
-   */
-  private runningLock = false;
-
-  private editorCoreWrapper: EditorCoreWrapper | undefined;
-  private enabled = false;
-  private parsersDir: string;
-  private codeBlocksCliPath: string;
-
-  private activeEditor: vscode.TextEditor | undefined = undefined;
-  private blocks: BlockLocationTree[] | undefined = undefined;
-  private selectedBlock: BlockLocation | undefined = undefined;
-  private selectedBlockSiblings: [BlockLocation | undefined, BlockLocation | undefined] = [undefined, undefined];
-
-  private disposables: vscode.Disposable[];
-
-  private static instance: BlockModeExtension | undefined = undefined;
-
-  private constructor(codeBlocksCliPath: string, parsersDir: string) {
-    this.codeBlocksCliPath = codeBlocksCliPath;
-    this.parsersDir = parsersDir;
-    this.disposables = [];
+function findSelections(blocks: BlockLocationTree[] | undefined, cursor: vscode.Position): Selections {
+  if (blocks === undefined) {
+    return undefined;
   }
 
-  public static async getInstance(context: vscode.ExtensionContext): Promise<BlockModeExtension | undefined> {
-    if (this.instance === undefined) {
-      const binDir = join(context.extensionPath, "bin");
-      const parsersDir = join(context.extensionPath, "parsers");
+  function cursorInBlock(block: BlockLocation): boolean {
+    return cursor.isAfterOrEqual(new vscode.Position(block.startRow, block.startCol))
+      && cursor.isBeforeOrEqual(new vscode.Position(block.endRow, block.endCol));
+  }
 
-      const codeBlocksCliPath = await core.getCodeBlocksCliPath(binDir);
-      if (codeBlocksCliPath === undefined) {
-        return undefined;
+  function findTreesSelections(
+    trees: BlockLocationTree[]
+  ): [BlockLocation | undefined, BlockLocation | undefined, BlockLocation | undefined] {
+    for (let i = 0; i < trees.length; i++) {
+      const tree = trees[i];
+
+      if (!cursorInBlock(tree.block)) {
+        continue;
       }
 
-      this.instance = new BlockModeExtension(codeBlocksCliPath, parsersDir);
-    }
-
-    return this.instance;
-  }
-
-  public isEnabled(): boolean {
-    return this.enabled;
-  }
-
-  async syncWrapperWithActiveEditor(): Promise<EditorCoreWrapper | undefined> {
-    const editor = vscode.window.activeTextEditor;
-    if (this.activeEditor === editor) {
-      return this.editorCoreWrapper;
-    } else {
-      clearDecorations(this.activeEditor);
-      this.activeEditor = editor;
-      this.editorCoreWrapper = await EditorCoreWrapper.build(editor, this.codeBlocksCliPath, this.parsersDir);
-      this.blocks = undefined;
-      this.selectedBlock = undefined;
-      this.selectedBlockSiblings = [undefined, undefined];
-    }
-  }
-
-  async updateBlocks(): Promise<void> {
-    if (this.activeEditor === undefined || this.editorCoreWrapper === undefined) {
-      return;
-    }
-
-    this.blocks = await this.editorCoreWrapper.getBlocks(this.activeEditor.document.getText());
-    this.updateSelection();
-  }
-
-  updateSelection(): void {
-    if (this.activeEditor === undefined || this.blocks === undefined) {
-      return;
-    }
-
-    const cursor = this.activeEditor.selection.active;
-
-    function cursorInBlock(block: BlockLocation): boolean {
-      return cursor.isAfterOrEqual(new vscode.Position(block.startRow, block.startCol))
-        && cursor.isBeforeOrEqual(new vscode.Position(block.endRow, block.endCol));
-    }
-
-    function findTreesSelections(trees: BlockLocationTree[]): [BlockLocation | undefined, BlockLocation | undefined, BlockLocation | undefined] {
-      for (let i = 0; i < trees.length; i++) {
-        const tree = trees[i];
-
-        if (!cursorInBlock(tree.block)) {
-          continue;
-        }
-
-        const [childPrev, selected, childNext] = findTreesSelections(tree.children);
-        if (selected !== undefined) {
-          return [childPrev, selected, childNext ?? tree.block];
-        }
-
-        const prev = i > 0 ? trees[i - 1].block : undefined;
-        const next = i < trees.length - 1 ? trees[i + 1].block : undefined;
-
-        return [prev, tree.block, next];
+      const [childPrev, selected, childNext] = findTreesSelections(tree.children);
+      if (selected !== undefined) {
+        return [childPrev, selected, childNext ?? tree.block];
       }
 
-      return [undefined, undefined, undefined];
+      const prev = i > 0 ? trees[i - 1].block : undefined;
+      const next = i < trees.length - 1 ? trees[i + 1].block : undefined;
+
+      return [prev, tree.block, next];
     }
 
-    const [prev, selected, next] = findTreesSelections(this.blocks);
-
-    this.selectedBlock = selected;
-    this.selectedBlockSiblings = [prev, next];
-
-    highlightSelections(this.activeEditor, this.selectedBlock, this.selectedBlockSiblings);
+    return [undefined, undefined, undefined];
   }
 
-  async moveSelectedBlock(direction: "up" | "down", force: boolean): Promise<void> {
-    if (this.activeEditor === undefined || this.editorCoreWrapper === undefined || this.selectedBlock === undefined) {
-      return;
-    }
-
-    let srcBlock: BlockLocation | undefined = undefined;
-    let dstBlock: BlockLocation | undefined = undefined;
-
-    const [prev, next] = this.selectedBlockSiblings;
-
-    switch (direction) {
-      case "up":
-        srcBlock = prev;
-        dstBlock = this.selectedBlock;
-        break;
-
-      case "down":
-        srcBlock = this.selectedBlock;
-        dstBlock = next;
-        break;
-    }
-
-    if (srcBlock === undefined || dstBlock === undefined) {
-      console.log("missing target block");
-      return;
-    }
-
-    const cursorByte = this.activeEditor.document.offsetAt(this.activeEditor.selection.active);
-    const cursorSelectedBlockOffset = cursorByte - this.selectedBlock.startByte;
-
-    const moveBlockResponse = await this.editorCoreWrapper.moveBlock(
-      this.activeEditor.document.getText(),
-      srcBlock,
-      dstBlock,
-      force
-    );
-
-    if (moveBlockResponse === undefined) {
-      console.log("failed to move block");
-      return;
-    }
-
-    const edit = new vscode.WorkspaceEdit();
-    edit.replace(this.activeEditor.document.uri, new vscode.Range(0, 0, this.activeEditor.document.lineCount, 0), moveBlockResponse.text);
-
-    await vscode.workspace.applyEdit(edit);
-
-    const newOffset = direction === "down" ? moveBlockResponse.newSrcStart : moveBlockResponse.newDstStart;
-
-    const newPosition = this.activeEditor.document.positionAt(newOffset + cursorSelectedBlockOffset);
-    const newSelection = new vscode.Selection(newPosition, newPosition);
-    this.activeEditor.selection = newSelection;
-
-    this.updateSelection();
+  const [prev, selected, next] = findTreesSelections(blocks);
+  if (selected === undefined) {
+    return undefined;
+  } else {
+    return [prev, selected, next];
   }
-
-  async enable(): Promise<void> {
-    this.enabled = true;
-
-    const onActiveContentChanged = async (): Promise<void> => {
-      await this.syncWrapperWithActiveEditor();
-      return await this.updateBlocks();
-    };
-    const onSelectionChanged = (): void => this.updateSelection();
-    this.disposables = [
-      vscode.workspace.onDidChangeTextDocument(onActiveContentChanged),
-      vscode.workspace.onDidSaveTextDocument(onActiveContentChanged),
-      vscode.workspace.onDidOpenTextDocument(onActiveContentChanged),
-      vscode.window.onDidChangeActiveTextEditor(onActiveContentChanged),
-      vscode.window.onDidChangeTextEditorSelection(onSelectionChanged),
-    ];
-
-    await onActiveContentChanged();
-    onSelectionChanged();
-  }
-
-  async disable(): Promise<void> {
-    this.enabled = false;
-
-    await Promise.all(this.disposables.map(async d => { await d.dispose(); }));
-    this.disposables = [];
-
-    clearDecorations(this.activeEditor);
-  }
-
-  async toggle(): Promise<void> {
-    this.enabled ? await this.disable() : await this.enable();
-  }
-
-  async raceGuard(promise: () => Promise<void>): Promise<void> {
-    if (this.runningLock) {
-      return;
-    }
-
-    this.runningLock = true;
-    try {
-      await promise();
-    }
-
-    finally {
-      this.runningLock = false;
-    }
-  }
-}
-
-function clearDecorations(editor: vscode.TextEditor | undefined): void {
-  editor?.setDecorations(selectedDecoration, []);
-  editor?.setDecorations(targetsDecoration, []);
 }
 
 function highlightSelections(
   editor: vscode.TextEditor,
-  selected: BlockLocation | undefined,
-  siblings: [BlockLocation | undefined, BlockLocation | undefined]
+  selections: [BlockLocation | undefined, BlockLocation, BlockLocation | undefined] | undefined,
 ): void {
-  const [prev, next] = siblings;
-
-  if (selected !== undefined) {
+  if (selections !== undefined) {
+    const [prev, selected, next] = selections;
     const range = new vscode.Range(selected.startRow, selected.startCol, selected.endRow, selected.endCol);
     editor.setDecorations(selectedDecoration, [range]);
+
+    const targetRanges = [];
+    if (prev !== undefined) {
+      targetRanges.push(new vscode.Range(prev.startRow, prev.startCol, prev.endRow, prev.endCol));
+    }
+
+    if (next !== undefined) {
+      targetRanges.push(new vscode.Range(next.startRow, next.startCol, next.endRow, next.endCol));
+    }
+
+    editor.setDecorations(targetsDecoration, targetRanges);
   } else {
     editor.setDecorations(selectedDecoration, []);
+    editor.setDecorations(targetsDecoration, []);
   }
-
-  const targetRanges = [];
-  if (prev !== undefined) {
-    targetRanges.push(new vscode.Range(prev.startRow, prev.startCol, prev.endRow, prev.endCol));
-  }
-
-  if (next !== undefined) {
-    targetRanges.push(new vscode.Range(next.startRow, next.startCol, next.endRow, next.endCol));
-  }
-
-  editor.setDecorations(targetsDecoration, targetRanges);
-}
-
-export async function getBlockModeHooks(context: vscode.ExtensionContext): Promise<Map<string, () => Promise<void>>> {
-  const blockMode = await BlockModeExtension.getInstance(context);
-
-  const guarded = (foo: () => Promise<void>) => async (): Promise<void> => await blockMode?.raceGuard(() => foo());
-
-  const toggleHook = guarded(async () => blockMode?.toggle());
-  const moveHook = (direction: "up" | "down", force: boolean): () => Promise<void> => {
-    return guarded(async (): Promise<void> => blockMode?.moveSelectedBlock(direction, force));
-  };
-
-  const hooks = new Map<string, () => Promise<void>>();
-  hooks.set("toggle", toggleHook);
-  hooks.set("moveUp", moveHook("up", false));
-  hooks.set("moveDown", moveHook("down", false));
-  hooks.set("moveUpForce", moveHook("up", true));
-  hooks.set("moveDownForce", moveHook("down", true));
-
-  return hooks;
 }
