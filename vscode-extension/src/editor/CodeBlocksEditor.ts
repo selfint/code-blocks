@@ -55,7 +55,7 @@ export class CodeBlocksEditor {
       force: false,
     };
 
-    const response = await core.moveBlock(this.codeBlocksCliPath, this.document, args);
+    const response = await core.moveBlock(this.codeBlocksCliPath, args);
     if (response === undefined) {
       return;
     }

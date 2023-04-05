@@ -94,7 +94,6 @@ export async function getBlocks(
 
 export async function moveBlock(
   codeBlocksCliPath: string,
-  document: vscode.TextDocument,
   args: MoveBlockArgs,
 ): Promise<MoveBlockResponse | undefined> {
   console.log(`Move block args: ${JSON.stringify(args)}`);
@@ -123,7 +122,7 @@ export async function moveBlock(
 
       if (choice === "Try force") {
         args.force = true;
-        return await moveBlock(codeBlocksCliPath, document, args);
+        return await moveBlock(codeBlocksCliPath, args);
       } else {
         return undefined;
       }
