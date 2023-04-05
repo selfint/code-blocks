@@ -1,6 +1,6 @@
 import { ExtensionContext, Uri, commands, window } from "vscode";
 import { CodeBlocksEditorProvider } from "./editor/CodeBlocksEditorProvider";
-import { getBlockModeHooks } from "./blockMode";
+import { getBlockModeCommands } from "./blockMode2";
 
 async function reopenWithCodeBocksEditor(): Promise<void> {
   const activeTabInput = window.tabGroups.activeTabGroup.activeTab?.input as {
@@ -25,7 +25,7 @@ async function openCodeBlocksEditorToTheSide(): Promise<void> {
   }
 }
 
-export async function activate(context: ExtensionContext): Promise<void> {
+export function activate(context: ExtensionContext): void {
   context.subscriptions.push(
     window.registerCustomEditorProvider(
       CodeBlocksEditorProvider.viewType,
@@ -38,7 +38,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     commands.registerCommand("codeBlocks.openToTheSide", openCodeBlocksEditorToTheSide)
   );
 
-  const hooks = await getBlockModeHooks(context);
+  const hooks = getBlockModeCommands(context);
   for (const [hookName, hook] of hooks) {
     context.subscriptions.push(commands.registerCommand(`codeBlocks.${hookName}`, hook));
   }
