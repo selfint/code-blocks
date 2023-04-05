@@ -18,7 +18,8 @@ const forceTargetsDecoration = vscode.window.createTextEditorDecorationType({
 /**
  * Either a selected block and possible siblings OR no selections.
  */
-type Selections = [BlockLocation | undefined, BlockLocation, BlockLocation | undefined] | undefined;
+type Selections = [TargetLocation | undefined, BlockLocation, TargetLocation | undefined] | undefined;
+type TargetLocation = [BlockLocation, boolean];
 
 export function getBlockModeCommands(context: vscode.ExtensionContext): Map<string, () => unknown> {
   let blockMode: BlockMode | undefined = undefined;
@@ -112,6 +113,7 @@ class BlockMode implements vscode.Disposable {
   private closeEditor(): void {
     this.editorState?.ofEditor.setDecorations(selectedDecoration, []);
     this.editorState?.ofEditor.setDecorations(targetsDecoration, []);
+    this.editorState?.ofEditor.setDecorations(forceTargetsDecoration, []);
     this.editorState = undefined;
   }
 
@@ -166,18 +168,31 @@ class BlockMode implements vscode.Disposable {
       this.editorState.ofEditor.setDecorations(selectedDecoration, [range]);
 
       const targetRanges = [];
+      const forceTargetRanges = [];
       if (prev !== undefined) {
-        targetRanges.push(new vscode.Range(prev.startRow, prev.startCol, prev.endRow, prev.endCol));
+        const [prevBlock, prevForce] = prev;
+        if (prevForce) {
+          forceTargetRanges.push(new vscode.Range(prevBlock.startRow, prevBlock.startCol, prevBlock.endRow, prevBlock.endCol));
+        } else {
+          targetRanges.push(new vscode.Range(prevBlock.startRow, prevBlock.startCol, prevBlock.endRow, prevBlock.endCol));
+        }
       }
 
       if (next !== undefined) {
-        targetRanges.push(new vscode.Range(next.startRow, next.startCol, next.endRow, next.endCol));
+        const [nextBlock, nextForce] = next;
+        if (nextForce) {
+          forceTargetRanges.push(new vscode.Range(nextBlock.startRow, nextBlock.startCol, nextBlock.endRow, nextBlock.endCol));
+        } else {
+          targetRanges.push(new vscode.Range(nextBlock.startRow, nextBlock.startCol, nextBlock.endRow, nextBlock.endCol));
+        }
       }
 
       this.editorState.ofEditor.setDecorations(targetsDecoration, targetRanges);
+      this.editorState.ofEditor.setDecorations(forceTargetsDecoration, forceTargetRanges);
     } else {
       this.editorState?.ofEditor.setDecorations(selectedDecoration, []);
       this.editorState?.ofEditor.setDecorations(targetsDecoration, []);
+      this.editorState?.ofEditor.setDecorations(forceTargetsDecoration, []);
     }
   }
 
@@ -197,13 +212,13 @@ class BlockMode implements vscode.Disposable {
     let dstBlock: BlockLocation | undefined = undefined;
     switch (direction) {
       case "up":
-        srcBlock = prev;
+        srcBlock = prev?.[0];
         dstBlock = selected;
         break;
 
       case "down":
         srcBlock = selected;
-        dstBlock = next;
+        dstBlock = next?.[0];
         break;
     }
 
@@ -338,9 +353,7 @@ function findSelections(blocks: BlockLocationTree[] | undefined, cursor: vscode.
       && cursor.isBeforeOrEqual(new vscode.Position(block.endRow, block.endCol));
   }
 
-  function findTreesSelections(
-    trees: BlockLocationTree[]
-  ): [BlockLocation | undefined, BlockLocation | undefined, BlockLocation | undefined] {
+  function findTreesSelections(trees: BlockLocationTree[]): Selections {
     for (let i = 0; i < trees.length; i++) {
       const tree = trees[i];
 
@@ -348,24 +361,24 @@ function findSelections(blocks: BlockLocationTree[] | undefined, cursor: vscode.
         continue;
       }
 
-      const [childPrev, selected, childNext] = findTreesSelections(tree.children);
-      if (selected !== undefined) {
-        return [childPrev, selected, childNext ?? tree.block];
+      const selections = findTreesSelections(tree.children);
+      if (selections !== undefined) {
+        const [childPrev, selected, childNext] = selections;
+        if (childNext === undefined) {
+          return [childPrev, selected, [tree.block, true]];
+        } else {
+          return selections;
+        }
       }
 
-      const prev = i > 0 ? trees[i - 1].block : undefined;
-      const next = i < trees.length - 1 ? trees[i + 1].block : undefined;
+      const prev: TargetLocation | undefined = i > 0 ? [trees[i - 1].block, false] : undefined;
+      const next: TargetLocation | undefined = i < trees.length - 1 ? [trees[i + 1].block, false] : undefined;
 
       return [prev, tree.block, next];
     }
 
-    return [undefined, undefined, undefined];
+    return undefined;
   }
 
-  const [prev, selected, next] = findTreesSelections(blocks);
-  if (selected === undefined) {
-    return undefined;
-  } else {
-    return [prev, selected, next];
-  }
+  return findTreesSelections(blocks);
 }
