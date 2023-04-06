@@ -140,23 +140,22 @@ class BlockMode implements vscode.Disposable {
     );
 
     this.highlightSelections();
-    this.focusSelection();
+    this.focusSelection(this.editorState.ofEditor.selection.active);
   }
 
-  focusSelection(): void {
-    if (this.editorState?.selections === undefined) {
+  focusSelection(selection: vscode.Position): void {
+    if (this.editorState === undefined) {
       return;
     }
 
     for (const visibleRange of this.editorState.ofEditor.visibleRanges) {
-      if (visibleRange.contains(this.editorState.ofEditor.selection.active)) {
+      if (visibleRange.contains(selection)) {
         return;
       }
     }
 
-    const activeSelection = this.editorState.ofEditor.selection.active;
     this.editorState.ofEditor.revealRange(
-      new vscode.Range(activeSelection, activeSelection),
+      new vscode.Range(selection, selection),
       vscode.TextEditorRevealType.Default
     );
   }
