@@ -32,7 +32,7 @@
 
 - Add "block mode":
 
-![block-mode-demo](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20rust%201.gif)
+  ![block-mode-demo](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20rust%201.gif)
 
 ## Fixed
 
