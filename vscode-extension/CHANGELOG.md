@@ -2,7 +2,7 @@
 
 # 0.5.1
 
-### New
+## New
 
 - Add block navigation commands.
 - Make "block mode" a vscode context (useful for keybindings).
@@ -23,7 +23,7 @@
   Note that `codeBlocks.toggle`, the editor commands, and the
   `codeBlocks.selectBlock` are not bound by default.
 
-### Fixed
+## Fixed
 
 - Blocks appearing in files with unsupported languages.
 
