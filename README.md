@@ -10,21 +10,37 @@ See the [vscode extension README](./vscode-extension/README.md) for more info.
 
 ### Typescript + JSX (React)
 
-![vscode-example-react](./vscode-extension/assets/Code-Blocks-Demo-9.gif)
+#### Editor
+
+![vscode-example-react](./vscode-extension/assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20react%201.gif)
+
+#### Block mode
+
+![vscode-example-react](./vscode-extension/assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20tsx%201.gif)
 
 > Quickly change UI layout
 
 ### Python
 
-![vscode-example-python](./vscode-extension/assets/Code-Blocks-Demo-11.gif)
+#### Editor
 
-> Prevents syntax/logic errors by preserving block scope
+![vscode-example-python](./vscode-extension/assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20python%201.gif)
+
+#### Block mode
+
+![vscode-example-python](./vscode-extension/assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20python%201.gif)
 
 ### Rust
 
-![vscode-example-python](./vscode-extension/assets/Code-Blocks-Demo-7.gif)
+#### Editor
 
-> Docs and attributes are part of the block
+![vscode-example-python](./vscode-extension/assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20rust%201.gif)
+
+> Prevents syntax/logic errors by preserving block scope
+
+#### Block mode
+
+![vscode-example-python](./vscode-extension/assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20rust%202.gif)
 
 ### Language support configuration
 
