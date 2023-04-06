@@ -7,6 +7,7 @@
 - Add block navigation commands.
 - Make "block mode" a vscode context (useful for keybindings).
 - Add "select current block" command.
+- Add configurable colors.
 - Add default keybindings (only active when "block mode" is on):
 
   | Command                        | Keybinding (cmd on mac) |
