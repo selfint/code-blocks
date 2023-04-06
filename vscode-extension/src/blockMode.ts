@@ -3,19 +3,6 @@ import * as vscode from "vscode";
 import { BlockLocation, BlockLocationTree, GetSubtreesArgs, GetSubtreesResponse, MoveBlockArgs, MoveBlockResponse } from "./codeBlocksWrapper/types";
 import { join } from "path";
 
-const selectedDecoration = vscode.window.createTextEditorDecorationType({
-  // backgroundColor: "var(--vscode-editor-selectionBackground)",
-  backgroundColor: "var(--vscode-inputOption-activeBackground)",
-});
-const targetsDecoration = vscode.window.createTextEditorDecorationType({
-  backgroundColor: "var(--vscode-editor-selectionHighlightBackground)",
-});
-const forceTargetsDecoration = vscode.window.createTextEditorDecorationType({
-  backgroundColor: "var(--vscode-editor-linkedEditingBackground)",
-  // backgroundColor: "var(--vscode-editor-findMatchHighlightBackground)",
-  // backgroundColor: "var(--vscode-inputValidation-errorBackground)",
-});
-
 /**
  * Either a selected block and possible siblings OR no selections.
  */
@@ -51,6 +38,10 @@ export function getBlockModeCommands(context: vscode.ExtensionContext): Map<stri
 
 
 class BlockMode implements vscode.Disposable {
+
+  selectedDecoration: vscode.TextEditorDecorationType;
+  targetsDecoration: vscode.TextEditorDecorationType;
+  forceTargetsDecoration: vscode.TextEditorDecorationType;
   codeBlocksCliPath: string;
   parsersDir: string;
 
@@ -67,7 +58,17 @@ class BlockMode implements vscode.Disposable {
       return undefined;
     }
 
-    const blockMode = new BlockMode(parsersDir, codeBlocksCliPath);
+    const configColors: { selected: string | undefined, target: string | undefined, forceTarget: string | undefined } | undefined = vscode.workspace
+      .getConfiguration("codeBlocks")
+      .get("colors");
+
+    const colors = {
+      selected: configColors?.selected ?? "var(--vscode-inputOption-activeBackground)",
+      target: configColors?.target ?? "var(--vscode-editor-selectionHighlightBackground)",
+      forceTarget: configColors?.forceTarget ?? "var(--vscode-editor-linkedEditingBackground)",
+    };
+
+    const blockMode = new BlockMode(parsersDir, codeBlocksCliPath, colors);
 
     await vscode.commands.executeCommand("setContext", "codeBlocks.blockMode", true);
 
@@ -78,9 +79,18 @@ class BlockMode implements vscode.Disposable {
     return blockMode;
   }
 
-  private constructor(parsersDir: string, codeBlocksCliPath: string) {
+  private constructor(parsersDir: string, codeBlocksCliPath: string, colors: { selected: string, target: string, forceTarget: string }) {
     this.parsersDir = parsersDir;
     this.codeBlocksCliPath = codeBlocksCliPath;
+    this.selectedDecoration = vscode.window.createTextEditorDecorationType({
+      backgroundColor: colors.selected,
+    });
+    this.targetsDecoration = vscode.window.createTextEditorDecorationType({
+      backgroundColor: colors.target,
+    });
+    this.forceTargetsDecoration = vscode.window.createTextEditorDecorationType({
+      backgroundColor: colors.forceTarget,
+    });
 
     this.disposables = [
       vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left),
@@ -123,9 +133,9 @@ class BlockMode implements vscode.Disposable {
   }
 
   private closeEditor(): void {
-    this.editorState?.ofEditor.setDecorations(selectedDecoration, []);
-    this.editorState?.ofEditor.setDecorations(targetsDecoration, []);
-    this.editorState?.ofEditor.setDecorations(forceTargetsDecoration, []);
+    this.editorState?.ofEditor.setDecorations(this.selectedDecoration, []);
+    this.editorState?.ofEditor.setDecorations(this.targetsDecoration, []);
+    this.editorState?.ofEditor.setDecorations(this.forceTargetsDecoration, []);
     this.editorState = undefined;
   }
 
@@ -176,7 +186,7 @@ class BlockMode implements vscode.Disposable {
     if (this.editorState?.selections !== undefined) {
       const [prev, selected, next] = this.editorState.selections;
       const range = new vscode.Range(selected.startRow, selected.startCol, selected.endRow, selected.endCol);
-      this.editorState.ofEditor.setDecorations(selectedDecoration, [range]);
+      this.editorState.ofEditor.setDecorations(this.selectedDecoration, [range]);
 
       const targetRanges = [];
       const forceTargetRanges = [];
@@ -198,12 +208,12 @@ class BlockMode implements vscode.Disposable {
         }
       }
 
-      this.editorState.ofEditor.setDecorations(targetsDecoration, targetRanges);
-      this.editorState.ofEditor.setDecorations(forceTargetsDecoration, forceTargetRanges);
+      this.editorState.ofEditor.setDecorations(this.targetsDecoration, targetRanges);
+      this.editorState.ofEditor.setDecorations(this.forceTargetsDecoration, forceTargetRanges);
     } else {
-      this.editorState?.ofEditor.setDecorations(selectedDecoration, []);
-      this.editorState?.ofEditor.setDecorations(targetsDecoration, []);
-      this.editorState?.ofEditor.setDecorations(forceTargetsDecoration, []);
+      this.editorState?.ofEditor.setDecorations(this.selectedDecoration, []);
+      this.editorState?.ofEditor.setDecorations(this.targetsDecoration, []);
+      this.editorState?.ofEditor.setDecorations(this.forceTargetsDecoration, []);
     }
   }
 

@@ -147,6 +147,15 @@
     "configuration": {
       "title": "CodeBlocks",
       "properties": {
+        "codeBlocks.colors": {
+          "type": "object",
+          "description": "Colors to use for block mode",
+          "default": {
+            "selected": "var(--vscode-inputOption-activeBackground)",
+            "target": "var(--vscode-editor-selectionHighlightBackground)",
+            "forceTarget": "var(--vscode-editor-linkedEditingBackground)"
+          }
+        },
         "codeBlocks.binPath": {
           "type": "string",
           "default": null,
