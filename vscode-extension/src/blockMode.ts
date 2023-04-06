@@ -4,7 +4,8 @@ import { BlockLocation, BlockLocationTree, GetSubtreesArgs, GetSubtreesResponse,
 import { join } from "path";
 
 const selectedDecoration = vscode.window.createTextEditorDecorationType({
-  backgroundColor: "var(--vscode-editor-selectionBackground)",
+  // backgroundColor: "var(--vscode-editor-selectionBackground)",
+  backgroundColor: "var(--vscode-inputOption-activeBackground)",
 });
 const targetsDecoration = vscode.window.createTextEditorDecorationType({
   backgroundColor: "var(--vscode-editor-selectionHighlightBackground)",
@@ -43,6 +44,7 @@ export function getBlockModeCommands(context: vscode.ExtensionContext): Map<stri
   commands.set("navigateDown", () => blockMode?.navigateBlocks("down", false));
   commands.set("navigateUpForce", () => blockMode?.navigateBlocks("up", true));
   commands.set("navigateDownForce", () => blockMode?.navigateBlocks("down", true));
+  commands.set("selectBlock", () => blockMode?.selectBlock());
 
   return commands;
 }
@@ -293,6 +295,20 @@ class BlockMode implements vscode.Disposable {
         }
         return;
     }
+  }
+
+  public selectBlock(): void {
+    if (this.editorState?.selections === undefined) {
+      return;
+    }
+
+    const [, selectedBlock,] = this.editorState.selections;
+
+    const anchor = this.editorState.ofEditor.document.positionAt(selectedBlock.startByte);
+    const active = this.editorState.ofEditor.document.positionAt(selectedBlock.endByte);
+    const newSelection = new vscode.Selection(anchor, active);
+
+    this.editorState.ofEditor.selection = newSelection;
   }
 }
 

@@ -2,10 +2,11 @@
 
 # 0.5.1
 
-### New
+## New
 
 - Add block navigation commands.
 - Make "block mode" a vscode context (useful for keybindings).
+- Add "select current block" command.
 - Add default keybindings:
 
   | Command                        | Keybinding (cmd on mac) |
@@ -19,10 +20,10 @@
   | `codeBlocks.navigateUpForce`   | `ctrl/cmd+shift+up`     |
   | `codeBlocks.navigateDownForce` | `ctrl/cmd+shift+down`   |
 
-  Note that `codeBlocks.toggle` is not bound by default, nor are
-  the editor commands.
+  Note that `codeBlocks.toggle`, the editor commands, and the
+  `codeBlocks.selectBlock` are not bound by default.
 
-### Fixed
+## Fixed
 
 - Blocks appearing in files with unsupported languages.
 
