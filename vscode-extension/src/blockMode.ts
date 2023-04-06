@@ -39,6 +39,8 @@ export function getBlockModeCommands(context: vscode.ExtensionContext): Map<stri
   commands.set("moveDown", async () => await blockMode?.moveBlock("down", false));
   commands.set("moveUpForce", async () => await blockMode?.moveBlock("up", true));
   commands.set("moveDownForce", async () => await blockMode?.moveBlock("down", true));
+  commands.set("navigateUp", () => blockMode?.navigateBlocks("up"));
+  commands.set("navigateDown", () => blockMode?.navigateBlocks("down"));
 
   return commands;
 }
@@ -143,7 +145,7 @@ class BlockMode implements vscode.Disposable {
     this.focusSelection(this.editorState.ofEditor.selection.active);
   }
 
-  focusSelection(selection: vscode.Position): void {
+  private focusSelection(selection: vscode.Position): void {
     if (this.editorState === undefined) {
       return;
     }
@@ -160,7 +162,7 @@ class BlockMode implements vscode.Disposable {
     );
   }
 
-  highlightSelections(): void {
+  private highlightSelections(): void {
     if (this.editorState?.selections !== undefined) {
       const [prev, selected, next] = this.editorState.selections;
       const range = new vscode.Range(selected.startRow, selected.startCol, selected.endRow, selected.endCol);
@@ -200,7 +202,6 @@ class BlockMode implements vscode.Disposable {
       console.log("No selected block to move");
       return;
     }
-
 
     const editor = this.editorState.ofEditor;
     const document = this.editorState.ofEditor.document;
@@ -252,6 +253,32 @@ class BlockMode implements vscode.Disposable {
     const newSelection = new vscode.Selection(newPosition, newPosition);
 
     editor.selection = newSelection;
+  }
+
+  public navigateBlocks(direction: "up" | "down"): void {
+    if (this.editorState?.selections === undefined) {
+      return;
+    }
+
+    const [prev, , next] = this.editorState.selections;
+
+    switch (direction) {
+      case "up":
+        if (prev !== undefined) {
+          const selection = this.editorState.ofEditor.document.positionAt(prev[0].startByte);
+          this.editorState.ofEditor.selection = new vscode.Selection(selection, selection);
+          this.focusSelection(selection);
+        }
+        return;
+
+      case "down":
+        if (next !== undefined) {
+          const selection = this.editorState.ofEditor.document.positionAt(next[0].startByte);
+          this.editorState.ofEditor.selection = new vscode.Selection(selection, selection);
+          this.focusSelection(selection);
+        }
+        return;
+    }
   }
 }
 

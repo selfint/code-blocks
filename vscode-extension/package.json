@@ -76,6 +76,14 @@
       {
         "command": "codeBlocks.moveDownForce",
         "title": "Code Blocks: Force move selected block down"
+      },
+      {
+        "command": "codeBlocks.navigateUp",
+        "title": "Code Blocks: Navigate to previous block"
+      },
+      {
+        "command": "codeBlocks.navigateDown",
+        "title": "Code Blocks: Navigate to next block"
       }
     ],
     "configuration": {
