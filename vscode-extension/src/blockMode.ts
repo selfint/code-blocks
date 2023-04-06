@@ -39,6 +39,10 @@ export function getBlockModeCommands(context: vscode.ExtensionContext): Map<stri
   commands.set("moveDown", async () => await blockMode?.moveBlock("down", false));
   commands.set("moveUpForce", async () => await blockMode?.moveBlock("up", true));
   commands.set("moveDownForce", async () => await blockMode?.moveBlock("down", true));
+  commands.set("navigateUp", () => blockMode?.navigateBlocks("up", false));
+  commands.set("navigateDown", () => blockMode?.navigateBlocks("down", false));
+  commands.set("navigateUpForce", () => blockMode?.navigateBlocks("up", true));
+  commands.set("navigateDownForce", () => blockMode?.navigateBlocks("down", true));
 
   return commands;
 }
@@ -140,28 +144,27 @@ class BlockMode implements vscode.Disposable {
     );
 
     this.highlightSelections();
-    this.focusSelection();
+    this.focusSelection(this.editorState.ofEditor.selection.active);
   }
 
-  focusSelection(): void {
-    if (this.editorState?.selections === undefined) {
+  private focusSelection(selection: vscode.Position): void {
+    if (this.editorState === undefined) {
       return;
     }
 
     for (const visibleRange of this.editorState.ofEditor.visibleRanges) {
-      if (visibleRange.contains(this.editorState.ofEditor.selection.active)) {
+      if (visibleRange.contains(selection)) {
         return;
       }
     }
 
-    const activeSelection = this.editorState.ofEditor.selection.active;
     this.editorState.ofEditor.revealRange(
-      new vscode.Range(activeSelection, activeSelection),
+      new vscode.Range(selection, selection),
       vscode.TextEditorRevealType.Default
     );
   }
 
-  highlightSelections(): void {
+  private highlightSelections(): void {
     if (this.editorState?.selections !== undefined) {
       const [prev, selected, next] = this.editorState.selections;
       const range = new vscode.Range(selected.startRow, selected.startCol, selected.endRow, selected.endCol);
@@ -201,7 +204,6 @@ class BlockMode implements vscode.Disposable {
       console.log("No selected block to move");
       return;
     }
-
 
     const editor = this.editorState.ofEditor;
     const document = this.editorState.ofEditor.document;
@@ -253,6 +255,38 @@ class BlockMode implements vscode.Disposable {
     const newSelection = new vscode.Selection(newPosition, newPosition);
 
     editor.selection = newSelection;
+  }
+
+  public navigateBlocks(direction: "up" | "down", force: boolean): void {
+    if (this.editorState?.selections === undefined) {
+      return;
+    }
+
+    const [prev, , next] = this.editorState.selections;
+
+    switch (direction) {
+      case "up":
+        if (prev !== undefined) {
+          const [prevBlock, prevForce] = prev;
+          if (!prevForce || force) {
+            const selection = this.editorState.ofEditor.document.positionAt(prevBlock.startByte);
+            this.editorState.ofEditor.selection = new vscode.Selection(selection, selection);
+            this.focusSelection(selection);
+          }
+        }
+        return;
+
+      case "down":
+        if (next !== undefined) {
+          const [nextBlock, nextForce] = next;
+          if (!nextForce || force) {
+            const selection = this.editorState.ofEditor.document.positionAt(nextBlock.startByte);
+            this.editorState.ofEditor.selection = new vscode.Selection(selection, selection);
+            this.focusSelection(selection);
+          }
+        }
+        return;
+    }
   }
 }
 
