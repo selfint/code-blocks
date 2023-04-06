@@ -94,6 +94,52 @@
         "title": "Code Blocks: Force navigate to next block"
       }
     ],
+    "keybindings": [
+      {
+        "command": "codeBlocks.moveUp",
+        "key": "alt+up",
+        "when": "editorTextFocus && codeBlocks.blockMode"
+      },
+      {
+        "command": "codeBlocks.moveDown",
+        "key": "alt+down",
+        "when": "editorTextFocus && codeBlocks.blockMode"
+      },
+      {
+        "command": "codeBlocks.moveUpForce",
+        "key": "alt+shift+up",
+        "when": "editorTextFocus && codeBlocks.blockMode"
+      },
+      {
+        "command": "codeBlocks.moveDownForce",
+        "key": "alt+shift+down",
+        "when": "editorTextFocus && codeBlocks.blockMode"
+      },
+      {
+        "command": "codeBlocks.navigateUp",
+        "key": "ctrl+up",
+        "mac": "cmd+up",
+        "when": "editorTextFocus && codeBlocks.blockMode"
+      },
+      {
+        "command": "codeBlocks.navigateDown",
+        "key": "ctrl+down",
+        "mac": "cmd+down",
+        "when": "editorTextFocus && codeBlocks.blockMode"
+      },
+      {
+        "command": "codeBlocks.navigateUpForce",
+        "key": "ctrl+shift+up",
+        "mac": "cmd+shift+up",
+        "when": "editorTextFocus && codeBlocks.blockMode"
+      },
+      {
+        "command": "codeBlocks.navigateDownForce",
+        "key": "ctrl+shift+down",
+        "mac": "cmd+shift+down",
+        "when": "editorTextFocus && codeBlocks.blockMode"
+      }
+    ],
     "configuration": {
       "title": "CodeBlocks",
       "properties": {
