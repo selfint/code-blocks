@@ -84,6 +84,14 @@
       {
         "command": "codeBlocks.navigateDown",
         "title": "Code Blocks: Navigate to next block"
+      },
+      {
+        "command": "codeBlocks.navigateUpForce",
+        "title": "Code Blocks: Force navigate to previous block"
+      },
+      {
+        "command": "codeBlocks.navigateDownForce",
+        "title": "Code Blocks: Force navigate to next block"
       }
     ],
     "configuration": {
