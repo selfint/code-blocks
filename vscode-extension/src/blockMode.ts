@@ -66,6 +66,9 @@ class BlockMode implements vscode.Disposable {
     }
 
     const blockMode = new BlockMode(parsersDir, codeBlocksCliPath);
+
+    await vscode.commands.executeCommand("setContext", "codeBlocks.blockMode", true);
+
     if (vscode.window.activeTextEditor !== undefined) {
       await blockMode.openEditor(vscode.window.activeTextEditor);
     }
@@ -78,6 +81,8 @@ class BlockMode implements vscode.Disposable {
     this.codeBlocksCliPath = codeBlocksCliPath;
 
     this.disposables = [
+      vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left),
+      vscode.window.setStatusBarMessage("-- BLOCK MODE --"),
       vscode.window.onDidChangeActiveTextEditor(async editor => {
         if (editor === undefined) {
           this.closeEditor();
@@ -100,6 +105,7 @@ class BlockMode implements vscode.Disposable {
   }
 
   async dispose(): Promise<void> {
+    await vscode.commands.executeCommand("setContext", "codeBlocks.blockMode", false);
     await Promise.all(this.disposables.map(async d => { await d.dispose(); }));
     this.closeEditor();
   }
