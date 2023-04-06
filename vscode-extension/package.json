@@ -92,6 +92,10 @@
       {
         "command": "codeBlocks.navigateDownForce",
         "title": "Code Blocks: Force navigate to next block"
+      },
+      {
+        "command": "codeBlocks.selectBlock",
+        "title": "Code Blocks: Select current block"
       }
     ],
     "keybindings": [
