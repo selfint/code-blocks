@@ -416,7 +416,7 @@ function findSelections(blocks: BlockLocationTree[] | undefined, cursor: vscode.
 
   function cursorInBlock(block: BlockLocation): boolean {
     return cursor.isAfterOrEqual(new vscode.Position(block.startRow, block.startCol))
-      && cursor.isBeforeOrEqual(new vscode.Position(block.endRow, block.endCol));
+      && cursor.isBefore(new vscode.Position(block.endRow, block.endCol));
   }
 
   function findTreesSelections(trees: BlockLocationTree[]): Selections {
