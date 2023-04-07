@@ -38,7 +38,7 @@
   | `codeBlocks.navigateUpForce`   | `ctrl/cmd+shift+up`     |
   | `codeBlocks.navigateDownForce` | `ctrl/cmd+shift+down`   |
 
-  Note that `codeBlocks.toggle`, the editor commands, and the
+  Note that `codeBlocks.toggle`, the old editor commands, and
   `codeBlocks.selectBlock` are not bound by default.
 
 ## Fixed
