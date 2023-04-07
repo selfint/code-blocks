@@ -31,9 +31,8 @@ output:
             <button className="card" onClick={() => writeFile(filePath, content)}>
               Write file
             </button>
-          </div>
-          <button className="card" onClick={readFile}>
-          ^ Source
+          </div><button className="card" onClick={readFile}>
+                ^ Source
         {/* ^src */}
               Choose file
             </button>

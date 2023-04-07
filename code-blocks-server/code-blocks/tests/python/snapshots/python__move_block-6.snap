@@ -32,9 +32,8 @@ output:
         ^ Dest
             def __init__(self) -> None:
                 ...
-        
-            def foo(self) -> None: # src
-            ^ Source
+        def foo(self) -> None: # src
+        ^ Source
                 ...
         
         

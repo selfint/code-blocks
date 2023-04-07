@@ -80,17 +80,23 @@ pub fn move_block<'tree>(
     let src_text = &text[src_block_range.clone()];
 
     let spaces = [
-        src_head
-            .prev_sibling()
-            .map(|s| &text[s.end_byte()..src_head.start_byte()]),
-        src_tail
-            .next_sibling()
-            .map(|s| &text[src_tail.end_byte()..s.start_byte()]),
+        // src_head
+        //     .prev_sibling()
+        //     .map(|s| &text[s.end_byte()..src_head.start_byte()]),
+        // src_tail
+        //     .next_sibling()
+        //     .map(|s| &text[src_tail.end_byte()..s.start_byte()]),
         dst_head
-            .prev_sibling()
+            .prev_named_sibling()
             .map(|s| &text[s.end_byte()..dst_head.start_byte()]),
+        dst_head
+            .next_named_sibling()
+            .map(|s| &text[dst_head.end_byte()..s.start_byte()]),
         dst_tail
-            .next_sibling()
+            .prev_named_sibling()
+            .map(|s| &text[s.end_byte()..dst_tail.start_byte()]),
+        dst_tail
+            .next_named_sibling()
             .map(|s| &text[dst_tail.end_byte()..s.start_byte()]),
     ];
 
@@ -121,6 +127,8 @@ pub fn move_block<'tree>(
     // move src to be below dst
     // move down
     let (new_src_start, new_dst_start) = if src_head.end_byte() <= dst_head.end_byte() {
+        dbg!(src_text);
+        dbg!(dst_tail.end_position());
         new_text.insert_str(dst_tail.end_byte(), src_text);
         new_text.insert_str(dst_tail.end_byte(), max_space);
         new_text.replace_range(src_range, "");

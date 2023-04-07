@@ -17,9 +17,8 @@ output:
 
     fn foo() {}
     ^ Dest
-
-    fn baz() {}
-    ^ Source
+ fn baz() {}
+ ^ Source
  /* ^dst */
 
     fn bar() {}

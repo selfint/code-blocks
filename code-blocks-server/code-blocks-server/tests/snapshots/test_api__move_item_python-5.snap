@@ -46,7 +46,6 @@ output:
             def bar():
             ^ Dest
                 ...
-                
             @staticmethod()
             ^ Source
             def foo():

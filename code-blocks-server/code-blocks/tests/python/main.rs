@@ -305,3 +305,30 @@ fn test_move_block() {
 "#
     );
 }
+
+#[test]
+fn test_python_new() {
+    check!(
+        check: Some(check_fn),
+        force: true,
+        r#"
+from dataclasses import dataclass
+
+@dataclass
+class A: # dst
+    def __init__(self) -> None:
+        ...
+
+    def foo(self) -> None: # src
+        ...
+
+
+def main():
+    ...
+
+
+if __name__ == "__main__":
+    main()
+"#
+    );
+}
