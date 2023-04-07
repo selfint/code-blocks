@@ -4,7 +4,13 @@
 
 ## New
 
-- Add block navigation commands.
+- Add block navigation commands:
+
+  Regular "navigate" commands will not navigate to parent scope,
+  for that there are the "force navigate" commands.
+
+  ![block-mode-navigation-demo](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20navigation%201.gif)
+
 - Make "block mode" a vscode context (useful for keybindings).
 - Add "select current block" command.
 - Add configurable colors.
