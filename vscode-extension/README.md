@@ -68,14 +68,14 @@ More examples below.
 
 ### Tl;dr
 
-| Command                                                       | Usage                                                                                |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `codeBlocks.toggle`                                           | Toggle "block mode" on / off                                                         |
-| `codeBlocks.moveUp` / `codeBlocks.moveDown`                   | Move the current block up / down                                                     |
-| `codeBlocks.moveUpForce` / `codeBlocks.moveDownForce`         | Move the current block up / down, even if doing so escapes the current block's scope |
-| `codeBlocks.navigateUp` / `codeBlocks.navigateDown`           | Jump to the previous / next block                                                    |
-| `codeBlocks.navigateUpForce` / `codeBlocks.navigateDownForce` | Jump to the previous / next, even if doing so escapes the current block's scope      |
-| `codeBlocks.selectBlock`                                      | Select the current block                                                             |
+| Command                                                       | Usage                                                                                 |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `codeBlocks.toggle`                                           | Toggle "block mode" on / off                                                          |
+| `codeBlocks.moveUp` / `codeBlocks.moveDown`                   | Move the current block up / down                                                      |
+| `codeBlocks.moveUpForce` / `codeBlocks.moveDownForce`         | Move the current block up / down, even if doing so escapes the current block's scope  |
+| `codeBlocks.navigateUp` / `codeBlocks.navigateDown`           | Jump to the previous / next block                                                     |
+| `codeBlocks.navigateUpForce` / `codeBlocks.navigateDownForce` | Jump to the previous / next block, even if doing so escapes the current block's scope |
+| `codeBlocks.selectBlock`                                      | Select the current block                                                              |
 
 ### Keybindings
 
@@ -91,10 +91,15 @@ These are the default key bindings, they are only active when "block mode" is on
 | `codeBlocks.navigateDown`      | `ctrl/cmd+down`         |
 | `codeBlocks.navigateUpForce`   | `ctrl/cmd+shift+up`     |
 | `codeBlocks.navigateDownForce` | `ctrl/cmd+shift+down`   |
-| `codeBlocks.toggle`            | No default keybinding   |
-| `codeBlocks.selectBlock`       | No default keybinding   |
-| `codeBlocks.open`              | No default keybinding   |
-| `codeBlocks.openToTheSide`     | No default keybinding   |
+
+These commands are not bound by default:
+
+| Command                    |
+| -------------------------- |
+| `codeBlocks.toggle`        |
+| `codeBlocks.selectBlock`   |
+| `codeBlocks.open`          |
+| `codeBlocks.openToTheSide` |
 
 ## Editor mode
 
@@ -104,7 +109,7 @@ To exit, either use the `workbench.action.reopenWithEditor` and open with the Te
 simply close the Code Blocks Editor tab.
 
 In "editor" mode, all the blocks in the current file are visible. To move a block,
-click it, then click on another block. The first block will be moved to be below
+click it, then click on another block. The first block will be moved below
 the second block. Clicking the same block twice will de-select the block.
 
 In contrast to "block" mode, this allows you to move any block in the file to anywhere else
