@@ -4,6 +4,13 @@
 
 ## New
 
+- Change "force" semantics:
+
+  Blocks that require a force move/navigate are detected in advance,
+  and trying to move/navigate to them will fail silently. Instead of
+  the old error notification, the background of the blocks is
+  now a different color.
+
 - Add block navigation commands:
 
   Regular "navigate" commands will not navigate to parent scope,
@@ -12,6 +19,7 @@
   ![block-mode-navigation-demo](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20navigation%201.gif)
 
 - Make "block mode" a vscode context (useful for keybindings).
+- Add "block mode" status bar indicator.
 - Add "select current block" command.
 - Add configurable colors.
 - Add default keybindings (only active when "block mode" is on):
