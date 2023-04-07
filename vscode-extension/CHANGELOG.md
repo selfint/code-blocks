@@ -24,7 +24,21 @@
 
   ![block-mode-select-demo](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20select%201.gif)
 
-- Add configurable colors.
+- Add configurable colors:
+
+  Default values:
+
+  ```json
+  "codeBlocks.colors": {
+    "selected": "var(--vscode-inputOption-activeBackground)",
+    "target": "var(--vscode-editor-selectionHighlightBackground)",
+    "forceTarget": "var(--vscode-editor-linkedEditingBackground)"
+  }
+  ```
+
+  Each value is a css string that is passed to the `background-color` property
+  of the respective block type. It can be any valid css value.
+
 - Add default keybindings (only active when "block mode" is on):
 
   | Command                        | Keybinding (cmd on mac) |
