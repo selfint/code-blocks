@@ -1,7 +1,7 @@
 use anyhow::{ensure, Result};
 use code_blocks::{get_query_subtrees, Block, BlockTree};
 
-use tree_sitter::{Point, Query};
+use tree_sitter::Query;
 
 #[path = "../test_utils.rs"]
 mod test_utils;
@@ -68,13 +68,13 @@ fn copy_item_below<'tree>(
     text: &str,
     trees: &Vec<BlockTree<'tree>>,
 ) -> Option<Block<'tree>> {
-    let pos = text
+    let row = text
         .lines()
         .enumerate()
-        .find_map(|(row, line)| line.find(ident).map(|col| Point::new(row + 1, col - 1)))?;
+        .find_map(|(row, line)| line.find(ident).map(|_| row))?;
 
     for tree in trees {
-        if tree.block.tail().start_position() == pos {
+        if tree.block.tail().start_position().row == row {
             return Some(tree.block.clone());
         }
 
@@ -93,9 +93,9 @@ macro_rules! check {
         let tree = build_tree($text, tree_sitter_python::language());
 
         let items = get_query_subtrees(&python_queries(), &tree, $text);
-        let src_block = copy_item_below("Vsrc", $text, &items).unwrap();
-        let dst_item = copy_item_below("Vdst", $text, &items);
-        let fail_item = copy_item_below("Vfail", $text, &items);
+        let src_block = copy_item_below("src", $text, &items).unwrap();
+        let dst_item = copy_item_below("dst", $text, &items);
+        let fail_item = copy_item_below("fail", $text, &items);
 
         let snapshot = if let Some(dst_item) = dst_item {
             let (new_text, mut new_src_start, mut new_dst_start) =
@@ -150,14 +150,12 @@ fn test_move_block() {
         check: Some(check_fn),
         force: false,
         r#"
-        #Vsrc
-        @decor1
+        @decor1 # src
         @decor2
         class A:
             ...
            
-        #Vdst
-        class C:
+        class C: # dst
             """class docstring"""
         
             def __init__(self):
@@ -179,8 +177,7 @@ fn test_move_block() {
         check: Some(check_fn),
         force: false,
         r#"
-        #Vsrc
-        @decor1
+        @decor1 # src
         @decor2
         class A:
             ...
@@ -188,39 +185,9 @@ fn test_move_block() {
         class C:
             """class docstring"""
         
-            #Vfail
-            def __init__(self):
+            def __init__(self): # fail
                 pass
         
-            @staticmethod()
-            def foo():
-                """method docstring"""
-                
-            def bar():
-                ...
-                
-        def func():
-            ...
-"#
-    );
-
-    check!(
-        check: Some(check_fn),
-        force: false,
-        r#"
-        @decor1
-        @decor2
-        class A:
-            ...
-           
-        class C:
-            """class docstring"""
-        
-            #Vsrc
-            def __init__(self):
-                pass
-        
-            #Vdst
             @staticmethod()
             def foo():
                 """method docstring"""
@@ -245,18 +212,16 @@ fn test_move_block() {
         class C:
             """class docstring"""
         
-            def __init__(self):
+            def __init__(self): # src
                 pass
         
-            #Vsrc
-            @staticmethod()
+            @staticmethod() # dst
             def foo():
                 """method docstring"""
                 
             def bar():
                 ...
                 
-        #Vfail
         def func():
             ...
 "#
@@ -277,13 +242,38 @@ fn test_move_block() {
             def __init__(self):
                 pass
         
-            #Vsrc
-            @staticmethod()
+            @staticmethod() # src
             def foo():
                 """method docstring"""
                 
-            #Vdst
             def bar():
+                ...
+                
+        def func(): # fail
+            ...
+"#
+    );
+
+    check!(
+        check: Some(check_fn),
+        force: false,
+        r#"
+        @decor1
+        @decor2
+        class A:
+            ...
+           
+        class C:
+            """class docstring"""
+        
+            def __init__(self):
+                pass
+        
+            @staticmethod() # src
+            def foo():
+                """method docstring"""
+                
+            def bar(): # dst
                 ...
                 
         def func():

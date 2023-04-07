@@ -14,16 +14,14 @@ expression: snapshot
             def __init__(self):
                 pass
         
-            #Vsrc
-            @staticmethod()
+            @staticmethod() # src
             def foo():
                 """method docstring"""
                 
             def bar():
                 ...
                 
-        #Vfail
-        def func():
+        def func(): # fail
             ...
 
 

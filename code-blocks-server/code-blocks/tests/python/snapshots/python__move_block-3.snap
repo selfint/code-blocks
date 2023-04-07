@@ -12,12 +12,10 @@ input:
         class C:
             """class docstring"""
         
-            #Vsrc
-            def __init__(self):
+            def __init__(self): # src
                 pass
         
-            #Vdst
-            @staticmethod()
+            @staticmethod() # dst
             def foo():
                 """method docstring"""
                 
@@ -38,14 +36,12 @@ output:
         class C:
             """class docstring"""
         
-            #Vsrc
-            #Vdst
-            @staticmethod()
+            @staticmethod() # dst
             ^ Dest
             def foo():
                 """method docstring"""
                 
-            def __init__(self):
+            def __init__(self): # src
             ^ Source
                 pass
                 

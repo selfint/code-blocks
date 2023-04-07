@@ -3,8 +3,7 @@ source: code-blocks/tests/python/main.rs
 expression: snapshot
 ---
 
-        #Vsrc
-        @decor1
+        @decor1 # src
         @decor2
         class A:
             ...
@@ -12,8 +11,7 @@ expression: snapshot
         class C:
             """class docstring"""
         
-            #Vfail
-            def __init__(self):
+            def __init__(self): # fail
                 pass
         
             @staticmethod()
