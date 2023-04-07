@@ -64,12 +64,6 @@ To select the current block, use the `codeBlocks.selectBlock` command.
 
 ![svelte-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20svelte%201.gif)
 
-1. "Block Mode" is turned on.
-2. Current block is visible (in blue), next block is visible (in grey).
-3. Current block is moved down.
-4. The new next block is now red, indicating it requires a "force" move. Note that now the
-   "next" block is the parent block.
-
 More examples below.
 
 ### Tl;dr
