@@ -87,16 +87,16 @@ pub fn move_block<'tree>(
         //     .next_sibling()
         //     .map(|s| &text[src_tail.end_byte()..s.start_byte()]),
         dst_head
-            .prev_named_sibling()
+            .prev_sibling()
             .map(|s| &text[s.end_byte()..dst_head.start_byte()]),
         dst_head
-            .next_named_sibling()
+            .next_sibling()
             .map(|s| &text[dst_head.end_byte()..s.start_byte()]),
         dst_tail
-            .prev_named_sibling()
+            .prev_sibling()
             .map(|s| &text[s.end_byte()..dst_tail.start_byte()]),
         dst_tail
-            .next_named_sibling()
+            .next_sibling()
             .map(|s| &text[dst_tail.end_byte()..s.start_byte()]),
     ];
 
