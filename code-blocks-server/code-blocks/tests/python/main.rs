@@ -89,7 +89,7 @@ fn copy_item_below<'tree>(
 macro_rules! check {
     (check: $check_fn:expr, force: $force:literal, $text:literal) => {
         let text = $text;
-        let force = false;
+        let force = $force;
         let tree = build_tree($text, tree_sitter_python::language());
 
         let items = get_query_subtrees(&python_queries(), &tree, $text);
@@ -278,6 +278,30 @@ fn test_move_block() {
                 
         def func():
             ...
+"#
+    );
+
+    check!(
+        check: Some(check_fn),
+        force: true,
+        r#"
+        from dataclasses import dataclass
+
+        @dataclass
+        class A: # dst
+            def __init__(self) -> None:
+                ...
+        
+            def foo(self) -> None: # src
+                ...
+        
+        
+        def main():
+            ...
+        
+        
+        if __name__ == "__main__":
+            main()
 "#
     );
 }

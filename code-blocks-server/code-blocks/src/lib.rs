@@ -120,7 +120,7 @@ pub fn move_block<'tree>(
 
     // move src to be below dst
     // move down
-    let (new_src_start, new_dst_start) = if src_head.end_byte() < dst_head.end_byte() {
+    let (new_src_start, new_dst_start) = if src_head.end_byte() <= dst_head.end_byte() {
         new_text.insert_str(dst_tail.end_byte(), src_text);
         new_text.insert_str(dst_tail.end_byte(), max_space);
         new_text.replace_range(src_range, "");
