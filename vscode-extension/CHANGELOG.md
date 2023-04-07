@@ -20,7 +20,10 @@
 
 - Make "block mode" a vscode context (useful for keybindings).
 - Add "block mode" status bar indicator.
-- Add "select current block" command.
+- Add "select current block" command:
+
+  ![block-mode-select-demo](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20select%201.gif)
+
 - Add configurable colors.
 - Add default keybindings (only active when "block mode" is on):
 
