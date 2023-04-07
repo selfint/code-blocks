@@ -141,11 +141,11 @@ appropriate direction.
 
 ![svelte-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20svelte%201.gif)
 
-### TypeScript + JSX
+### React (TypeScript + JSX)
 
 > Rapidly changing UI look
 
-![tsx-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20tsx%201.gif)
+![react-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20react%201.gif)
 
 ### Python
 
@@ -186,7 +186,8 @@ To move a block, click the source block, and then the block to move it under.
 ### Python
 
 **NOTE**: Force moving in Python almost never works correctly,
-since whitespace is meaningful
+since whitespace is meaningful it's a bit tricky. Hopefully in the future
+this is stabilized.
 
 > Moving methods and classes with decorators
 
