@@ -1,0 +1,52 @@
+---
+source: code-blocks/tests/python/main.rs
+expression: snapshot
+---
+input:
+
+        @decor1
+        @decor2
+        class A:
+            ...
+           
+        class C:
+            """class docstring"""
+        
+            def __init__(self):
+                pass
+        
+            @staticmethod() # src
+            def foo():
+                """method docstring"""
+                
+            def bar(): # dst
+                ...
+                
+        def func():
+            ...
+
+---
+output:
+
+        @decor1
+        @decor2
+        class A:
+            ...
+           
+        class C:
+            """class docstring"""
+        
+            def __init__(self):
+                pass
+        
+            def bar(): # dst
+            ^ Dest
+                ...
+                
+            @staticmethod() # src
+            ^ Source
+            def foo():
+                """method docstring"""
+                
+        def func():
+            ...

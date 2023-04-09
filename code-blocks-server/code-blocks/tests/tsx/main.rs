@@ -74,12 +74,10 @@ snapshot!(
     export default function App() {
         return (
             <>
-              <button>
-          {/* ^src */}
+              <button> {/* src */}
                 Choose file
               </button>!!! stuff in here is also part of the syntax tree !!!
-              <button>
-          {/* ^dst */}
+              <button> {/* dst */}
                 Write file
               </button>!!! stuff in here is also part of the syntax tree !!!
             </>
@@ -97,13 +95,11 @@ snapshot!(
         return (
             <>
               <div>
-                <button>
-            {/* ^src */}
+                <button> {/* src */}
                   Choose file
                 </button>!!! stuff in here is also part of the syntax tree !!!
               </div>
-              <button>
-          {/* ^dst */}
+              <button> {/* dst */}
                 Write file
               </button>!!! stuff in here is also part of the syntax tree !!!
             </>

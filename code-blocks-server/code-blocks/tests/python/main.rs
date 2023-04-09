@@ -5,7 +5,16 @@ use tree_sitter::Query;
 
 #[path = "../test_utils.rs"]
 mod test_utils;
-use test_utils::build_tree;
+use test_utils::{build_tree, copy_item_above};
+
+fn preserve_scope(s: &Block, d: &Block) -> Result<()> {
+    ensure!(
+        s.head().parent() == d.head().parent(),
+        "Blocks have different parents"
+    );
+
+    Ok(())
+}
 
 const PYTHON_QUERY_STRINGS: [&str; 3] = [
     "(class_definition) @item",
@@ -63,93 +72,11 @@ fn test_get_query_subtrees() {
     insta::assert_yaml_snapshot!(blocks);
 }
 
-fn copy_item_below<'tree>(
-    ident: &str,
-    text: &str,
-    trees: &Vec<BlockTree<'tree>>,
-) -> Option<Block<'tree>> {
-    let row = text
-        .lines()
-        .enumerate()
-        .find_map(|(row, line)| line.find(ident).map(|_| row))?;
-
-    for tree in trees {
-        if tree.block.tail().start_position().row == row {
-            return Some(tree.block.clone());
-        }
-
-        if let Some(node) = copy_item_below(ident, text, &tree.children) {
-            return Some(node);
-        }
-    }
-
-    None
-}
-
-macro_rules! check {
-    (check: $check_fn:expr, force: $force:literal, $text:literal) => {
-        let text = $text;
-        let force = $force;
-        let tree = build_tree($text, tree_sitter_python::language());
-
-        let items = get_query_subtrees(&python_queries(), &tree, $text);
-        let src_block = copy_item_below("src", $text, &items).unwrap();
-        let dst_item = copy_item_below("dst", $text, &items);
-        let fail_item = copy_item_below("fail", $text, &items);
-
-        let snapshot = if let Some(dst_item) = dst_item {
-            let (new_text, mut new_src_start, mut new_dst_start) =
-                code_blocks::move_block(src_block, dst_item, text, Some(check_fn), force).unwrap();
-
-            let mut new_lines = vec![];
-            let mut added_src = false;
-            let mut added_dst = false;
-            for line in new_text.lines() {
-                new_lines.push(line.to_string());
-                if new_src_start > line.len() {
-                    new_src_start -= line.len() + 1;
-                } else if !added_src {
-                    new_lines.push(" ".repeat(new_src_start) + "^ Source");
-                    added_src = true;
-                }
-
-                if new_dst_start > line.len() {
-                    new_dst_start -= line.len() + 1;
-                } else if !added_dst {
-                    new_lines.push(" ".repeat(new_dst_start) + "^ Dest");
-                    added_dst = true;
-                }
-            }
-
-            let new_text = new_lines.join("\n");
-            format!("input:\n{}\n---\noutput:\n{}", text, new_text)
-        } else if let Some(fail_item) = fail_item {
-            let result = code_blocks::move_block(src_block, fail_item, $text, $check_fn, $force);
-            assert!(result.is_err());
-            format!("{}\n\n{:?}", $text, result.err().unwrap())
-        } else {
-            panic!("no dst/fail item in input");
-        };
-
-        insta::assert_display_snapshot!(snapshot);
-    };
-}
-
-fn check_fn(s: &Block, d: &Block) -> Result<()> {
-    ensure!(
-        s.head().parent() == d.head().parent(),
-        "Blocks have different parents"
-    );
-
-    Ok(())
-}
-
-#[test]
-fn test_move_block() {
-    check!(
-        check: Some(check_fn),
-        force: false,
-        r#"
+snapshot!(
+    test_move_class,
+    tree_sitter_python::language(),
+    python_queries(),
+    r#"
         @decor1 # src
         @decor2
         class A:
@@ -171,12 +98,14 @@ fn test_move_block() {
         def func():
             ...
 "#
-    );
+);
 
-    check!(
-        check: Some(check_fn),
-        force: false,
-        r#"
+snapshot!(
+    test_move_preserve_scope,
+    tree_sitter_python::language(),
+    python_queries(),
+    preserve_scope,
+    r#"
         @decor1 # src
         @decor2
         class A:
@@ -198,12 +127,13 @@ fn test_move_block() {
         def func():
             ...
 "#
-    );
+);
 
-    check!(
-        check: Some(check_fn),
-        force: false,
-        r#"
+snapshot!(
+    test_move_method,
+    tree_sitter_python::language(),
+    python_queries(),
+    r#"
         @decor1
         @decor2
         class A:
@@ -225,12 +155,14 @@ fn test_move_block() {
         def func():
             ...
 "#
-    );
+);
 
-    check!(
-        check: Some(check_fn),
-        force: false,
-        r#"
+snapshot!(
+    test_move_out_scope_fails,
+    tree_sitter_python::language(),
+    python_queries(),
+    preserve_scope,
+    r#"
         @decor1
         @decor2
         class A:
@@ -252,12 +184,13 @@ fn test_move_block() {
         def func(): # fail
             ...
 "#
-    );
+);
 
-    check!(
-        check: Some(check_fn),
-        force: false,
-        r#"
+snapshot!(
+    test_move_decorated_method,
+    tree_sitter_python::language(),
+    python_queries(),
+    r#"
         @decor1
         @decor2
         class A:
@@ -279,12 +212,13 @@ fn test_move_block() {
         def func():
             ...
 "#
-    );
+);
 
-    check!(
-        check: Some(check_fn),
-        force: true,
-        r#"
+snapshot!(
+    test_move_outside_class_force,
+    tree_sitter_python::language(),
+    python_queries(),
+    r#"
         from dataclasses import dataclass
 
         @dataclass
@@ -303,32 +237,4 @@ fn test_move_block() {
         if __name__ == "__main__":
             main()
 "#
-    );
-}
-
-#[test]
-fn test_python_new() {
-    check!(
-        check: Some(check_fn),
-        force: true,
-        r#"
-from dataclasses import dataclass
-
-@dataclass
-class A: # dst
-    def __init__(self) -> None:
-        ...
-
-    def foo(self) -> None: # src
-        ...
-
-
-def main():
-    ...
-
-
-if __name__ == "__main__":
-    main()
-"#
-    );
-}
+);

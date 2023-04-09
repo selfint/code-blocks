@@ -8,13 +8,11 @@ input:
         return (
             <>
               <div>
-                <button>
-            {/* ^src */}
+                <button> {/* src */}
                   Choose file
                 </button>!!! stuff in here is also part of the syntax tree !!!
               </div>
-              <button>
-          {/* ^dst */}
+              <button> {/* dst */}
                 Write file
               </button>!!! stuff in here is also part of the syntax tree !!!
             </>
@@ -30,13 +28,11 @@ output:
               <div>
                 !!! stuff in here is also part of the syntax tree !!!
               </div>
-              <button>
+              <button> {/* dst */}
               ^ Dest
-          {/* ^dst */}
                 Write file
-              </button><button>
+              </button><button> {/* src */}
                        ^ Source
-            {/* ^src */}
                   Choose file
                 </button>!!! stuff in here is also part of the syntax tree !!!
             </>

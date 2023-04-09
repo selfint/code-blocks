@@ -4,10 +4,8 @@ expression: snapshot
 ---
 input:
 
-    mod m {
-/*  ^fail */
-        fn foo() {}
-     /* ^src */
+    mod m { // fail
+        fn foo() {} // src
     }
 
     fn baz() {}

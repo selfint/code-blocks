@@ -5,15 +5,13 @@ expression: snapshot
 input:
 
 mod m {
-    fn foo() {
- /* ^src */
+    fn foo() { // src
         fn in_foo() {
             bar();
         }
     }
 
-    fn bar() {}
- /* ^dst */
+    fn bar() {} // dst
 }
 
 fn baz() {}
@@ -25,14 +23,12 @@ mod m {
     fn bar() {}
     ^ Dest
 
-    fn foo() {
+    fn foo() { // src
     ^ Source
- /* ^src */
         fn in_foo() {
             bar();
         }
-    }
- /* ^dst */
+    } // dst
 }
 
 fn baz() {}

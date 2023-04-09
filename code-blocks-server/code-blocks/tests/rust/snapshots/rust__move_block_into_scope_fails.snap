@@ -9,12 +9,10 @@ input:
     }
 
     mod m2 {
-        fn bar() {}
-    /*  ^fail */
+        fn bar() {} // fail
     }
 
-    mod m3 {
-/*  ^src */
+    mod m3 { // src
         fn baz() {}
     }
 

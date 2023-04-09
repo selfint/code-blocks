@@ -4,8 +4,7 @@ expression: snapshot
 ---
 input:
 
-    mod m1 {
-/*  ^dst */
+    mod m1 { // dst
         fn foo() {}
     }
 
@@ -13,23 +12,20 @@ input:
         fn bar() {}
     }
 
-    mod m3 {
-/*  ^src */
+    mod m3 { // src
         fn baz() {}
     }
 
 ---
 output:
 
-    mod m1 {
+    mod m1 { // dst
     ^ Dest
-/*  ^dst */
         fn foo() {}
     }
 
-    mod m3 {
+    mod m3 { // src
     ^ Source
-/*  ^src */
         fn baz() {}
     }
 
