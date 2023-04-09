@@ -80,12 +80,6 @@ pub fn move_block<'tree>(
     let src_text = &text[src_block_range.clone()];
 
     let spaces = [
-        // src_head
-        //     .prev_sibling()
-        //     .map(|s| &text[s.end_byte()..src_head.start_byte()]),
-        // src_tail
-        //     .next_sibling()
-        //     .map(|s| &text[src_tail.end_byte()..s.start_byte()]),
         dst_head
             .prev_sibling()
             .map(|s| &text[s.end_byte()..dst_head.start_byte()]),
