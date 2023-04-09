@@ -238,3 +238,31 @@ snapshot!(
             main()
 "#
 );
+
+snapshot!(
+    test_move_nested_methods,
+    tree_sitter_python::language(),
+    python_queries(),
+    r#"
+from dataclasses import dataclass
+
+@dataclass
+class A:
+    def __init__(self) -> None:
+        pass
+
+    def bar(self) -> None: # dst
+        pass
+
+
+        def foo(self) -> None: # src
+            pass
+
+
+def main():
+    pass
+
+if __name__ == "__main__":
+    main()
+    "#
+);
