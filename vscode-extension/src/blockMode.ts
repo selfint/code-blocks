@@ -9,12 +9,14 @@ import { join } from "path";
 type Selections = [TargetLocation | undefined, BlockLocation, TargetLocation | undefined] | undefined;
 type TargetLocation = [BlockLocation, boolean];
 
-export function getBlockModeCommands(context: vscode.ExtensionContext): Map<string, () => unknown> {
+export function registerBlockModeCommands(context: vscode.ExtensionContext): void {
+  function registerCommand(name: string, callback: () => unknown): void {
+    vscode.commands.registerCommand(`codeBlocks.${name}`, callback);
+  }
+
   let blockMode: BlockMode | undefined = undefined;
 
-  const commands = new Map<string, () => unknown>();
-
-  commands.set("toggle", async () => {
+  registerCommand("toggle", async () => {
     if (blockMode === undefined) {
       blockMode = await BlockMode.build(context);
     } else {
@@ -22,23 +24,19 @@ export function getBlockModeCommands(context: vscode.ExtensionContext): Map<stri
       blockMode = undefined;
     }
   });
-
-  commands.set("moveUp", async () => await blockMode?.moveBlock("up", false));
-  commands.set("moveDown", async () => await blockMode?.moveBlock("down", false));
-  commands.set("moveUpForce", async () => await blockMode?.moveBlock("up", true));
-  commands.set("moveDownForce", async () => await blockMode?.moveBlock("down", true));
-  commands.set("navigateUp", () => blockMode?.navigateBlocks("up", false));
-  commands.set("navigateDown", () => blockMode?.navigateBlocks("down", false));
-  commands.set("navigateUpForce", () => blockMode?.navigateBlocks("up", true));
-  commands.set("navigateDownForce", () => blockMode?.navigateBlocks("down", true));
-  commands.set("selectBlock", () => blockMode?.selectBlock());
-
-  return commands;
+  registerCommand("moveUp", async () => await blockMode?.moveBlock("up", false));
+  registerCommand("moveDown", async () => await blockMode?.moveBlock("down", false));
+  registerCommand("moveUpForce", async () => await blockMode?.moveBlock("up", true));
+  registerCommand("moveDownForce", async () => await blockMode?.moveBlock("down", true));
+  registerCommand("navigateUp", () => blockMode?.navigateBlocks("up", false));
+  registerCommand("navigateDown", () => blockMode?.navigateBlocks("down", false));
+  registerCommand("navigateUpForce", () => blockMode?.navigateBlocks("up", true));
+  registerCommand("navigateDownForce", () => blockMode?.navigateBlocks("down", true));
+  registerCommand("selectBlock", () => blockMode?.selectBlock());
 }
 
 
 class BlockMode implements vscode.Disposable {
-
   selectedDecoration: vscode.TextEditorDecorationType;
   targetsDecoration: vscode.TextEditorDecorationType;
   forceTargetsDecoration: vscode.TextEditorDecorationType;
