@@ -8,6 +8,12 @@ import { join } from "path";
  */
 type Selections = [TargetLocation | undefined, BlockLocation, TargetLocation | undefined] | undefined;
 type TargetLocation = [BlockLocation, boolean];
+type ConfigColors = {
+  selected: string | undefined;
+  target: string | undefined;
+  forceTarget: string | undefined;
+};
+
 
 export function registerBlockModeCommands(context: vscode.ExtensionContext): void {
   function registerCommand(name: string, callback: () => unknown): void {
@@ -56,7 +62,7 @@ class BlockMode implements vscode.Disposable {
       return undefined;
     }
 
-    const configColors: { selected: string | undefined, target: string | undefined, forceTarget: string | undefined } | undefined = vscode.workspace
+    const configColors: ConfigColors | undefined = vscode.workspace
       .getConfiguration("codeBlocks")
       .get("colors");
 
@@ -77,7 +83,7 @@ class BlockMode implements vscode.Disposable {
     return blockMode;
   }
 
-  private constructor(parsersDir: string, codeBlocksCliPath: string, colors: { selected: string, target: string, forceTarget: string }) {
+  private constructor(parsersDir: string, codeBlocksCliPath: string, colors: ConfigColors) {
     this.parsersDir = parsersDir;
     this.codeBlocksCliPath = codeBlocksCliPath;
     this.selectedDecoration = vscode.window.createTextEditorDecorationType({
