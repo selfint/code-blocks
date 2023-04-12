@@ -1,5 +1,5 @@
 ---
-source: code-blocks-server/tests/test_api.rs
+source: code-blocks/tests/python/main.rs
 expression: snapshot
 ---
 input:
@@ -15,16 +15,14 @@ input:
             def __init__(self):
                 pass
         
-            #Vsrc
-            @staticmethod()
+            @staticmethod() # src
             def foo():
                 """method docstring"""
                 
             def bar():
                 ...
                 
-        #Vfail
-        def func():
+        def func(): # fail
             ...
 
 ---

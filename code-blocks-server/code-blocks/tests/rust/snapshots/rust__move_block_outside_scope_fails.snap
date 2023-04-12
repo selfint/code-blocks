@@ -5,12 +5,10 @@ expression: snapshot
 input:
 
     mod m {
-        fn foo() {}
-     /* ^src */
+        fn foo() {} // src
     }
 
-    fn baz() {}
-/*  ^fail */
+    fn baz() {} // fail
 
 ---
 output:

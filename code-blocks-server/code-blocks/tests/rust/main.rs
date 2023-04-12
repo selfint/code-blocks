@@ -83,15 +83,13 @@ snapshot! {
     tree_sitter_rust::language(),
     rust_queries(),
         r#"
-    fn foo() {
- /* ^src */
+    fn foo() { // src
         fn in_foo() {
             bar();
         }
     }
 
-    fn bar() {}
- /* ^dst */
+    fn bar() {} // dst
 "#
 }
 
@@ -101,15 +99,13 @@ snapshot!(
     rust_queries(),
     r#"
 mod m {
-    fn foo() {
- /* ^src */
+    fn foo() { // src
         fn in_foo() {
             bar();
         }
     }
 
-    fn bar() {}
- /* ^dst */
+    fn bar() {} // dst
 }
 
 fn baz() {}
@@ -122,11 +118,9 @@ snapshot!(
     rust_queries(),
     r#"
 mod m {
-    fn foo() {}
- /* ^src */
+    fn foo() {} // src
 
-    fn bar() {}}
- /* ^dst */
+    fn bar() {}} // dst
 
 fn baz() {}
 "#
@@ -139,12 +133,10 @@ snapshot!(
     preserve_scope,
     r#"
     mod m {
-        fn foo() {}
-     /* ^src */
+        fn foo() {} // src
     }
 
-    fn baz() {}
-/*  ^fail */
+    fn baz() {} // fail
 "#
 );
 
@@ -154,10 +146,8 @@ snapshot!(
     rust_queries(),
     preserve_scope,
     r#"
-    mod m {
-/*  ^fail */
-        fn foo() {}
-     /* ^src */
+    mod m { // fail
+        fn foo() {} // src
     }
 
     fn baz() {}
@@ -169,13 +159,11 @@ snapshot!(
     tree_sitter_rust::language(),
     rust_queries(),
     r#"
-    fn foo() {}
- /* ^dst */
+    fn foo() {} // dst
 
     fn bar() {}
 
-    fn baz() {}
- /* ^src */
+    fn baz() {} // src
 "#
 );
 
@@ -184,8 +172,7 @@ snapshot!(
     tree_sitter_rust::language(),
     rust_queries(),
     r#"
-    mod m1 {
-/*  ^src */
+    mod m1 { // src
         fn foo() {}
     }
 
@@ -193,8 +180,7 @@ snapshot!(
         fn bar() {}
     }
 
-    mod m3 {
-/*  ^dst */
+    mod m3 { // dst
         fn baz() {}
     }
 "#
@@ -205,8 +191,7 @@ snapshot!(
     tree_sitter_rust::language(),
     rust_queries(),
     r#"
-    mod m1 {
-/*  ^dst */
+    mod m1 { // dst
         fn foo() {}
     }
 
@@ -214,8 +199,7 @@ snapshot!(
         fn bar() {}
     }
 
-    mod m3 {
-/*  ^src */
+    mod m3 { // src
         fn baz() {}
     }
 "#
@@ -232,12 +216,10 @@ snapshot!(
     }
 
     mod m2 {
-        fn bar() {}
-    /*  ^fail */
+        fn bar() {} // fail
     }
 
-    mod m3 {
-/*  ^src */
+    mod m3 { // src
         fn baz() {}
     }
 "#
@@ -249,10 +231,8 @@ snapshot!(
     rust_queries(),
     r#"
     #[test]
-    fn foo() {}
-/*  ^src */
+    fn foo() {} // src
 
-    fn bar() {}
-/*  ^dst */
+    fn bar() {} // dst
 "#
 );

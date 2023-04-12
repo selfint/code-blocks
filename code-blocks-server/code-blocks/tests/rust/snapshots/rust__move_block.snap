@@ -4,15 +4,13 @@ expression: snapshot
 ---
 input:
 
-    fn foo() {
- /* ^src */
+    fn foo() { // src
         fn in_foo() {
             bar();
         }
     }
 
-    fn bar() {}
- /* ^dst */
+    fn bar() {} // dst
 
 ---
 output:
@@ -20,11 +18,9 @@ output:
     fn bar() {}
     ^ Dest
 
-    fn foo() {
+    fn foo() { // src
     ^ Source
- /* ^src */
         fn in_foo() {
             bar();
         }
-    }
- /* ^dst */
+    } // dst

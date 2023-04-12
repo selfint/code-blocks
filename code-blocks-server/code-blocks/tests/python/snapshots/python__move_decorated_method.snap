@@ -15,13 +15,11 @@ input:
             def __init__(self):
                 pass
         
-            #Vsrc
-            @staticmethod()
+            @staticmethod() # src
             def foo():
                 """method docstring"""
                 
-            #Vdst
-            def bar():
+            def bar(): # dst
                 ...
                 
         def func():
@@ -41,13 +39,11 @@ output:
             def __init__(self):
                 pass
         
-            #Vsrc
-            #Vdst
-            def bar():
+            def bar(): # dst
             ^ Dest
                 ...
                 
-            @staticmethod()
+            @staticmethod() # src
             ^ Source
             def foo():
                 """method docstring"""

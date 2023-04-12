@@ -5,21 +5,18 @@ expression: snapshot
 input:
 
     #[test]
-    fn foo() {}
-/*  ^src */
+    fn foo() {} // src
 
-    fn bar() {}
-/*  ^dst */
+    fn bar() {} // dst
 
 ---
 output:
 
-    /*  ^src */
+    // src
+    ^ Dest
 
     fn bar() {}
-    ^ Dest
 
     #[test]
     ^ Source
-    fn foo() {}
-/*  ^dst */
+    fn foo() {} // dst

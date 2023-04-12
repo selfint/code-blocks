@@ -1,0 +1,45 @@
+---
+source: code-blocks/tests/python/main.rs
+expression: snapshot
+---
+input:
+
+        from dataclasses import dataclass
+
+        @dataclass
+        class A: # dst
+            def __init__(self) -> None:
+                ...
+        
+            def foo(self) -> None: # src
+                ...
+        
+        
+        def main():
+            ...
+        
+        
+        if __name__ == "__main__":
+            main()
+
+---
+output:
+
+        from dataclasses import dataclass
+
+        @dataclass
+        class A: # dst
+        ^ Dest
+            def __init__(self) -> None:
+                ...
+        def foo(self) -> None: # src
+        ^ Source
+                ...
+        
+        
+        def main():
+            ...
+        
+        
+        if __name__ == "__main__":
+            main()

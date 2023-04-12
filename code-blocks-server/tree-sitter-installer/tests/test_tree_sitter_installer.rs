@@ -4,6 +4,7 @@ use tree_sitter_installer::{
 };
 
 #[test]
+#[ignore = "network access"]
 fn test_install_and_load_parser() {
     let download_cmd = "git clone https://github.com/tree-sitter/tree-sitter-rust";
     let language_fn_symbol = b"language";

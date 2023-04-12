@@ -1,6 +1,6 @@
 use code_blocks::{Block, BlockTree};
 
-use tree_sitter::{Language, Parser, Point, Tree};
+use tree_sitter::{Language, Parser, Tree};
 
 pub fn build_tree(text: &str, language: Language) -> Tree {
     let mut parser = Parser::new();
@@ -16,13 +16,13 @@ pub fn copy_item_above<'tree>(
     text: &str,
     trees: &Vec<BlockTree<'tree>>,
 ) -> Option<Block<'tree>> {
-    let pos = text
+    let row = text
         .lines()
         .enumerate()
-        .find_map(|(row, line)| line.find(ident).map(|col| Point::new(row - 1, col)))?;
+        .find_map(|(row, line)| line.find(ident).map(|_| row))?;
 
     for tree in trees {
-        if tree.block.tail().start_position() == pos {
+        if tree.block.tail().start_position().row == row {
             return Some(tree.block.clone());
         }
 
@@ -50,9 +50,9 @@ macro_rules! snapshot {
             let tree = build_tree(text, $lang);
 
             let items = code_blocks::get_query_subtrees(&queries, &tree, text);
-            let src_block = copy_item_above("^src", text, &items).expect("failed to find src item");
-            let dst_item = copy_item_above("^dst", text, &items);
-            let fail_item = copy_item_above("^fail", text, &items);
+            let src_block = copy_item_above("src", text, &items).expect("failed to find src item");
+            let dst_item = copy_item_above("dst", text, &items);
+            let fail_item = copy_item_above("fail", text, &items);
 
             let snapshot = if let Some(dst_item) = dst_item {
                 let (new_text, mut new_src_start, mut new_dst_start) =
@@ -106,9 +106,9 @@ macro_rules! snapshot {
             let tree = build_tree(text, $lang);
 
             let items = code_blocks::get_query_subtrees(&queries, &tree, text);
-            let src_block = copy_item_above("^src", text, &items).expect("failed to find src item");
-            let dst_item = copy_item_above("^dst", text, &items);
-            let fail_item = copy_item_above("^fail", text, &items);
+            let src_block = copy_item_above("src", text, &items).expect("failed to find src item");
+            let dst_item = copy_item_above("dst", text, &items);
+            let fail_item = copy_item_above("fail", text, &items);
 
             let snapshot = if let Some(dst_item) = dst_item {
                 let (new_text, mut new_src_start, mut new_dst_start) =

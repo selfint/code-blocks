@@ -1,11 +1,10 @@
 ---
-source: code-blocks-server/tests/test_api.rs
+source: code-blocks/tests/python/main.rs
 expression: snapshot
 ---
 input:
 
-        #Vsrc
-        @decor1
+        @decor1 # src
         @decor2
         class A:
             ...
@@ -13,8 +12,7 @@ input:
         class C:
             """class docstring"""
         
-            #Vfail
-            def __init__(self):
+            def __init__(self): # fail
                 pass
         
             @staticmethod()

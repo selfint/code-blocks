@@ -4,14 +4,12 @@ expression: snapshot
 ---
 input:
 
-        #Vsrc
-        @decor1
+        @decor1 # src
         @decor2
         class A:
             ...
            
-        #Vdst
-        class C:
+        class C: # dst
             """class docstring"""
         
             def __init__(self):
@@ -30,9 +28,7 @@ input:
 ---
 output:
 
-        #Vsrc
-        #Vdst
-        class C:
+        class C: # dst
         ^ Dest
             """class docstring"""
         
@@ -46,7 +42,7 @@ output:
             def bar():
                 ...
                 
-        @decor1
+        @decor1 # src
         ^ Source
         @decor2
         class A:
