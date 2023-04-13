@@ -57,6 +57,12 @@ class BlockMode implements vscode.Disposable {
     move: number,
   };
 
+  pendingEvents: {
+    block: (() => Promise<void>)[],
+    selection: (() => Promise<void>)[],
+    move: (() => Promise<void>)[]
+  };
+
   disposables: vscode.Disposable[];
 
   public static async build(context: vscode.ExtensionContext): Promise<BlockMode | undefined> {
@@ -123,9 +129,9 @@ class BlockMode implements vscode.Disposable {
         }
       }),
 
-      vscode.window.onDidChangeTextEditorSelection(async () => {
+      vscode.window.onDidChangeTextEditorSelection(async selection => {
         console.log("got selection changed event");
-        return await this.updateEditorSelections();
+        return await this.updateEditorSelections(selection.selections[0].active);
       })
     ];
 
@@ -134,6 +140,48 @@ class BlockMode implements vscode.Disposable {
       selection: 0,
       move: 0
     };
+
+    this.pendingEvents = {
+      block: [],
+      selection: [],
+      move: []
+    };
+  }
+
+  async registerEvent(
+    event: { kind: "block", text: string }
+      | { kind: "selection", position: vscode.Position }
+      | { kind: "move", direction: "up" | "down", force: boolean }
+  ): Promise<void> {
+    switch (event.kind) {
+      case "block":
+        this.pendingEvents.block.push(async () => await this.updateEditorBlocks(event.text));
+        break;
+
+      case "selection":
+        this.pendingEvents.selection.push(async () => await this.updateEditorSelections(event.position));
+        break;
+
+      case "move":
+        this.pendingEvents.move.push(async () => await this.moveBlock(event.direction, event.force));
+    }
+
+    if (this.pendingEvents.block.length > 0) {
+      const lastEvent = this.pendingEvents.block[this.pendingEvents.block.length - 1];
+      await lastEvent();
+      this.pendingEvents.block = [];
+    }
+
+    if (this.pendingEvents.selection.length > 0) {
+      const lastEvent = this.pendingEvents.selection[this.pendingEvents.selection.length - 1];
+      await lastEvent();
+      this.pendingEvents.selection = [];
+    }
+
+    for (const moveEvent of this.pendingEvents.move) {
+      await moveEvent();
+    }
+    this.pendingEvents.move = [];
   }
 
   async dispose(): Promise<void> {
@@ -152,7 +200,7 @@ class BlockMode implements vscode.Disposable {
 
     this.editorState = new EditorState(editor, wrapper);
     await this.updateEditorBlocks(editor.document.getText());
-    await this.updateEditorSelections();
+    await this.updateEditorSelections(editor.selection.active);
   }
 
   private closeEditor(): void {
@@ -182,7 +230,7 @@ class BlockMode implements vscode.Disposable {
     }
   }
 
-  private async updateEditorSelections(): Promise<void> {
+  private async updateEditorSelections(position: vscode.Position): Promise<void> {
     while (this.updatesLeft.block > 0 || this.updatesLeft.selection > 0) {
       await sleep(10);
     }
@@ -196,11 +244,11 @@ class BlockMode implements vscode.Disposable {
 
       this.editorState.selections = findSelections(
         this.editorState.blocks,
-        this.editorState.ofEditor.selection.active,
+        position,
       );
 
       this.highlightSelections();
-      this.focusSelection(this.editorState.ofEditor.selection.active);
+      this.focusSelection(position);
       console.log("done updateEditorSelections");
     } finally {
       this.updatesLeft.selection--;
@@ -328,7 +376,7 @@ class BlockMode implements vscode.Disposable {
       editor.selection = newSelection;
 
       await this.updateEditorBlocks(moveBlockResponse.text);
-      await this.updateEditorSelections();
+      await this.updateEditorSelections(newPosition);
     } finally {
       this.updatesLeft.move--;
     }
