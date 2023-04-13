@@ -54,6 +54,7 @@ class BlockMode implements vscode.Disposable {
   disposables: vscode.Disposable[];
 
   public static async build(context: vscode.ExtensionContext): Promise<BlockMode | undefined> {
+    console.log("build");
     const parsersDir = join(context.extensionPath, "parsers");
     const binDir = join(context.extensionPath, "bin");
     const codeBlocksCliPath = await core.getCodeBlocksCliPath(binDir);
@@ -84,6 +85,7 @@ class BlockMode implements vscode.Disposable {
   }
 
   private constructor(parsersDir: string, codeBlocksCliPath: string, colors: ConfigColors) {
+    console.log("constructor");
     this.parsersDir = parsersDir;
     this.codeBlocksCliPath = codeBlocksCliPath;
     this.selectedDecoration = vscode.window.createTextEditorDecorationType({
@@ -110,66 +112,69 @@ class BlockMode implements vscode.Disposable {
 
       vscode.workspace.onDidChangeTextDocument(async documentChanged => {
         if (this.editorState?.ofEditor.document === documentChanged.document) {
-          await this.updateEditorState();
+          await this.updateEditorState(documentChanged.document.getText());
         }
       }),
 
-      vscode.window.onDidChangeTextEditorSelection(selection => {
-        this.updateEditorSelections(selection.selections[0].active);
-      })
+      vscode.window.onDidChangeTextEditorSelection(() => this.updateEditorSelections())
     ];
   }
 
   async dispose(): Promise<void> {
+    console.log("dispose");
     await vscode.commands.executeCommand("setContext", "codeBlocks.blockMode", false);
     await Promise.all(this.disposables.map(async d => { await d.dispose(); }));
     this.closeEditor();
   }
 
   private async openEditor(editor: vscode.TextEditor): Promise<void> {
+    console.log("openEditor");
     const wrapper = await EditorCoreWrapper.build(editor, this.codeBlocksCliPath, this.parsersDir);
     if (wrapper === undefined) {
       return;
     }
 
     this.editorState = new EditorState(editor, wrapper);
-    await this.updateEditorState();
+    await this.updateEditorState(editor.document.getText());
+    this.updateEditorSelections();
   }
 
   private closeEditor(): void {
+    console.log("closeEditor");
     this.editorState?.ofEditor.setDecorations(this.selectedDecoration, []);
     this.editorState?.ofEditor.setDecorations(this.targetsDecoration, []);
     this.editorState?.ofEditor.setDecorations(this.forceTargetsDecoration, []);
     this.editorState = undefined;
   }
 
-  private async updateEditorState(): Promise<void> {
+  private async updateEditorState(text: string): Promise<void> {
+    console.log("updateEditorState");
     if (this.editorState === undefined) {
       return;
     }
 
-    this.editorState.blocks = await this.editorState.editorCoreWrapper.getBlocks(
-      this.editorState.ofEditor.document.getText()
-    );
-
-    this.updateEditorSelections(this.editorState.ofEditor.selection.active);
+    this.editorState.blocks = await this.editorState.editorCoreWrapper.getBlocks(text);
+    console.log("done updateEditorState");
   }
 
-  private updateEditorSelections(selection: vscode.Position): void {
+  private updateEditorSelections(): void {
+    console.log("updateEditorSelections");
     if (this.editorState === undefined) {
       return;
     }
 
     this.editorState.selections = findSelections(
       this.editorState.blocks,
-      selection,
+      this.editorState.ofEditor.selection.active,
     );
 
     this.highlightSelections();
     this.focusSelection(this.editorState.ofEditor.selection.active);
+    console.log("done updateEditorSelections");
   }
 
   private focusSelection(selection: vscode.Position): void {
+    console.log("focusSelection");
     if (this.editorState === undefined) {
       return;
     }
@@ -187,6 +192,7 @@ class BlockMode implements vscode.Disposable {
   }
 
   private highlightSelections(): void {
+    console.log("highlightSelections");
     if (this.editorState?.selections !== undefined) {
       const [prev, selected, next] = this.editorState.selections;
       const range = new vscode.Range(selected.startRow, selected.startCol, selected.endRow, selected.endCol);
@@ -222,6 +228,8 @@ class BlockMode implements vscode.Disposable {
   }
 
   public async moveBlock(direction: "up" | "down", force: boolean): Promise<void> {
+    console.log("moveBlock");
+
     if (this.editorState?.selections === undefined) {
       console.log("No selected block to move");
       return;
@@ -280,6 +288,8 @@ class BlockMode implements vscode.Disposable {
   }
 
   public navigateBlocks(direction: "up" | "down", force: boolean): void {
+    console.log("navigateBlocks");
+
     if (this.editorState?.selections === undefined) {
       return;
     }
@@ -312,6 +322,7 @@ class BlockMode implements vscode.Disposable {
   }
 
   public selectBlock(): void {
+    console.log("selectBlock");
     if (this.editorState?.selections === undefined) {
       return;
     }
@@ -328,8 +339,8 @@ class BlockMode implements vscode.Disposable {
 
 
 class EditorState {
-  ofEditor: vscode.TextEditor;
-  editorCoreWrapper: EditorCoreWrapper;
+  readonly ofEditor: vscode.TextEditor;
+  readonly editorCoreWrapper: EditorCoreWrapper;
   blocks: BlockLocationTree[] | undefined;
   selections: Selections = undefined;
 
@@ -452,3 +463,5 @@ function findSelections(blocks: BlockLocationTree[] | undefined, cursor: vscode.
 
   return findTreesSelections(blocks);
 }
+
+const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));

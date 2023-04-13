@@ -52,7 +52,7 @@ async function callCodeBlocksCli<Response>(
       const rl = createInterface(cli.stdout);
 
       rl.on("line", (line) => {
-        console.log(`Got line: ${line}`);
+        console.log(`Got line: ${line.substring(0, 200)}`);
         const parsedLine = JSON.parse(line) as JsonResult<Response> | undefined;
         if (parsedLine === undefined) {
           reject(`failed to parse line: ${line}`);
