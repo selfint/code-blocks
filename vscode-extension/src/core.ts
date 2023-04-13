@@ -127,7 +127,7 @@ export async function moveBlock(
           return undefined;
         }
       } else if (response.result !== differentScopeErrorMsg) {
-        await vscode.window.showErrorMessage(`Failed to move block: ${response.result}`);
+        void vscode.window.showErrorMessage(`Failed to move block: ${response.result}`);
       }
     }
   }

@@ -51,6 +51,12 @@ class BlockMode implements vscode.Disposable {
 
   editorState: EditorState | undefined = undefined;
 
+  updatesLeft: {
+    block: number,
+    selection: number,
+    move: number,
+  };
+
   disposables: vscode.Disposable[];
 
   public static async build(context: vscode.ExtensionContext): Promise<BlockMode | undefined> {
@@ -111,13 +117,23 @@ class BlockMode implements vscode.Disposable {
       }),
 
       vscode.workspace.onDidChangeTextDocument(async documentChanged => {
+        console.log(`got document changed event`);
         if (this.editorState?.ofEditor.document === documentChanged.document) {
-          await this.updateEditorState(documentChanged.document.getText());
+          await this.updateEditorBlocks(documentChanged.document.getText());
         }
       }),
 
-      vscode.window.onDidChangeTextEditorSelection(() => this.updateEditorSelections())
+      vscode.window.onDidChangeTextEditorSelection(async () => {
+        console.log("got selection changed event");
+        return await this.updateEditorSelections();
+      })
     ];
+
+    this.updatesLeft = {
+      block: 0,
+      selection: 0,
+      move: 0
+    };
   }
 
   async dispose(): Promise<void> {
@@ -135,8 +151,8 @@ class BlockMode implements vscode.Disposable {
     }
 
     this.editorState = new EditorState(editor, wrapper);
-    await this.updateEditorState(editor.document.getText());
-    this.updateEditorSelections();
+    await this.updateEditorBlocks(editor.document.getText());
+    await this.updateEditorSelections();
   }
 
   private closeEditor(): void {
@@ -147,30 +163,48 @@ class BlockMode implements vscode.Disposable {
     this.editorState = undefined;
   }
 
-  private async updateEditorState(text: string): Promise<void> {
-    console.log("updateEditorState");
-    if (this.editorState === undefined) {
-      return;
+  private async updateEditorBlocks(text: string): Promise<void> {
+    while (this.updatesLeft.block > 0) {
+      await sleep(10);
     }
 
-    this.editorState.blocks = await this.editorState.editorCoreWrapper.getBlocks(text);
-    console.log("done updateEditorState");
+    try {
+      this.updatesLeft.block++;
+      console.log("updateEditorState");
+      if (this.editorState === undefined) {
+        return;
+      }
+
+      this.editorState.blocks = await this.editorState.editorCoreWrapper.getBlocks(text);
+      console.log("done updateEditorState");
+    } finally {
+      this.updatesLeft.block--;
+    }
   }
 
-  private updateEditorSelections(): void {
-    console.log("updateEditorSelections");
-    if (this.editorState === undefined) {
-      return;
+  private async updateEditorSelections(): Promise<void> {
+    while (this.updatesLeft.block > 0 || this.updatesLeft.selection > 0) {
+      await sleep(10);
     }
 
-    this.editorState.selections = findSelections(
-      this.editorState.blocks,
-      this.editorState.ofEditor.selection.active,
-    );
+    try {
+      this.updatesLeft.selection++;
+      console.log("updateEditorSelections");
+      if (this.editorState === undefined) {
+        return;
+      }
 
-    this.highlightSelections();
-    this.focusSelection(this.editorState.ofEditor.selection.active);
-    console.log("done updateEditorSelections");
+      this.editorState.selections = findSelections(
+        this.editorState.blocks,
+        this.editorState.ofEditor.selection.active,
+      );
+
+      this.highlightSelections();
+      this.focusSelection(this.editorState.ofEditor.selection.active);
+      console.log("done updateEditorSelections");
+    } finally {
+      this.updatesLeft.selection--;
+    }
   }
 
   private focusSelection(selection: vscode.Position): void {
@@ -228,63 +262,76 @@ class BlockMode implements vscode.Disposable {
   }
 
   public async moveBlock(direction: "up" | "down", force: boolean): Promise<void> {
-    console.log("moveBlock");
-
-    if (this.editorState?.selections === undefined) {
-      console.log("No selected block to move");
-      return;
+    while (this.updatesLeft.move > 0 || this.updatesLeft.block > 0 || this.updatesLeft.selection > 0) {
+      await sleep(10);
     }
 
-    const editor = this.editorState.ofEditor;
-    const document = this.editorState.ofEditor.document;
-    const coreWrapper = this.editorState.editorCoreWrapper;
-    const [prev, selected, next] = this.editorState.selections;
+    try {
+      this.updatesLeft.move++;
 
-    let srcBlock: BlockLocation | undefined = undefined;
-    let dstBlock: BlockLocation | undefined = undefined;
-    switch (direction) {
-      case "up":
-        srcBlock = prev?.[0];
-        dstBlock = selected;
-        break;
+      console.log("moveBlock");
 
-      case "down":
-        srcBlock = selected;
-        dstBlock = next?.[0];
-        break;
+      if (this.editorState?.selections === undefined) {
+        console.log("No selected block to move");
+        return;
+      }
+
+      const editor = this.editorState.ofEditor;
+      const document = this.editorState.ofEditor.document;
+      const coreWrapper = this.editorState.editorCoreWrapper;
+      const [prev, selected, next] = this.editorState.selections;
+
+      let srcBlock: BlockLocation | undefined = undefined;
+      let dstBlock: BlockLocation | undefined = undefined;
+      switch (direction) {
+        case "up":
+          srcBlock = prev?.[0];
+          dstBlock = selected;
+          break;
+
+        case "down":
+          srcBlock = selected;
+          dstBlock = next?.[0];
+          break;
+      }
+
+      if (srcBlock === undefined || dstBlock === undefined) {
+        console.log("Missing move target block");
+        return;
+      }
+
+      const moveBlockResponse = await coreWrapper.moveBlock(
+        document.getText(), srcBlock, dstBlock, force
+      );
+
+      if (moveBlockResponse === undefined) {
+        console.log("Failed to move block");
+        return;
+      }
+
+      const edit = new vscode.WorkspaceEdit();
+      edit.replace(
+        editor.document.uri,
+        new vscode.Range(0, 0, document.lineCount, 0),
+        moveBlockResponse.text
+      );
+
+      const cursorByte = document.offsetAt(editor.selection.active);
+      const cursorSelectedBlockOffset = cursorByte - selected.startByte;
+
+      await vscode.workspace.applyEdit(edit);
+
+      const newOffset = direction === "down" ? moveBlockResponse.newSrcStart : moveBlockResponse.newDstStart;
+      const newPosition = document.positionAt(newOffset + cursorSelectedBlockOffset);
+      const newSelection = new vscode.Selection(newPosition, newPosition);
+
+      editor.selection = newSelection;
+
+      await this.updateEditorBlocks(moveBlockResponse.text);
+      await this.updateEditorSelections();
+    } finally {
+      this.updatesLeft.move--;
     }
-
-    if (srcBlock === undefined || dstBlock === undefined) {
-      console.log("Missing move target block");
-      return;
-    }
-
-    const moveBlockResponse = await coreWrapper.moveBlock(
-      document.getText(), srcBlock, dstBlock, force
-    );
-
-    if (moveBlockResponse === undefined) {
-      console.log("Failed to move block");
-      return;
-    }
-
-    const edit = new vscode.WorkspaceEdit();
-    edit.replace(
-      editor.document.uri,
-      new vscode.Range(0, 0, document.lineCount, 0),
-      moveBlockResponse.text
-    );
-
-    const cursorByte = document.offsetAt(editor.selection.active);
-    const cursorSelectedBlockOffset = cursorByte - selected.startByte;
-
-    await vscode.workspace.applyEdit(edit);
-
-    const newOffset = direction === "down" ? moveBlockResponse.newSrcStart : moveBlockResponse.newDstStart;
-    const newPosition = document.positionAt(newOffset + cursorSelectedBlockOffset);
-    const newSelection = new vscode.Selection(newPosition, newPosition);
-
-    editor.selection = newSelection;
   }
 
   public navigateBlocks(direction: "up" | "down", force: boolean): void {
