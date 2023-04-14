@@ -201,11 +201,6 @@ class BlockMode implements vscode.Disposable {
       console.log("got valid selection blocks");
     }
 
-    if (this.editorState.selectionVersion === version) {
-      console.log("skipping duplicate selection event");
-      return;
-    }
-
     const selections = findSelections(this.editorState.blocks, position);
     this.editorState.selections = selections;
     this.editorState.selectionVersion = version;
@@ -402,6 +397,16 @@ class BlockMode implements vscode.Disposable {
     console.log("selectBlock");
     if (this.editorState?.selections === undefined) {
       return;
+    }
+
+    if (
+      this.editorState.selectionVersion === undefined
+      || this.editorState.selectionVersion < this.editorState.ofEditor.document.version
+    ) {
+      console.log("got stale selection version");
+      return;
+    } else {
+      console.log("got valid selection version");
     }
 
     const [, selectedBlock,] = this.editorState.selections;
