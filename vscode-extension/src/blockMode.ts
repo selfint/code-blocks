@@ -154,7 +154,7 @@ class BlockMode implements vscode.Disposable {
   }
 
   private async updateEditorBlocks(text: string, version: number): Promise<void> {
-    console.log("updateEditorState");
+    console.log(`updateEditorState, version: ${version}`);
     if (this.editorState === undefined) {
       return;
     }
@@ -172,8 +172,13 @@ class BlockMode implements vscode.Disposable {
     }
 
     const wrapper = this.editorState.editorCoreWrapper;
-    this.editorState.blocks = await wrapper.getBlocks(text);
+    const oldBlockVersion = this.editorState.blockVersion;
     this.editorState.blockVersion = version;
+    try {
+      this.editorState.blocks = await wrapper.getBlocks(text);
+    } catch (e) {
+      this.editorState.blockVersion = oldBlockVersion;
+    }
 
     this.updateEditorSelections(this.editorState.ofEditor.selection.active, version);
 
@@ -181,7 +186,7 @@ class BlockMode implements vscode.Disposable {
   }
 
   private updateEditorSelections(position: vscode.Position | undefined, version: number): void {
-    console.log("updateEditorSelections");
+    console.log(`updateEditorSelections, version: ${version}`);
     if (this.editorState === undefined || position === undefined) {
       return;
     }
@@ -271,7 +276,7 @@ class BlockMode implements vscode.Disposable {
   }
 
   async _moveBlock(direction: "up" | "down", force: boolean, version: number): Promise<void> {
-    console.log("moveBlock");
+    console.log(`moveBlock, version: ${version}`);
 
     if (this.editorState === undefined) {
       return;
