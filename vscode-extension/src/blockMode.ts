@@ -2,6 +2,7 @@ import * as core from "./core";
 import * as vscode from "vscode";
 import { BlockLocation, BlockLocationTree, GetSubtreesArgs, GetSubtreesResponse, MoveBlockArgs, MoveBlockResponse } from "./codeBlocksWrapper/types";
 import { join } from "path";
+import { dir } from "console";
 
 /**
  * Either a selected block and possible siblings OR no selections.
@@ -114,14 +115,14 @@ class BlockMode implements vscode.Disposable {
         if (this.editorState?.ofEditor.document === documentChanged.document) {
           const v = documentChanged.document.version;
           console.log(`got document changed event, version: ${v}`);
-          await this.updateEditorBlocks(documentChanged.document.getText());
+          await this.updateEditorBlocks(documentChanged.document.getText(), v);
         }
       }),
 
       vscode.window.onDidChangeTextEditorSelection(selection => {
         const v = selection.textEditor.document.version;
         console.log(`got selection changed event, version: ${v}`);
-        return this.updateEditorSelections(selection.selections[0].active);
+        return this.updateEditorSelections(selection.selections[0].active, v);
       })
     ];
   }
@@ -141,8 +142,8 @@ class BlockMode implements vscode.Disposable {
     }
 
     this.editorState = new EditorState(editor, wrapper);
-    await this.updateEditorBlocks(editor.document.getText());
-    this.updateEditorSelections(editor.selection.active);
+    await this.updateEditorBlocks(editor.document.getText(), editor.document.version);
+    this.updateEditorSelections(editor.selection.active, editor.document.version);
   }
 
   private closeEditor(): void {
@@ -153,26 +154,61 @@ class BlockMode implements vscode.Disposable {
     this.editorState = undefined;
   }
 
-  private async updateEditorBlocks(text: string): Promise<void> {
+  private async updateEditorBlocks(text: string, version: number): Promise<void> {
     console.log("updateEditorState");
     if (this.editorState === undefined) {
       return;
     }
 
+    if (this.editorState.blockVersion !== undefined && this.editorState.blockVersion >= version) {
+      console.log("skipping old block event");
+      return;
+    }
+
+    if (version <= this.editorState.staleVersion) {
+      console.log("got stale block event");
+      return;
+    } else {
+      console.log("got valid block event");
+    }
+
     const wrapper = this.editorState.editorCoreWrapper;
     this.editorState.blocks = await wrapper.getBlocks(text);
+    this.editorState.blockVersion = version;
+
+    this.updateEditorSelections(this.editorState.ofEditor.selection.active, version);
 
     console.log("done updateEditorState");
   }
 
-  private updateEditorSelections(position: vscode.Position | undefined): void {
+  private updateEditorSelections(position: vscode.Position | undefined, version: number): void {
     console.log("updateEditorSelections");
     if (this.editorState === undefined || position === undefined) {
       return;
     }
 
+    if (version <= this.editorState.staleVersion) {
+      console.log("got stale selection event");
+      return;
+    } else {
+      console.log("got valid selection event");
+    }
+
+    if (this.editorState.blockVersion === undefined || this.editorState.blockVersion < version) {
+      console.log("got stale selection blocks");
+      return;
+    } else {
+      console.log("got valid selection blocks");
+    }
+
+    if (this.editorState.selectionVersion === version) {
+      console.log("skipping duplicate selection event");
+      return;
+    }
+
     const selections = findSelections(this.editorState.blocks, position);
     this.editorState.selections = selections;
+    this.editorState.selectionVersion = version;
 
     this.highlightSelections(selections);
     console.log("done updateEditorSelections");
@@ -232,10 +268,24 @@ class BlockMode implements vscode.Disposable {
     }
   }
 
-  public async moveBlock(direction: "up" | "down", force: boolean): Promise<void> {
+  async moveBlock(direction: "up" | "down", force: boolean): Promise<void> {
     console.log("moveBlock");
 
-    if (this.editorState?.selections === undefined) {
+    if (this.editorState === undefined) {
+      return;
+    }
+
+    if (
+      this.editorState.selectionVersion === undefined
+      || this.editorState.selectionVersion < this.editorState.ofEditor.document.version
+    ) {
+      console.log("got stale selection version");
+      return;
+    } else {
+      console.log("got valid selection version");
+    }
+
+    if (this.editorState.selections === undefined) {
       console.log("No selected block to move");
       return;
     }
@@ -283,18 +333,25 @@ class BlockMode implements vscode.Disposable {
     const cursorByte = document.offsetAt(editor.selection.active);
     const cursorSelectedBlockOffset = cursorByte - selected.startByte;
 
+    const oldStaleVersion = this.editorState.staleVersion;
+    this.editorState.staleVersion = document.version;
     await vscode.workspace.applyEdit(edit);
+    // rollback stale version if edit failed, and exit
+    if (document.version === this.editorState.staleVersion) {
+      this.editorState.staleVersion = oldStaleVersion;
+      return;
+    }
 
     const newOffset = direction === "down" ? moveBlockResponse.newSrcStart : moveBlockResponse.newDstStart;
-    const newPosition = document.positionAt(newOffset + cursorSelectedBlockOffset);
+    const newPosition = document.positionAt(newOffset + cursorSelectedBlockOffset - cursorSelectedBlockOffset);
     const newSelection = new vscode.Selection(newPosition, newPosition);
 
     editor.selection = newSelection;
 
+    await this.updateEditorBlocks(moveBlockResponse.text, document.version);
+    this.updateEditorSelections(newPosition, document.version);
     this.focusSelection(newPosition);
-
-    // await this.updateEditorBlocks(moveBlockResponse.text);
-    // await this.updateEditorSelections(newPosition);
+    console.log("done moveBlock");
   }
 
   public navigateBlocks(direction: "up" | "down", force: boolean): void {
@@ -302,6 +359,16 @@ class BlockMode implements vscode.Disposable {
 
     if (this.editorState?.selections === undefined) {
       return;
+    }
+
+    if (
+      this.editorState.selectionVersion === undefined
+      || this.editorState.selectionVersion < this.editorState.ofEditor.document.version
+    ) {
+      console.log("got stale selection version");
+      return;
+    } else {
+      console.log("got valid selection version");
     }
 
     const [prev, , next] = this.editorState.selections;
@@ -353,10 +420,16 @@ class EditorState {
   readonly editorCoreWrapper: EditorCoreWrapper;
   blocks: BlockLocationTree[] | undefined;
   selections: Selections = undefined;
+  staleVersion: number;
+  blockVersion: number | undefined;
+  selectionVersion: number | undefined;
 
   constructor(editor: vscode.TextEditor, editorCoreWrapper: EditorCoreWrapper) {
     this.ofEditor = editor;
     this.editorCoreWrapper = editorCoreWrapper;
+    this.staleVersion = editor.document.version - 1;
+    this.blockVersion = undefined;
+    this.selectionVersion = undefined;
   }
 }
 
