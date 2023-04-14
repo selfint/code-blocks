@@ -369,6 +369,7 @@ class BlockMode implements vscode.Disposable {
     const newVersion = document.version;
     await this.updateEditorBlocks(moveBlockResponse.text, newVersion);
     this.updateEditorSelections(newPosition, newVersion);
+
     this.focusSelection(newPosition);
 
     console.log("done moveBlock");
