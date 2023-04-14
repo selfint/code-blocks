@@ -222,7 +222,7 @@ class BlockMode implements vscode.Disposable {
 
     this.editorState.ofEditor.revealRange(
       new vscode.Range(selection, selection),
-      vscode.TextEditorRevealType.Default
+      vscode.TextEditorRevealType.InCenterIfOutsideViewport
     );
   }
 
@@ -263,15 +263,30 @@ class BlockMode implements vscode.Disposable {
   }
 
   async moveBlock(direction: "up" | "down", force: boolean): Promise<void> {
+    if (this.editorState === undefined) {
+      return;
+    }
+
+    await this._moveBlock(direction, force, this.editorState.ofEditor.document.version);
+  }
+
+  async _moveBlock(direction: "up" | "down", force: boolean, version: number): Promise<void> {
     console.log("moveBlock");
 
     if (this.editorState === undefined) {
       return;
     }
 
+    if (version <= this.editorState.staleVersion) {
+      console.log("got stale move event");
+      return;
+    } else {
+      console.log("got valid move event");
+    }
+
     if (
       this.editorState.selectionVersion === undefined
-      || this.editorState.selectionVersion < this.editorState.ofEditor.document.version
+      || this.editorState.selectionVersion < version
     ) {
       console.log("got stale selection version");
       return;
@@ -308,12 +323,16 @@ class BlockMode implements vscode.Disposable {
       return;
     }
 
+    const oldStaleVersion = this.editorState.staleVersion;
+    this.editorState.staleVersion = version;
+
     const moveBlockResponse = await coreWrapper.moveBlock(
       document.getText(), srcBlock, dstBlock, force
     );
 
     if (moveBlockResponse === undefined) {
       console.log("Failed to move block");
+      this.editorState.staleVersion = oldStaleVersion;
       return;
     }
 
@@ -327,8 +346,8 @@ class BlockMode implements vscode.Disposable {
     const cursorByte = document.offsetAt(editor.selection.active);
     const cursorSelectedBlockOffset = cursorByte - selected.startByte;
 
-    const oldStaleVersion = this.editorState.staleVersion;
-    this.editorState.staleVersion = document.version;
+    console.log(`cursorSelectedBlockOffset: ${cursorSelectedBlockOffset}`);
+
     await vscode.workspace.applyEdit(edit);
     // rollback stale version if edit failed, and exit
     if (document.version === this.editorState.staleVersion) {
@@ -337,14 +356,16 @@ class BlockMode implements vscode.Disposable {
     }
 
     const newOffset = direction === "down" ? moveBlockResponse.newSrcStart : moveBlockResponse.newDstStart;
-    const newPosition = document.positionAt(newOffset + cursorSelectedBlockOffset - cursorSelectedBlockOffset);
+    const newPosition = document.positionAt(newOffset + cursorSelectedBlockOffset);
     const newSelection = new vscode.Selection(newPosition, newPosition);
 
     editor.selection = newSelection;
 
-    await this.updateEditorBlocks(moveBlockResponse.text, document.version);
-    this.updateEditorSelections(newPosition, document.version);
+    const newVersion = document.version;
+    await this.updateEditorBlocks(moveBlockResponse.text, newVersion);
+    this.updateEditorSelections(newPosition, newVersion);
     this.focusSelection(newPosition);
+
     console.log("done moveBlock");
   }
 
