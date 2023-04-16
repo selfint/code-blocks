@@ -2,7 +2,6 @@ import * as core from "./core";
 import * as vscode from "vscode";
 import { BlockLocation, BlockLocationTree, GetSubtreesArgs, GetSubtreesResponse, MoveBlockArgs, MoveBlockResponse } from "./codeBlocksWrapper/types";
 import { join } from "path";
-import { dir } from "console";
 
 /**
  * Either a selected block and possible siblings OR no selections.
