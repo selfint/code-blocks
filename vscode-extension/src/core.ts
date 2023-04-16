@@ -78,7 +78,7 @@ export async function getBlocks(
   codeBlocksCliPath: string,
   args: GetSubtreesArgs,
 ): Promise<GetSubtreesResponse | undefined> {
-  console.log(`Get subtrees args: ${JSON.stringify(args)}`);
+  console.log(`Get subtrees args: ${JSON.stringify(args).substring(0, 200)}`);
 
   const response = await codeBlocksCliClient.getSubtrees(codeBlocksCliPath, args);
 
@@ -97,7 +97,7 @@ export async function moveBlock(
   args: MoveBlockArgs,
   allowRetry = true,
 ): Promise<MoveBlockResponse | undefined> {
-  console.log(`Move block args: ${JSON.stringify(args)}`);
+  console.log(`Move block args: ${JSON.stringify(args).substring(0, 200)}`);
 
   const response = await codeBlocksCliClient.moveBlock(codeBlocksCliPath, args);
   const differentScopeErrorMsg =
@@ -127,7 +127,7 @@ export async function moveBlock(
           return undefined;
         }
       } else if (response.result !== differentScopeErrorMsg) {
-        await vscode.window.showErrorMessage(`Failed to move block: ${response.result}`);
+        void vscode.window.showErrorMessage(`Failed to move block: ${response.result}`);
       }
     }
   }
