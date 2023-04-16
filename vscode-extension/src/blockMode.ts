@@ -172,13 +172,8 @@ class BlockMode implements vscode.Disposable {
     }
 
     const wrapper = this.editorState.editorCoreWrapper;
-    const oldBlockVersion = this.editorState.blockVersion;
+    this.editorState.blocks = await wrapper.getBlocks(text);
     this.editorState.blockVersion = version;
-    try {
-      this.editorState.blocks = await wrapper.getBlocks(text);
-    } catch (e) {
-      this.editorState.blockVersion = oldBlockVersion;
-    }
 
     this.updateEditorSelections(this.editorState.ofEditor.selection.active, version);
 
@@ -187,6 +182,7 @@ class BlockMode implements vscode.Disposable {
 
   private updateEditorSelections(position: vscode.Position | undefined, version: number): void {
     console.log(`updateEditorSelections, version: ${version}`);
+
     if (this.editorState === undefined || position === undefined) {
       return;
     }
@@ -232,7 +228,7 @@ class BlockMode implements vscode.Disposable {
 
     this.editorState.ofEditor.revealRange(
       new vscode.Range(selection, selection),
-      vscode.TextEditorRevealType.InCenterIfOutsideViewport
+      vscode.TextEditorRevealType.Default
     );
   }
 
@@ -367,12 +363,9 @@ class BlockMode implements vscode.Disposable {
 
     editor.selection = newSelection;
 
-    const newVersion = document.version;
-    await this.updateEditorBlocks(moveBlockResponse.text, newVersion);
-    this.updateEditorSelections(newPosition, newVersion);
-
+    await this.updateEditorBlocks(moveBlockResponse.text, document.version);
+    this.updateEditorSelections(newPosition, document.version);
     this.focusSelection(newPosition);
-
     console.log("done moveBlock");
   }
 
