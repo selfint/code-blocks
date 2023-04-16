@@ -154,12 +154,12 @@ class BlockMode implements vscode.Disposable {
   }
 
   private async updateEditorBlocks(text: string, version: number): Promise<void> {
-    console.log("updateEditorState");
+    console.log(`updateEditorState, version: ${version}`);
     if (this.editorState === undefined) {
       return;
     }
 
-    if (this.editorState.blockVersion !== undefined && this.editorState.blockVersion >= version) {
+    if (this.editorState.ofEditor.document.version > version) {
       console.log("skipping old block event");
       return;
     }
@@ -181,13 +181,19 @@ class BlockMode implements vscode.Disposable {
   }
 
   private updateEditorSelections(position: vscode.Position | undefined, version: number): void {
-    console.log("updateEditorSelections");
+    console.log(`updateEditorSelections, version: ${version}`);
+
     if (this.editorState === undefined || position === undefined) {
       return;
     }
 
+    if (this.editorState.ofEditor.document.version > version) {
+      console.log("skipping old selection event");
+      return;
+    }
+
     if (version <= this.editorState.staleVersion) {
-      console.log("got stale selection event");
+      console.log(`got stale selection event, version: ${version} stale: ${this.editorState.staleVersion}`);
       return;
     } else {
       console.log("got valid selection event");
@@ -263,17 +269,30 @@ class BlockMode implements vscode.Disposable {
   }
 
   async moveBlock(direction: "up" | "down", force: boolean): Promise<void> {
-    console.log("moveBlock");
-
     if (this.editorState === undefined) {
       return;
     }
 
-    if (
-      this.editorState.selectionVersion === undefined
-      || this.editorState.selectionVersion < this.editorState.ofEditor.document.version
-    ) {
-      console.log("got stale selection version");
+    const editor = this.editorState.ofEditor;
+    const document = this.editorState.ofEditor.document;
+    const coreWrapper = this.editorState.editorCoreWrapper;
+    console.log(`moveBlock, version: ${document.version}`);
+
+    if (document.version <= this.editorState.staleVersion) {
+      console.log("got stale move event");
+      return;
+    }
+
+
+    if (this.editorState.blockVersion !== document.version) {
+      console.log("got invalid block version");
+      return;
+    } else {
+      console.log("got valid block version");
+    }
+
+    if (this.editorState.selectionVersion !== document.version) {
+      console.log("got invalid selection version");
       return;
     } else {
       console.log("got valid selection version");
@@ -284,9 +303,6 @@ class BlockMode implements vscode.Disposable {
       return;
     }
 
-    const editor = this.editorState.ofEditor;
-    const document = this.editorState.ofEditor.document;
-    const coreWrapper = this.editorState.editorCoreWrapper;
     const [prev, selected, next] = this.editorState.selections;
 
     let srcBlock: BlockLocation | undefined = undefined;
@@ -308,12 +324,22 @@ class BlockMode implements vscode.Disposable {
       return;
     }
 
+    const cursorByte = document.offsetAt(editor.selection.active);
+    const cursorSelectedBlockOffset = cursorByte - selected.startByte;
+
+    // if something fails we will revert the stale version to the current stale version
+    const oldStaleVersion = this.editorState.staleVersion;
+
+    this.editorState.staleVersion = document.version;
+
     const moveBlockResponse = await coreWrapper.moveBlock(
       document.getText(), srcBlock, dstBlock, force
     );
 
+    // rollback stale version if move failed, and exit
     if (moveBlockResponse === undefined) {
       console.log("Failed to move block");
+      this.editorState.staleVersion = oldStaleVersion;
       return;
     }
 
@@ -324,11 +350,6 @@ class BlockMode implements vscode.Disposable {
       moveBlockResponse.text
     );
 
-    const cursorByte = document.offsetAt(editor.selection.active);
-    const cursorSelectedBlockOffset = cursorByte - selected.startByte;
-
-    const oldStaleVersion = this.editorState.staleVersion;
-    this.editorState.staleVersion = document.version;
     await vscode.workspace.applyEdit(edit);
     // rollback stale version if edit failed, and exit
     if (document.version === this.editorState.staleVersion) {
@@ -337,7 +358,7 @@ class BlockMode implements vscode.Disposable {
     }
 
     const newOffset = direction === "down" ? moveBlockResponse.newSrcStart : moveBlockResponse.newDstStart;
-    const newPosition = document.positionAt(newOffset + cursorSelectedBlockOffset - cursorSelectedBlockOffset);
+    const newPosition = document.positionAt(newOffset + cursorSelectedBlockOffset);
     const newSelection = new vscode.Selection(newPosition, newPosition);
 
     editor.selection = newSelection;
@@ -422,11 +443,22 @@ class BlockMode implements vscode.Disposable {
 class EditorState {
   readonly ofEditor: vscode.TextEditor;
   readonly editorCoreWrapper: EditorCoreWrapper;
+
   blocks: BlockLocationTree[] | undefined;
   selections: Selections = undefined;
-  staleVersion: number;
   blockVersion: number | undefined;
   selectionVersion: number | undefined;
+
+  /** mark stale version to prevent other modifications before the move finishes
+   *
+   * Since JavaScript doesn't have a notion of "locking" memory across `async`
+   * calls, we need this hack to ensure no other modification is done to
+   * the editor while we are performing the move operation.
+   *
+   * And because the move operation has `async` calls inside it, without
+   * this "lock" we would get undefined behavior.
+  */
+  staleVersion: number;
 
   constructor(editor: vscode.TextEditor, editorCoreWrapper: EditorCoreWrapper) {
     this.ofEditor = editor;
