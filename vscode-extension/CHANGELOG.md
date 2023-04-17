@@ -7,7 +7,7 @@
 ## Fixed
 
 - Moving blocks rapidly is unstable.
-- Python: Force move erros.
+- Python: Force move can cause syntax errors.
 
 # 0.5.1
 
