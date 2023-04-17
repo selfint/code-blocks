@@ -6,7 +6,7 @@
 
 ## Fixed
 
-- Moving blocks rapidly unstable.
+- Moving blocks rapidly is unstable.
 - Python: Force move erros.
 
 # 0.5.1
