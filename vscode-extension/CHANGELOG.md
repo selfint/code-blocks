@@ -1,5 +1,14 @@
 # Release Notes
 
+# 0.5.2
+
+## New
+
+## Fixed
+
+- Moving blocks rapidly unstable.
+- Python: Force move erros.
+
 # 0.5.1
 
 ## New
