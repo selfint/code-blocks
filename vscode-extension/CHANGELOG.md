@@ -6,7 +6,7 @@
 
 ## Fixed
 
-- Moving blocks rapidly is unstable.
+- Block Mode: Moving blocks rapidly is unstable.
 - Python: Force move can cause syntax errors.
 
 # 0.5.1
