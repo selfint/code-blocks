@@ -351,10 +351,9 @@ class BlockMode implements vscode.Disposable {
     );
 
     await vscode.workspace.applyEdit(edit);
-    // rollback stale version if edit failed, and exit
+    // rollback stale version if edit made no changes
     if (document.version === this.editorState.staleVersion) {
       this.editorState.staleVersion = oldStaleVersion;
-      return;
     }
 
     const newOffset = direction === "down" ? moveBlockResponse.newSrcStart : moveBlockResponse.newDstStart;
