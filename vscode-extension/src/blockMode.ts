@@ -21,13 +21,24 @@ export function registerBlockModeCommands(context: vscode.ExtensionContext): voi
   }
 
   let blockMode: BlockMode | undefined = undefined;
+  let beingToggled = false;
 
   registerCommand("toggle", async () => {
-    if (blockMode === undefined) {
-      blockMode = await BlockMode.build(context);
-    } else {
-      await blockMode.dispose();
-      blockMode = undefined;
+    if (beingToggled) {
+      return;
+    }
+
+    try {
+      beingToggled = true;
+
+      if (blockMode === undefined) {
+        blockMode = await BlockMode.build(context);
+      } else {
+        await blockMode.dispose();
+        blockMode = undefined;
+      }
+    } finally {
+      beingToggled = false;
     }
   });
   registerCommand("moveUp", async () => await blockMode?.moveBlock("up", false));
