@@ -16,7 +16,7 @@ See the [vscode extension README](./vscode-extension/README.md) for more info.
 
 #### Block mode
 
-![vscode-example-react](./vscode-extension/assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20tsx%201.gif)
+![vscode-example-react](./vscode-extension/assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20react%201.gif)
 
 > Quickly change UI layout
 
