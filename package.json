@@ -14,11 +14,11 @@
   },
   "homepage": "https://github.com/selfint/code-blocks#readme",
   "icon": "./assets/extension-logo.png",
-  "version": "0.5.3",
+  "version": "0.6.0",
   "private": true,
   "license": "MIT",
   "engines": {
-    "vscode": "^1.46.0"
+    "vscode": "^1.79.0"
   },
   "categories": [
     "Visualization",
@@ -261,25 +261,29 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "yarn run compile && yarn run lint",
+    "test": "mocha ./out/test/runTest.js",
     "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
     "esbuild": "yarn run esbuild-base --sourcemap",
     "esbuild-watch": "yarn run esbuild-base --sourcemap --watch",
     "lint": "tsc --noEmit && eslint src --ext ts"
   },
   "devDependencies": {
-    "@types/glob": "^7.1.3",
+    "@types/glob": "^8.0.1",
+    "@types/mocha": "^10.0.1",
     "@types/node": "16.x",
-    "@types/vscode": "^1.46.0",
-    "@types/which": "^2.0.1",
-    "@typescript-eslint/eslint-plugin": "^5.54.0",
-    "@typescript-eslint/parser": "^5.54.0",
-    "esbuild": "^0.17.10",
-    "eslint": "^8.35.0",
-    "eslint-plugin-github": "^4.6.1",
-    "glob": "^7.1.6",
-    "prettier": "^2.2.1",
-    "typescript": "^4.9.5",
-    "vscode-test": "^1.5.0"
+    "@types/tar": "^6.1.5",
+    "@types/vscode": "^1.79.0",
+    "@typescript-eslint/eslint-plugin": "^5.49.0",
+    "@typescript-eslint/parser": "^5.49.0",
+    "@vscode/test-electron": "^2.2.2",
+    "esbuild": "^0.18.4",
+    "eslint": "^8.33.0",
+    "glob": "^8.1.0",
+    "mocha": "^10.2.0",
+    "typescript": "^4.9.4"
   },
-  "dependencies": {}
+  "dependencies": {
+    "tar": "^6.1.15",
+    "web-tree-sitter": "^0.20.8"
+  }
 }

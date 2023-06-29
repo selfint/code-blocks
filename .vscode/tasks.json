@@ -8,7 +8,7 @@
 			"script": "install:all",
 			"label": "install-extension-deps",
 			"options": {
-				"cwd": "${workspaceFolder}${pathSeparator}vscode-extension"
+				"cwd": "${workspaceFolder}"
 			}
 		},
 		{
@@ -23,11 +23,10 @@
 				"isDefault": true
 			},
 			"options": {
-				"cwd": "${workspaceFolder}${pathSeparator}vscode-extension"
+				"cwd": "${workspaceFolder}"
 			},
 			"dependsOn": [
 				"webview-ui",
-				// "code-blocks-server",
 			]
 		},
 		{
@@ -35,42 +34,8 @@
 			"script": "build",
 			"label": "webview-ui",
 			"options": {
-				"cwd": "${workspaceFolder}${pathSeparator}vscode-extension${pathSeparator}webview-ui"
+				"cwd": "${workspaceFolder}${pathSeparator}webview-ui"
 			},
-		},
-		{
-			"label": "code-blocks-server",
-			"type": "shell",
-			"command": "cargo",
-			"args": [
-				"run",
-				"--release",
-				"--bin=code-blocks-rest",
-				"--features=rest"
-			],
-			"options": {
-				"cwd": "${workspaceFolder}${pathSeparator}code-blocks-server${pathSeparator}code-blocks-server"
-			},
-			"isBackground": true,
-			"problemMatcher": {
-				"pattern": {
-					"regexp": "(.*)",
-					"file": 1,
-					"location": 1,
-					"severity": 1,
-					"code": 1,
-					"message": 1
-				},
-				"background": {
-					"activeOnStart": true,
-					"beginsPattern": {
-						"regexp": ".*"
-					},
-					"endsPattern": {
-						"regexp": ".*"
-					},
-				}
-			}
 		}
 	]
 }

@@ -1,60 +1,68 @@
 name: vscode-extension CI/CD
 
 on:
-  push:
-    branches:
-      - main
-    tags:
-      - "vscode-extension-v*.*.*"
-  pull_request:
-    branches:
-      - main
+    push:
+        branches:
+            - main
+        tags:
+            - "v*.*.*"
+    pull_request:
+        branches:
+            - main
 
 permissions:
-  contents: write
-
-defaults:
-  run:
-    working-directory: vscode-extension
+    contents: write
 
 jobs:
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set Node.js 19.x
-        uses: actions/setup-node@v3
-        with:
-          node-version: 19.x
-      - name: Install extension dependencies
-        run: yarn run install:all
-      - name: Test
-        run: yarn run pretest
+    test:
+        strategy:
+            fail-fast: false
+            matrix:
+                os: [macos-latest, ubuntu-latest, windows-latest]
+        runs-on: ${{ matrix.os }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+            - name: Install Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 16
+            # https://github.com/actions/setup-node/issues/68#issuecomment-536238341
+            - name: Patch node gyp on windows to support Visual Studio 2019
+              if: runner.os == 'windows'
+              shell: powershell
+              run: |
+                  npm install --global node-gyp@latest
+                  npm prefix -g | % {npm config set node_gyp "$_\node_modules\node-gyp\bin\node-gyp.js"}
+            - name: Install extension dependencies
+              run: yarn run install:all
+            - name: Run tests
+              uses: coactions/setup-xvfb@v1
+              with:
+                  run: yarn test
 
-  release:
-    name: Release extension
-    if: startsWith(github.ref, 'refs/tags/vscode-extension-v')
-    needs: test
+    release:
+        name: Release extension
+        if: startsWith(github.ref, 'refs/tags/v')
+        needs: test
 
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set Node.js 19.x
-        uses: actions/setup-node@v3
-        with:
-          node-version: 19.x
-      - name: Install vsce
-        run: npm i -g @vscode/vsce
-      - name: Install extension dependencies
-        run: yarn run install:all
-      - name: Build webview
-        run: yarn run build:webview
-      - name: Build extension
-        run: vsce package --yarn --baseImagesUrl https://raw.githubusercontent.com/selfint/code-blocks/${{ github.ref_name }}/vscode-extension 
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          generate_release_notes: true
-          files: vscode-extension/code-blocks-*.vsix
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - name: Set Node.js 16.x
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 16.x
+            - name: Install vsce
+              run: npm i -g @vscode/vsce
+            - name: Install extension dependencies
+              run: yarn run install:all
+            - name: Build webview
+              run: yarn run build:webview
+            - name: Build extension
+              run: vsce package --yarn --baseImagesUrl https://raw.githubusercontent.com/selfint/code-blocks/${{ github.ref_name }}
+            - name: Release
+              uses: softprops/action-gh-release@v1
+              with:
+                  generate_release_notes: true
+                  files: code-blocks-*.vsix
