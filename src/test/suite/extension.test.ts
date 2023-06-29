@@ -13,7 +13,7 @@ async function openDocument(content: string, language: string): Promise<void> {
 }
 
 suite("codeBlocks commands", function () {
-    this.timeout("5m");
+    this.timeout(process.env.TEST_TIMEOUT ?? "2s");
 
     suite(".open", function () {
         this.beforeAll(() => {

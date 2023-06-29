@@ -13,6 +13,9 @@ on:
 permissions:
     contents: write
 
+env:
+    TEST_TIMEOUT: 5m
+
 jobs:
     test:
         strategy:
