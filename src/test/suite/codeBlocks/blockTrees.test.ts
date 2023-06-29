@@ -90,7 +90,7 @@ suite("blockTrees", function () {
 `);
         });
 
-        test.only("resolves nested blocks", async function () {
+        test("resolves nested blocks", async function () {
             const rust = await Installer.loadParser("parsers", "tree-sitter-rust");
             assert.ok(rust);
 
