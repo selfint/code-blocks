@@ -2,6 +2,8 @@ import * as Parser from "web-tree-sitter";
 import * as vscode from "vscode";
 import { Language, Tree } from "web-tree-sitter";
 
+import { parserFinishedInit } from "./extension";
+
 function positionToPoint(pos: vscode.Position): Parser.Point {
     return {
         row: pos.line,
@@ -19,7 +21,7 @@ export class FileTree {
     }
 
     public static async new(language: Language, text: string): Promise<FileTree> {
-        await Parser.init();
+        await parserFinishedInit;
         const parser = new Parser();
         parser.setLanguage(language);
 
