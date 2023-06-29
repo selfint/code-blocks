@@ -1,6 +1,7 @@
-// import * as assert from "assert";
+import * as assert from "assert";
 
 import * as vscode from "vscode";
+import { CodeBlocksEditorProvider } from "../../editor/CodeBlocksEditorProvider";
 
 async function openDocument(content: string, language: string): Promise<void> {
     await vscode.window.showTextDocument(
@@ -17,9 +18,13 @@ suite("codeBlocks commands", function () {
             return void vscode.window.showInformationMessage("Start code-blocks.open tests");
         });
 
-        test("doesn't crash", async function () {
+        test("Opens active tab with Code Blocks Editor", async function () {
             await openDocument("fn main() {}", "rust");
             await vscode.commands.executeCommand("codeBlocks.open");
+            assert.equal(
+                (vscode.window.tabGroups.activeTabGroup.activeTab?.input as { viewType: string }).viewType,
+                CodeBlocksEditorProvider.viewType
+            );
         });
     });
 });
