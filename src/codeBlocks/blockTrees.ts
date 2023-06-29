@@ -17,16 +17,20 @@ function getQueryBlocks(tree: Tree, queries: Query[]): Block[] {
     const blocks = [];
 
     for (const query of queries) {
-        const captures = query.captures(root);
-        const block = [];
-        for (const capture of captures) {
-            block.push(capture.node);
+        const matches = query.matches(root);
+
+        for (const match of matches) {
+            const block = [];
+            for (const capture of match.captures) {
+                block.push(capture.node);
+                console.log([capture.node.startIndex, capture.node.endIndex]);
+            }
+            block.sort((a, b) => a.startIndex - b.startIndex);
+
+            blocks.push(block);
         }
-
-        block.sort((a, b) => a.startIndex - b.startIndex);
-
-        blocks.push(block);
     }
+
     return blocks;
 }
 

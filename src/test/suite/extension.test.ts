@@ -1,7 +1,6 @@
-import * as assert from "assert";
-
 import * as vscode from "vscode";
 import { CodeBlocksEditorProvider } from "../../editor/CodeBlocksEditorProvider";
+import { assert } from "chai";
 
 async function openDocument(content: string, language: string): Promise<void> {
     await vscode.window.showTextDocument(

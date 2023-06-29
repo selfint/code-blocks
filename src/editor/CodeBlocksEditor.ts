@@ -20,7 +20,7 @@ function blockToBlockLocation(block: codeBlocks.Block): BlockLocation {
     };
 }
 
-function blockTreeToBlockLocationTree(blockTree: codeBlocks.BlockTree): BlockLocationTree {
+export function blockTreeToBlockLocationTree(blockTree: codeBlocks.BlockTree): BlockLocationTree {
     const block = blockToBlockLocation(blockTree.block);
     const children = blockTree.children.map(blockTreeToBlockLocationTree);
     return { block, children };
