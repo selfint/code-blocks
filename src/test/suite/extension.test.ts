@@ -12,7 +12,6 @@ async function openDocument(content: string, language: string): Promise<void> {
 }
 
 suite("codeBlocks commands", function () {
-    this.timeout("10h");
     suite(".open", function () {
         this.beforeAll(() => {
             return void vscode.window.showInformationMessage("Start code-blocks.open tests");
