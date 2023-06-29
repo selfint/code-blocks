@@ -7,7 +7,6 @@ import { FileTree } from "../FileTree";
 
 export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider {
     public static readonly viewType = "codeBlocks.editor";
-    public static readonly extensionBinDir = "bin";
     public static readonly parsersDir = "parsers";
 
     private extensionParsersDirPath: string;
