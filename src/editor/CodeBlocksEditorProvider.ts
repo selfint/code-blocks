@@ -1,9 +1,9 @@
 import * as Installer from "../Installer";
+import * as configuration from "../configuration";
 import * as path from "path";
 import * as vscode from "vscode";
 import { CodeBlocksEditor } from "./CodeBlocksEditor";
 import { FileTree } from "../FileTree";
-import * as configuration from "../configuration";
 
 export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider {
     public static readonly viewType = "codeBlocks.editor";
