@@ -1,3 +1,4 @@
+import * as configuration from "./configuration";
 import * as path from "path";
 import * as tar from "tar";
 import * as vscode from "vscode";
@@ -116,45 +117,19 @@ async function runCmd(
     });
 }
 
-type LanguageIdOverride = {
-    npmPackageName: string;
-    parserName: string;
-    subdirectory?: string;
-};
-function getLanguageIdOverride(languageId: string): LanguageIdOverride {
-    const getLangIdConfig = (c: string): string | undefined =>
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        vscode.workspace.getConfiguration(`[${languageId}]`)[`codeBlocks.${c}`] ?? undefined;
-
-    const npmPackageName = getLangIdConfig("npmPackageName") ?? `tree-sitter-${languageId}`;
-    const parserName = getLangIdConfig("parserName") ?? npmPackageName;
-    const subdirectory = getLangIdConfig("subdirectory");
-
-    return {
-        npmPackageName,
-        parserName,
-        subdirectory,
-    };
-}
-
-function getIgnoredLanguageIds(): string[] {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return vscode.workspace.getConfiguration("codeBlocks").ignoredLanguageIds ?? [];
-}
-
 export async function getLanguage(parsersDir: string, languageId: string): Promise<Language | undefined> {
-    const ignoredLanguageIds = getIgnoredLanguageIds();
+    const ignoredLanguageIds = configuration.getIgnoredLanguageIds();
     if (ignoredLanguageIds.includes(languageId)) {
         return undefined;
     }
 
-    await parserFinishedInit;
-
-    const { npmPackageName, subdirectory, parserName } = getLanguageIdOverride(languageId);
+    const { npmPackageName, subdirectory, parserName } = configuration.getLanguageConfig(languageId);
     const parserWasmBindings = getWasmBindingsPath(parsersDir, npmPackageName, parserName);
 
-    const npmCommand = "npm";
+    const npm = "npm";
     const treeSitterCli = "tree-sitter";
+
+    await parserFinishedInit;
 
     if (!existsSync(parserWasmBindings)) {
         let number = 0;
@@ -170,7 +145,7 @@ export async function getLanguage(parsersDir: string, languageId: string): Promi
                     npmPackageName,
                     subdirectory,
                     (data) => progress.report({ message: data, increment: number++ }),
-                    npmCommand,
+                    npm,
                     treeSitterCli
                 );
             }

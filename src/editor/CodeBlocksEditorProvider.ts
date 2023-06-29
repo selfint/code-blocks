@@ -3,19 +3,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { CodeBlocksEditor } from "./CodeBlocksEditor";
 import { FileTree } from "../FileTree";
-
-export type LanguageSupport = {
-    parserInstaller: {
-        downloadCmd: string;
-        libraryName: string;
-        languageFnSymbol: string;
-    };
-    queries: string[];
-};
-
-export type CodeBlocksExtensionSettings = {
-    languageSupport: Map<string, LanguageSupport>;
-};
+import * as configuration from "../configuration";
 
 export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider {
     public static readonly viewType = "codeBlocks.editor";
@@ -23,21 +11,9 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
     public static readonly parsersDir = "parsers";
 
     private extensionParsersDirPath: string;
-    private extensionSettings: CodeBlocksExtensionSettings;
 
     constructor(private readonly context: vscode.ExtensionContext) {
         this.extensionParsersDirPath = path.join(context.extensionPath, CodeBlocksEditorProvider.parsersDir);
-
-        const languageSupport: Record<string, LanguageSupport> | undefined = vscode.workspace
-            .getConfiguration("codeBlocks")
-            .get("languageSupport");
-        if (languageSupport === undefined) {
-            throw new Error("Invalid languageSupport settings");
-        }
-
-        this.extensionSettings = {
-            languageSupport: new Map(Object.entries(languageSupport)),
-        };
     }
 
     public async resolveCustomTextEditor(
@@ -45,11 +21,11 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
         webviewPanel: vscode.WebviewPanel
         // token: vscode.CancellationToken
     ): Promise<void> {
-        const languageSupport = this.extensionSettings.languageSupport.get(document.languageId);
-        if (languageSupport === undefined) {
+        const languageQueries = configuration.getLanguageConfig(document.languageId).queries;
+        if (languageQueries === undefined) {
             await vscode.window.showErrorMessage(
-                `Opened file in language without support: '${document.languageId}'. Try adding ` +
-                    ` support via the 'codeBlocks.languageSupport' extension setting`
+                `Opened file in language without queries support: '${document.languageId}'. Try adding ` +
+                    ` support via the '[${document.languageId}].codeBlocks.queries' setting`
             );
             return;
         }
@@ -66,7 +42,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
         }
 
         const queries = [];
-        for (const query of languageSupport.queries) {
+        for (const query of languageQueries) {
             queries.push(language.query(query));
         }
         const fileTree = await FileTree.new(language, document.getText());

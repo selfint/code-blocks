@@ -10,9 +10,9 @@ Rust (technically just `cargo`) is required for this extension to work, go to [r
 
 1. Install the extension from:
 
-   - Inside vscode, search for the `selfint.code-blocks` extension.
-   - The [vscode marketplace](https://marketplace.visualstudio.com/items?itemName=selfint.code-blocks).
-   - The GitHub [releases](https://github.com/selfint/code-blocks/releases?q=vscode-extension&expanded=true) page.
+    - Inside vscode, search for the `selfint.code-blocks` extension.
+    - The [vscode marketplace](https://marketplace.visualstudio.com/items?itemName=selfint.code-blocks).
+    - The GitHub [releases](https://github.com/selfint/code-blocks/releases?q=vscode-extension&expanded=true) page.
 
 2. Open a file with the Code Blocks Editor, the `code-blocks-cli` will need to be downloaded
    by the method of your choosing (using `cargo` or downloading from the latest release).
@@ -195,54 +195,83 @@ this is stabilized.
 
 ## \*Supported languages
 
-To support a language, [tree-sitter query](https://tree-sitter.github.io/tree-sitter/using-parsers#query-syntax)s are required to resolve blocks. This involves some manual
-labour for each language, but not much.
+To support a language, [tree-sitter queries](https://tree-sitter.github.io/tree-sitter/using-parsers#query-syntax)
+are required to resolve blocks. This involves some manual entry for each language, but not much.
 
-Also, to use a language, a [tree-sitter grammar](https://tree-sitter.github.io/tree-sitter/creating-parsers#the-grammar-dsl) is required. There are [many grammars](https://github.com/tree-sitter) already written, but to use them they need to be compiled. The extension will
-automatically download and compile the grammar for you, but it needs to know some metadata
-about each grammar.
+Also, to use a language, a [tree-sitter grammar](https://tree-sitter.github.io/tree-sitter/creating-parsers#the-grammar-dsl)
+is required. There are [many grammars](https://github.com/tree-sitter) already written,
+but to use them they need to be compiled to web assembly. The extension will
+automatically download and compile the grammar for you, but sometimes it needs some metadata
+to be manually configured.
 
 For now, these are the default configured languages:
 
-- [x] Rust
-- [x] TypeScript
-- [x] TypeScript + JSX (typescriptreact)
-- [x] Svelte
-- [x] Python
-- [x] Java
+-   [x] Rust
+-   [x] TypeScript
+-   [x] TypeScript + JSX (typescriptreact)
+-   [x] Svelte
+-   [x] Python
+-   [x] Java
 
 Next up:
 
-- [ ] C#
-- [ ] C
-- [ ] C++
-- [ ] JavaScript
+-   [ ] C#
+-   [ ] C
+-   [ ] C++
+-   [ ] JavaScript
 
 ### Adding a language
 
 To add support for a language yourself, you'll need to:
 
-1. Configure the installation method of the grammar.
+1. Write the tree sitter queries for creating the blocks.
 
-2. Write the tree sitter queries for creating the blocks.
+2. Configure the installation method of the grammar (usually not needed).
 
-Here is an example of the configuration for Python:
+Both steps are only changes to your `.vscode/settings.json` file, and will automatically be used
+by the extension.
+
+Also, please [submit a PR](https://github.com/selfint/code-blocks/pulls) with your language
+configuration added to the `package.json` default configurations.
+
+#### Python example
+
+Python's [npm package](https://www.npmjs.com/package/tree-sitter-python) and languageId are the same
+`tree-sitter-python` and `python`, respectively. The grammar is at the root directory of the project
+(this is almost always true). That means only the queries need to be configured:
 
 ```json
-"codeBlocks.languageSupport": {
-    "python": {
-        "parserInstaller": {
-            "downloadCmd": "git clone https://github.com/tree-sitter/tree-sitter-python",
-            "symbol": "language",
-            "name": "tree_sitter_python"
-        },
-        "queries": [
-            "(class_definition) @item",
-            "(function_definition) @item",
-            "(decorated_definition) @item"
-        ]
-    }
-}
+"[python]": {
+    "codeBlocks.queries": [
+        "(class_definition) @item",
+        "(function_definition) @item",
+        "(decorated_definition) @item"
+    ]
+},
+```
+
+#### TSX example
+
+This is the most complex default configuration.
+In .ts(x) code, documentation comes before the object it is describing, so we need to account
+for that in the queries. Also, it's [npm package](https://www.npmjs.com/package/tree-sitter-typescript) is called
+`tree-sitter-typescript`, while it's languageId is `typescriptreact`. Finally, the grammar
+is inside a subdirectory called 'tsx'.
+
+```json
+"[typescriptreact]": {
+    "codeBlocks.npmPackageName": "tree-sitter-typescript",
+    "codeBlocks.parserName": "tree-sitter-tsx",
+    "codeBlocks.subdirectory": "tsx",
+    "codeBlocks.queries": [
+        "( (comment)* @header . (class_declaration) @item)",
+        "( (comment)* @header . (method_definition) @item)",
+        "( (comment)* @header . (function_declaration) @item)",
+        "( (comment)* @header . (export_statement) @item)",
+        "(jsx_element) @item",
+        "(jsx_self_closing_element) @item"
+    ]
+},
 ```
 
 For figuring out how to write the queries, use the

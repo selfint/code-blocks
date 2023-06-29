@@ -159,96 +159,75 @@
             "forceTarget": "var(--vscode-editor-linkedEditingBackground)"
           }
         },
-        "codeBlocks.binPath": {
-          "type": "string",
-          "default": null,
-          "description": "Executable to use for 'code-blocks-cli'"
-        },
-        "codeBlocks.languageSupport": {
-          "type": "object",
-          "default": {
-            "rust": {
-              "parserInstaller": {
-                "downloadCmd": "git clone https://github.com/tree-sitter/tree-sitter-rust",
-                "libraryName": "tree_sitter_rust",
-                "languageFnSymbol": "language"
-              },
-              "queries": [
-                "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (function_item) @item)",
-                "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (mod_item) @item)",
-                "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (struct_item) @item)",
-                "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (impl_item) @item)",
-                "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (enum_item) @item)",
-                "(match_arm) @arm"
-              ]
-            },
-            "typescript": {
-              "parserInstaller": {
-                "downloadCmd": "git clone https://github.com/tree-sitter/tree-sitter-typescript",
-                "libraryName": "tree_sitter_typescript",
-                "languageFnSymbol": "language_typescript"
-              },
-              "queries": [
-                "( (comment)* @header . (class_declaration) @item)",
-                "( (comment)* @header . (method_definition) @item)",
-                "( (comment)* @header . (function_declaration) @item)",
-                "( (comment)* @header . (export_statement) @item)"
-              ]
-            },
-            "typescriptreact": {
-              "parserInstaller": {
-                "downloadCmd": "git clone https://github.com/tree-sitter/tree-sitter-typescript",
-                "libraryName": "tree_sitter_typescript",
-                "languageFnSymbol": "language_tsx"
-              },
-              "queries": [
-                "( (comment)* @header . (class_declaration) @item)",
-                "( (comment)* @header . (method_definition) @item)",
-                "( (comment)* @header . (function_declaration) @item)",
-                "( (comment)* @header . (export_statement) @item)",
-                "(jsx_element) @item",
-                "(jsx_self_closing_element) @item"
-              ]
-            },
-            "svelte": {
-              "parserInstaller": {
-                "downloadCmd": "git clone https://github.com/Himujjal/tree-sitter-svelte",
-                "libraryName": "tree_sitter_svelte",
-                "languageFnSymbol": "language"
-              },
-              "queries": [
-                "( (comment)* @header . (element) @item)",
-                "( (comment)* @header . (each_statement) @item)",
-                "( (comment)* @header . (if_statement) @item)",
-                "( (comment)* @header . (style_element) @item)",
-                "( (comment)* @header . (script_element) @item)"
-              ]
-            },
-            "python": {
-              "parserInstaller": {
-                "downloadCmd": "git clone https://github.com/tree-sitter/tree-sitter-python",
-                "libraryName": "tree_sitter_python",
-                "languageFnSymbol": "language"
-              },
-              "queries": [
-                "(class_definition) @item",
-                "(function_definition) @item",
-                "(decorated_definition) @item"
-              ]
-            },
-            "java": {
-              "parserInstaller": {
-                "downloadCmd": "git clone https://github.com/tree-sitter/tree-sitter-java",
-                "libraryName": "tree_sitter_java",
-                "languageFnSymbol": "language"
-              },
-              "queries": [
-                "( (block_comment)* @header . (class_declaration) @item)",
-                "( (block_comment)* @header . (method_declaration) @item)"
-              ]
-            }
-          }
+        "codeBlocks.ignoredLanguageIds": {
+          "type": "array",
+          "description": "List of language IDs to not load parsers for",
+          "default": [
+            "plaintext"
+          ]
         }
+      }
+    },
+    "configurationDefaults": {
+      "[rust]": {
+        "codeBlocks.queries": [
+          "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (function_item) @item)",
+          "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (mod_item) @item)",
+          "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (struct_item) @item)",
+          "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (impl_item) @item)",
+          "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (enum_item) @item)",
+          "(match_arm) @arm"
+        ]
+      },
+      "[typescript]": {
+        "codeBlocks.subdirectory": "typescript",
+        "codeBlocks.queries": [
+          "( (comment)* @header . (class_declaration) @item)",
+          "( (comment)* @header . (method_definition) @item)",
+          "( (comment)* @header . (function_declaration) @item)",
+          "( (comment)* @header . (export_statement) @item)"
+        ]
+      },
+      "[typescriptreact]": {
+        "codeBlocks.npmPackageName": "tree-sitter-typescript",
+        "codeBlocks.parserName": "tree-sitter-tsx",
+        "codeBlocks.subdirectory": "tsx",
+        "codeBlocks.queries": [
+          "( (comment)* @header . (class_declaration) @item)",
+          "( (comment)* @header . (method_definition) @item)",
+          "( (comment)* @header . (function_declaration) @item)",
+          "( (comment)* @header . (export_statement) @item)",
+          "(jsx_element) @item",
+          "(jsx_self_closing_element) @item"
+        ]
+      },
+      "[javascriptreact]": {
+        "codeBlocks.npmPackageName": "tree-sitter-javascript"
+      },
+      "[svelte]": {
+        "codeBlocks.queries": [
+          "( (comment)* @header . (element) @item)",
+          "( (comment)* @header . (each_statement) @item)",
+          "( (comment)* @header . (if_statement) @item)",
+          "( (comment)* @header . (style_element) @item)",
+          "( (comment)* @header . (script_element) @item)"
+        ]
+      },
+      "[python]": {
+        "codeBlocks.queries": [
+          "(class_definition) @item",
+          "(function_definition) @item",
+          "(decorated_definition) @item"
+        ]
+      },
+      "[java]": {
+        "codeBlocks.queries": [
+          "( (block_comment)* @header . (class_declaration) @item)",
+          "( (block_comment)* @header . (method_declaration) @item)"
+        ]
+      },
+      "[csharp]": {
+        "codeBlocks.npmPackageName": "tree-sitter-c-sharp"
       }
     }
   },
