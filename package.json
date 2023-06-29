@@ -2,10 +2,9 @@
   "name": "code-blocks",
   "publisher": "selfint",
   "displayName": "Code Blocks",
-  "description": "An extension for manipulating your code's syntax tree.",
+  "description": "Move code blocks around",
   "repository": {
     "url": "https://github.com/selfint/code-blocks",
-    "directory": "vscode-extension",
     "type": "git"
   },
   "bugs": {
@@ -25,11 +24,11 @@
     "Other"
   ],
   "keywords": [
+    "blocks",
+    "code-blocks",
     "refactor",
     "tree-sitter",
-    "custom-editor",
-    "code-blocks",
-    "blocks",
+    "treesitter",
     "visualization"
   ],
   "preview": true,
