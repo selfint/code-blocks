@@ -1,2 +1,0 @@
-[workspace]
-members = ["code-blocks", "code-blocks-server", "tree-sitter-installer"]
