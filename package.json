@@ -239,7 +239,7 @@
     "vscode:prepublish": "yarn run esbuild-base --minify",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "yarn run compile && yarn run lint && yarn run build:webview && yarn run check:webview",
+    "pretest": "yarn run compile && yarn run lint",
     "test": "mocha ./out/test/runTest.js",
     "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
     "esbuild": "yarn run esbuild-base --sourcemap",

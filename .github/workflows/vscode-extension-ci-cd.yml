@@ -32,6 +32,8 @@ jobs:
                   node-version: 16
             - name: Install extension dependencies
               run: yarn run install:all
+            - name: Build webview
+              run: yarn run build:webview && yarn run check:webview
             - name: Run tests
               uses: coactions/setup-xvfb@v1
               with:
