@@ -64,7 +64,7 @@ suite("blockTrees", function () {
             return void vscode.window.showInformationMessage("Start blockTrees.getBlockTrees tests");
         });
 
-        test("is correct", async function () {
+        test("resolves sequential blocks", async function () {
             const rust = await Installer.loadParser("parsers", "tree-sitter-rust");
             assert.ok(rust);
 
@@ -87,6 +87,65 @@ suite("blockTrees", function () {
 +-------------+
 | fn bar() {} |
 +-------------+
+`);
+        });
+
+        test.only("resolves nested blocks", async function () {
+            const rust = await Installer.loadParser("parsers", "tree-sitter-rust");
+            assert.ok(rust);
+
+            const text = `
+fn grandparent() {
+    fn father() {
+        fn boy() {}
+    }
+    fn mother() {
+        fn girl() {}
+    }
+}
+`;
+            const fileTree = await FileTree.new(rust, text);
+            const queries = [rust.query("(function_item) @item")];
+            const blocksTrees = codeBlocks.getBlockTrees(fileTree.tree, queries);
+
+            expect(JSON.stringify(blocksTrees.map(blockTreeToBlockLocationTree))).to.equal(
+                `[{"block":{"startByte":1,"endByte":110,"startRow":1,"startCol":0,"endRow":8,"endCol":1},"children":[{"block":{"startByte":24,"endByte":63,"startRow":2,"startCol":4,"endRow":4,"endCol":5},"children":[{"block":{"startByte":46,"endByte":57,"startRow":3,"startCol":8,"endRow":3,"endCol":19},"children":[]}]},{"block":{"startByte":68,"endByte":108,"startRow":5,"startCol":4,"endRow":7,"endCol":5},"children":[{"block":{"startByte":90,"endByte":102,"startRow":6,"startCol":8,"endRow":6,"endCol":20},"children":[]}]}]}]`
+            );
+            expect("\n" + blockTreesToString(text, blocksTrees)).to.equal(`
++--------------------+
+| fn grandparent() { |
+|      |
++--------------------+
+ +---------------+
+ | fn father() { |
+ |          |
+ +---------------+
+  +-------------+
+  | fn boy() {} |
+  +-------------+
+ +-------+
+ |  |
+ |     } |
+ +-------+
+ +------+
+ |  |
+ |      |
+ +------+
+ +---------------+
+ | fn mother() { |
+ |          |
+ +---------------+
+  +--------------+
+  | fn girl() {} |
+  +--------------+
+ +-------+
+ |  |
+ |     } |
+ +-------+
++---+
+|  |
+| } |
++---+
 `);
         });
     });
