@@ -39,6 +39,7 @@ export class FileTree implements vscode.Disposable {
     }
 
     async dispose(): Promise<void> {
+        this.tree.delete();
         await Promise.all(
             this.disposables.map(async (d) => {
                 await d.dispose();
