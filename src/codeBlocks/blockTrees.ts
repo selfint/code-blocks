@@ -23,7 +23,6 @@ function getQueryBlocks(tree: Tree, queries: Query[]): Block[] {
             const block = [];
             for (const capture of match.captures) {
                 block.push(capture.node);
-                console.log([capture.node.startIndex, capture.node.endIndex]);
             }
             block.sort((a, b) => a.startIndex - b.startIndex);
 
