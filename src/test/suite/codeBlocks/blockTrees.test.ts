@@ -1,7 +1,7 @@
 import * as Installer from "../../../Installer";
 import * as assert from "assert";
-import * as codeBlocks from "../../../codeBlocks";
 import * as vscode from "vscode";
+import { BlockTree, getBlockTrees } from "../../../BlockTree";
 import { FileTree } from "../../../FileTree";
 import { expect } from "chai";
 
@@ -17,7 +17,7 @@ function box(text: string, indent: number): string {
     return border + newLines + border;
 }
 
-function blockTreesToString(source: string, blockTrees: codeBlocks.BlockTree[], indent = 0): string {
+function blockTreesToString(source: string, blockTrees: BlockTree[], indent = 0): string {
     let treesText = "";
     for (let i = 0; i < blockTrees.length; i++) {
         let treeText = "";
@@ -69,7 +69,7 @@ suite("blockTrees", function () {
                 await vscode.workspace.openTextDocument({ language: "rust", content: text })
             );
             const queries = [rust.query("(function_item) @item")];
-            const blocksTrees = codeBlocks.getBlockTrees(fileTree.tree, queries);
+            const blocksTrees = getBlockTrees(fileTree.tree, queries);
 
             expect("\n" + blockTreesToString(text, blocksTrees)).to.equal(`
 +-------------+
@@ -109,7 +109,7 @@ fn grandma() {
                 await vscode.workspace.openTextDocument({ language: "rust", content: text })
             );
             const queries = [rust.query("(function_item) @item")];
-            const blocksTrees = codeBlocks.getBlockTrees(fileTree.tree, queries);
+            const blocksTrees = getBlockTrees(fileTree.tree, queries);
 
             expect("\n" + blockTreesToString(text, blocksTrees)).to.equal(`
 +-------------------------+

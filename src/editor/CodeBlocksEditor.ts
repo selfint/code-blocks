@@ -1,12 +1,12 @@
-import * as codeBlocks from "../codeBlocks";
 import * as vscode from "vscode";
+import { Block, BlockTree, getBlockTrees } from "../BlockTree";
 import { BlockLocation, BlockLocationTree, MoveCommand, UpdateMessage } from "./messages";
 import { FileTree } from "../FileTree";
 import { Query } from "web-tree-sitter";
 import { getNonce } from "../utilities/getNonce";
 import { getUri } from "../utilities/getUri";
 
-function blockToBlockLocation(block: codeBlocks.Block): BlockLocation {
+function blockToBlockLocation(block: Block): BlockLocation {
     const head = block[0];
     const tail = block[block.length - 1];
 
@@ -20,7 +20,7 @@ function blockToBlockLocation(block: codeBlocks.Block): BlockLocation {
     };
 }
 
-function blockTreeToBlockLocationTree(blockTree: codeBlocks.BlockTree): BlockLocationTree {
+function blockTreeToBlockLocationTree(blockTree: BlockTree): BlockLocationTree {
     const block = blockToBlockLocation(blockTree.block);
     const children = blockTree.children.map(blockTreeToBlockLocationTree);
     return { block, children };
@@ -44,7 +44,7 @@ export class CodeBlocksEditor {
     }
 
     private async drawBlocks(): Promise<void> {
-        const blockTrees = codeBlocks.getBlockTrees(this.fileTree.tree, this.queries);
+        const blockTrees = getBlockTrees(this.fileTree.tree, this.queries);
         const blockLocationTrees = blockTrees.map(blockTreeToBlockLocationTree);
 
         await this.webviewPanel.webview.postMessage({
@@ -87,22 +87,22 @@ export class CodeBlocksEditor {
         };
 
         webview.html = /*html*/ `
-      <!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <title>Code Blocks editor</title>
-          <meta charset="UTF-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${
-              webview.cspSource
-          }; script-src 'nonce-${nonce}';">
-          <link rel="stylesheet" type="text/css" href="${stylesUri.toString()}">
-          <script defer nonce="${nonce}" src="${scriptUri.toString()}"></script>
-        </head>
-        <body>
-        </body>
-      </html>
-    `;
+            <!DOCTYPE html>
+            <html lang="en">
+                <head>
+                <title>Code Blocks editor</title>
+                <meta charset="UTF-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${
+                    webview.cspSource
+                }; script-src 'nonce-${nonce}';">
+                <link rel="stylesheet" type="text/css" href="${stylesUri.toString()}">
+                <script defer nonce="${nonce}" src="${scriptUri.toString()}"></script>
+                </head>
+                <body>
+                </body>
+            </html>
+        `;
     }
 
     private subscribeToDocEvents(): void {
