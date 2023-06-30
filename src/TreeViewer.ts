@@ -1,4 +1,3 @@
-import * as Installer from "./Installer";
 import * as vscode from "vscode";
 import { FileTree } from "./FileTree";
 
@@ -21,37 +20,12 @@ export class TreeViewer implements vscode.TextDocumentContentProvider {
         /* */
     }
 
-    public async open(parsersDir: string): Promise<void> {
-        // only update viewer manually when we first open the tree view editor
-        const openedDocuments = vscode.workspace.textDocuments;
-        const updateManually = !openedDocuments.some((e) => e.uri.toString() === TreeViewer.uri.toString());
-
+    public async open(): Promise<void> {
         await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(TreeViewer.uri), {
             viewColumn: vscode.ViewColumn.Beside,
             preserveFocus: true,
             preview: true,
         });
-
-        if (updateManually) {
-            await this.update(parsersDir, vscode.window.activeTextEditor);
-        }
-    }
-
-    public async update(parsersDir: string, editor: vscode.TextEditor | undefined): Promise<void> {
-        if (editor === undefined) {
-            TreeViewer.treeViewer.viewFileTree(undefined);
-            return;
-        }
-
-        const activeDocument = editor.document;
-        const language = await Installer.getLanguage(parsersDir, activeDocument.languageId);
-        if (language === undefined) {
-            this.viewFileTree(undefined);
-            return;
-        }
-
-        const fileTree = await FileTree.new(language, activeDocument);
-        this.viewFileTree(fileTree);
     }
 
     public viewFileTree(fileTree: FileTree | undefined): void {
