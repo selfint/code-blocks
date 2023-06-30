@@ -51,7 +51,7 @@ function blockTreesToString(source: string, blockTrees: BlockTree[], indent = 0)
     return treesText;
 }
 
-suite("blockTrees", function () {
+suite("BlockTrees", function () {
     this.timeout(process.env.TEST_TIMEOUT ?? "2s");
 
     suite("getBlockTrees", function () {
