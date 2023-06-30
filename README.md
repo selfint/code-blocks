@@ -1,3 +1,5 @@
+[![vscode-extension CI/CD](https://github.com/selfint/code-blocks/actions/workflows/vscode-extension-ci-cd.yml/badge.svg)](https://github.com/selfint/code-blocks/actions/workflows/vscode-extension-ci-cd.yml)
+
 # Code Blocks
 
 Move your code blocks around!
