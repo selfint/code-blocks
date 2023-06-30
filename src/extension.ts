@@ -1,8 +1,7 @@
-import * as Parser from "web-tree-sitter";
 import { ExtensionContext, Uri, commands, window } from "vscode";
 import { CodeBlocksEditorProvider } from "./editor/CodeBlocksEditorProvider";
+import Parser from "web-tree-sitter";
 
-export { Parser };
 export const parserFinishedInit = new Promise<void>((resolve) => {
     void Parser.init().then(() => {
         resolve();
