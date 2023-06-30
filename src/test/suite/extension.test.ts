@@ -41,8 +41,7 @@ source_file [0:0 - 0:12]
   function_item [0:0 - 0:12]
     identifier [0:3 - 0:7]
     parameters [0:7 - 0:9]
-    block [0:10 - 0:12]
-            `);
+    block [0:10 - 0:12]`);
         });
     });
 });
