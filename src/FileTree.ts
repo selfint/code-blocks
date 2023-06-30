@@ -106,10 +106,22 @@ export class FileTree implements vscode.Disposable {
             return undefined;
         }
 
+        // get all parents of start and end node
         const startParents: SyntaxNode[] = [startNode.parent];
         const endParents: SyntaxNode[] = [endNode.parent];
+        while (startParents.at(-1)?.parent || endParents.at(-1)?.parent) {
+            const nextStartParent = startParents.at(-1)?.parent;
+            if (nextStartParent) {
+                startParents.push(nextStartParent);
+            }
+            const nextEndParent = endParents.at(-1)?.parent;
+            if (nextEndParent) {
+                endParents.push(nextEndParent);
+            }
+        }
 
-        const lowestCommonParent = (): SyntaxNode | undefined => {
+        // find lowest common parent of start and end nodes
+        const lowestCommonParent = ((): SyntaxNode | undefined => {
             const startParentInEndParents = startParents.findIndex(
                 (startParent) => endParents.findIndex((endParent) => endParent.equals(startParent)) !== -1
             );
@@ -124,33 +136,16 @@ export class FileTree implements vscode.Disposable {
             } else {
                 return undefined;
             }
-        };
+        })();
 
-        let commonParent: SyntaxNode | undefined = undefined;
-        while (startParents.at(-1)?.parent || endParents.at(-1)?.parent) {
-            commonParent = lowestCommonParent();
-            if (commonParent !== undefined) {
-                break;
-            }
-
-            const nextStartParent = startParents.at(-1)?.parent;
-            if (nextStartParent) {
-                startParents.push(nextStartParent);
-            }
-            const nextEndParent = endParents.at(-1)?.parent;
-            if (nextEndParent) {
-                endParents.push(nextEndParent);
-            }
-        }
-
-        if (commonParent === undefined) {
+        if (lowestCommonParent === undefined) {
             // should be impossible
             throw new Error("got start and end nodes without a common parent");
         }
 
-        // get all named children in the common parent from start position to end position
+        // get all named children in the common parent from start to end nodes
         const selectedNodes = [];
-        for (const child of commonParent.namedChildren) {
+        for (const child of lowestCommonParent.namedChildren) {
             if (child.endIndex > startNode.startIndex && child.startIndex <= endNode.endIndex) {
                 selectedNodes.push(child);
             }
