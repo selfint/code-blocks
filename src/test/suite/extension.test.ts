@@ -56,6 +56,8 @@ source_file [0:0 - 0:12]
             await vscode.commands.executeCommand("codeBlocks.moveUp");
 
             expect(activeEditor.document.getText()).to.equal("fn foo() { } fn main() {}");
+
+            expect(false).to.be.true;
         });
     });
 });
