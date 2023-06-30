@@ -4,8 +4,7 @@ import { FileTree, MoveSelectionDirection } from "../../FileTree";
 import { Language } from "web-tree-sitter";
 import assert from "assert";
 import { expect } from "chai";
-
-const parsersDir = "parsers";
+import { parsersDir } from "./parsersDir";
 
 suite("FileTree", function () {
     suite("Rust", function () {

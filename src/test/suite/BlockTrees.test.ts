@@ -4,6 +4,7 @@ import * as vscode from "vscode";
 import { BlockTree, getBlockTrees } from "../../BlockTree";
 import { FileTree } from "../../FileTree";
 import { expect } from "chai";
+import { parsersDir } from "./parsersDir";
 
 function box(text: string, indent: number): string {
     const lines = text.split(/\n/);
@@ -60,7 +61,7 @@ suite("BlockTrees", function () {
         });
 
         test("resolves sequential blocks", async function () {
-            const rust = await Installer.loadParser("parsers", "tree-sitter-rust");
+            const rust = await Installer.loadParser(parsersDir, "tree-sitter-rust");
             assert.ok(rust);
 
             const text = "fn foo() {}\nfn bar() {}";
@@ -83,7 +84,7 @@ suite("BlockTrees", function () {
         });
 
         test("resolves nested blocks", async function () {
-            const rust = await Installer.loadParser("parsers", "tree-sitter-rust");
+            const rust = await Installer.loadParser(parsersDir, "tree-sitter-rust");
             assert.ok(rust);
 
             const text = `

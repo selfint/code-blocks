@@ -6,7 +6,7 @@ import { Language } from "web-tree-sitter";
 import { UpdateSelectionDirection } from "../../Selection";
 import { expect } from "chai";
 
-const parsersDir = "parsers";
+import { parsersDir } from "./parsersDir";
 
 async function getCursorSelectionText(
     cursor: string,
