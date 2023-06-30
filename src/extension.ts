@@ -34,29 +34,21 @@ async function openCodeBlocksEditorToTheSide(): Promise<void> {
 }
 
 export function activate(context: vscode.ExtensionContext): void {
+    const parsersDir = join(context.extensionPath, "parsers");
+
     context.subscriptions.push(
         vscode.window.registerCustomEditorProvider(
             CodeBlocksEditorProvider.viewType,
             new CodeBlocksEditorProvider(context)
-        )
-    );
-
-    context.subscriptions.push(
-        vscode.workspace.registerTextDocumentContentProvider(TreeViewer.scheme, TreeViewer.treeViewer)
-    );
-
-    const parsersDir = join(context.extensionPath, "parsers");
-    context.subscriptions.push(
+        ),
+        vscode.workspace.registerTextDocumentContentProvider(TreeViewer.scheme, TreeViewer.treeViewer),
         vscode.commands.registerCommand("codeBlocks.openTreeViewer", async () => {
             await TreeViewer.treeViewer.open(parsersDir);
         }),
         vscode.window.onDidChangeActiveTextEditor(
             async (editor) => await TreeViewer.treeViewer.update(parsersDir, editor)
-        )
-    );
-
-    context.subscriptions.push(vscode.commands.registerCommand("codeBlocks.open", reopenWithCodeBocksEditor));
-    context.subscriptions.push(
+        ),
+        vscode.commands.registerCommand("codeBlocks.open", reopenWithCodeBocksEditor),
         vscode.commands.registerCommand("codeBlocks.openToTheSide", openCodeBlocksEditorToTheSide)
     );
 }
