@@ -5,7 +5,7 @@ import { Language } from "web-tree-sitter";
 import assert from "assert";
 import { expect } from "chai";
 
-const parsersDir = "/Users/selfint/dev/github.com/selfint/code-blocks/parsers";
+const parsersDir = "parsers";
 
 suite("FileTree", function () {
     suite("Rust", function () {
