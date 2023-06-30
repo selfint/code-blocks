@@ -106,46 +106,43 @@ export class FileTree implements vscode.Disposable {
             return undefined;
         }
 
-        // get all parents of start and end node
-        const startParents: SyntaxNode[] = [startNode.parent];
-        const endParents: SyntaxNode[] = [endNode.parent];
-        while (startParents.at(-1)?.parent || endParents.at(-1)?.parent) {
-            const nextStartParent = startParents.at(-1)?.parent;
-            if (nextStartParent) {
-                startParents.push(nextStartParent);
+        // get all parents of start and end nodes
+        const parents = (node: SyntaxNode): SyntaxNode[] => {
+            const parentNodes = [];
+            while (node.parent) {
+                parentNodes.push(node.parent);
+                node = node.parent;
             }
-            const nextEndParent = endParents.at(-1)?.parent;
-            if (nextEndParent) {
-                endParents.push(nextEndParent);
-            }
-        }
+
+            return parentNodes;
+        };
+        const startParents = parents(startNode);
+        const endParents = parents(endNode);
 
         // find lowest common parent of start and end nodes
-        const lowestCommonParent = ((): SyntaxNode => {
-            const startParentInEndParents = startParents.findIndex((startParent) =>
-                endParents.some((endParent) => endParent.equals(startParent))
-            );
-            const endParentInStartParents = endParents.findIndex((endParent) =>
-                startParents.some((startParent) => startParent.equals(endParent))
-            );
+        const startParentInEndParents = startParents.findIndex((startParent) =>
+            endParents.some((endParent) => endParent.equals(startParent))
+        );
+        const endParentInStartParents = endParents.findIndex((endParent) =>
+            startParents.some((startParent) => startParent.equals(endParent))
+        );
 
-            if (0 <= startParentInEndParents && startParentInEndParents <= endParentInStartParents) {
-                return startParents[startParentInEndParents];
-            } else if (0 <= endParentInStartParents) {
-                return endParents[endParentInStartParents];
-            } else {
-                // should be impossible
-                throw new Error("got start and end nodes without a common parent");
-            }
-        })();
+        let lowestCommonParent = undefined;
+        if (0 <= startParentInEndParents && startParentInEndParents <= endParentInStartParents) {
+            lowestCommonParent = startParents[startParentInEndParents];
+        } else if (0 <= endParentInStartParents) {
+            lowestCommonParent = endParents[endParentInStartParents];
+        } else {
+            // should be impossible
+            throw new Error("got start and end nodes without a common parent");
+        }
 
         // get all named children in the common parent from start to end nodes
         const selectedNodes = lowestCommonParent.namedChildren.filter(
             (child) => child.endIndex > startNode.startIndex && child.startIndex <= endNode.endIndex
         );
 
-        // aren't the nodes already sorted?
-        // TODO: check if we can remove this
+        // TODO: aren't the nodes already sorted? check if we can remove this
         selectedNodes.sort((a, b) => a.startIndex - b.startIndex);
 
         return new Selection([startNode], selectedNodes, this.version);
