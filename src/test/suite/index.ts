@@ -1,6 +1,6 @@
-import * as Mocha from "mocha";
-import * as glob from "glob";
 import * as path from "path";
+import Mocha from "mocha";
+import glob from "glob";
 
 export function run(): Promise<void> {
     // Create the mocha test
@@ -24,6 +24,7 @@ export function run(): Promise<void> {
                 // Run the mocha test
                 mocha.run((failures) => {
                     if (failures > 0) {
+                        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
                         e(new Error(`${failures} tests failed.`));
                     } else {
                         c();
