@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import { CodeBlocksEditorProvider } from "../../editor/CodeBlocksEditorProvider";
 import { assert, expect } from "chai";
+import { CodeBlocksEditorProvider } from "../../editor/CodeBlocksEditorProvider";
 import { TreeViewer } from "../../TreeViewer";
 
 async function openDocument(content: string, language: string): Promise<void> {
