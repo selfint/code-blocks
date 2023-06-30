@@ -1,4 +1,4 @@
-import { ExtensionContext, Uri, commands, window } from "vscode";
+import * as vscode from "vscode";
 import { CodeBlocksEditorProvider } from "./editor/CodeBlocksEditorProvider";
 import Parser from "web-tree-sitter";
 
@@ -9,38 +9,38 @@ export const parserFinishedInit = new Promise<void>((resolve) => {
 });
 
 async function reopenWithCodeBocksEditor(): Promise<void> {
-    const activeTabInput = window.tabGroups.activeTabGroup.activeTab?.input as {
+    const activeTabInput = vscode.window.tabGroups.activeTabGroup.activeTab?.input as {
         [key: string]: unknown;
-        uri: Uri | undefined;
+        uri: vscode.Uri | undefined;
     };
 
     if (activeTabInput.uri !== undefined) {
-        await commands.executeCommand("vscode.openWith", activeTabInput.uri, "codeBlocks.editor");
+        await vscode.commands.executeCommand("vscode.openWith", activeTabInput.uri, "codeBlocks.editor");
     }
 }
 
 async function openCodeBlocksEditorToTheSide(): Promise<void> {
-    const activeTabInput = window.tabGroups.activeTabGroup.activeTab?.input as {
+    const activeTabInput = vscode.window.tabGroups.activeTabGroup.activeTab?.input as {
         [key: string]: unknown;
-        uri: Uri | undefined;
+        uri: vscode.Uri | undefined;
     };
 
     if (activeTabInput.uri !== undefined) {
-        await commands.executeCommand("vscode.openWith", activeTabInput.uri, "codeBlocks.editor");
-        await commands.executeCommand("workbench.action.moveEditorToNextGroup");
+        await vscode.commands.executeCommand("vscode.openWith", activeTabInput.uri, "codeBlocks.editor");
+        await vscode.commands.executeCommand("workbench.action.moveEditorToNextGroup");
     }
 }
 
-export function activate(context: ExtensionContext): void {
+export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(
-        window.registerCustomEditorProvider(
+        vscode.window.registerCustomEditorProvider(
             CodeBlocksEditorProvider.viewType,
             new CodeBlocksEditorProvider(context)
         )
     );
 
-    context.subscriptions.push(commands.registerCommand("codeBlocks.open", reopenWithCodeBocksEditor));
+    context.subscriptions.push(vscode.commands.registerCommand("codeBlocks.open", reopenWithCodeBocksEditor));
     context.subscriptions.push(
-        commands.registerCommand("codeBlocks.openToTheSide", openCodeBlocksEditorToTheSide)
+        vscode.commands.registerCommand("codeBlocks.openToTheSide", openCodeBlocksEditorToTheSide)
     );
 }
