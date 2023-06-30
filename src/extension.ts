@@ -35,12 +35,18 @@ async function openCodeBlocksEditorToTheSide(): Promise<void> {
 
 export function activate(context: vscode.ExtensionContext): void {
     const parsersDir = join(context.extensionPath, "parsers");
+    let blockModeEnabled = false;
+    const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
+    statusBar.text = "-- BLOCK MODE --";
 
     context.subscriptions.push(
+        statusBar,
         vscode.window.registerCustomEditorProvider(
             CodeBlocksEditorProvider.viewType,
             new CodeBlocksEditorProvider(context)
         ),
+        vscode.commands.registerCommand("codeBlocks.open", reopenWithCodeBocksEditor),
+        vscode.commands.registerCommand("codeBlocks.openToTheSide", openCodeBlocksEditorToTheSide),
         vscode.workspace.registerTextDocumentContentProvider(TreeViewer.scheme, TreeViewer.treeViewer),
         vscode.commands.registerCommand("codeBlocks.openTreeViewer", async () => {
             await TreeViewer.treeViewer.open(parsersDir);
@@ -48,7 +54,14 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.window.onDidChangeActiveTextEditor(
             async (editor) => await TreeViewer.treeViewer.update(parsersDir, editor)
         ),
-        vscode.commands.registerCommand("codeBlocks.open", reopenWithCodeBocksEditor),
-        vscode.commands.registerCommand("codeBlocks.openToTheSide", openCodeBlocksEditorToTheSide)
+        vscode.commands.registerCommand("codeBlocks.toggle", async () => {
+            blockModeEnabled = !blockModeEnabled;
+            await vscode.commands.executeCommand("setContext", "codeBlocks.blockMode", blockModeEnabled);
+            if (blockModeEnabled) {
+                statusBar.show();
+            } else {
+                statusBar.hide();
+            }
+        })
     );
 }
