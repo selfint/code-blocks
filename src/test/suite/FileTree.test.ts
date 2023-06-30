@@ -1,6 +1,6 @@
-import * as Installer from "../../../Installer";
+import * as Installer from "../../Installer";
 import * as vscode from "vscode";
-import { FileTree } from "../../../FileTree";
+import { FileTree } from "../../FileTree";
 import { Language } from "web-tree-sitter";
 import assert from "assert";
 import { expect } from "chai";

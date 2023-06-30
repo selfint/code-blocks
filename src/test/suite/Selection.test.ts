@@ -1,9 +1,9 @@
-import * as Installer from "../../../Installer";
+import * as Installer from "../../Installer";
 import * as assert from "assert";
 import * as vscode from "vscode";
-import { FileTree } from "../../../FileTree";
+import { FileTree } from "../../FileTree";
 import { Language } from "web-tree-sitter";
-import { UpdateSelectionDirection } from "../../../Selection";
+import { UpdateSelectionDirection } from "../../Selection";
 import { expect } from "chai";
 
 const parsersDir = "parsers";
