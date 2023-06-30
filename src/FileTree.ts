@@ -226,6 +226,7 @@ export class FileTree implements vscode.Disposable {
 
         switch (direction) {
             case "swap-previous": {
+                // TODO: if block mode, resolve previous block
                 const previousNode = selection.selectedSiblings[0].previousNamedSibling;
                 if (!previousNode) {
                     return err(`Can't move to ${direction}, previous node of selection is null`);
