@@ -1,8 +1,9 @@
 import * as vscode from "vscode";
-import Parser, { Language, SyntaxNode, Tree } from "web-tree-sitter";
-
+import { BlockTree, getBlockTrees } from "./BlockTree";
+import Parser, { Language, Query, SyntaxNode, Tree } from "web-tree-sitter";
 import { Result, err, ok } from "./result";
 import { Selection } from "./Selection";
+import { getLanguageConfig } from "./configuration";
 import { parserFinishedInit } from "./extension";
 
 function positionToPoint(pos: vscode.Position): Parser.Point {
@@ -24,8 +25,13 @@ export type MoveSelectionDirection = "swap-previous";
 export class FileTree implements vscode.Disposable {
     public parser: Parser;
     public tree: Tree;
+    public blocks: BlockTree[] | undefined;
     public document: vscode.TextDocument;
     public version: number;
+
+    private queries: Query[] | undefined;
+    private lazyLoadQueries: () => Query[] | undefined;
+    private blockMode = false;
 
     private onUpdateEmitter: vscode.EventEmitter<void> = new vscode.EventEmitter();
     public onUpdate = this.onUpdateEmitter.event;
@@ -38,6 +44,27 @@ export class FileTree implements vscode.Disposable {
         this.document = document;
         this.version = document.version;
 
+        const queryStrings = getLanguageConfig(document.languageId).queries;
+        if (queryStrings !== undefined) {
+            const language = parser.getLanguage();
+            this.lazyLoadQueries = (): Query[] => {
+                if (this.queries === undefined) {
+                    this.queries = queryStrings.map((q) => language.query(q));
+                }
+
+                return this.queries;
+            };
+        } else {
+            this.lazyLoadQueries = (): undefined => undefined;
+        }
+
+        if (this.blockMode) {
+            const queries = this.lazyLoadQueries();
+            if (queries !== undefined) {
+                this.blocks = getBlockTrees(this.tree, queries);
+            }
+        }
+
         this.disposables = [this.onUpdateEmitter];
         this.disposables.push(
             vscode.workspace.onDidChangeTextDocument((event) => {
@@ -46,6 +73,18 @@ export class FileTree implements vscode.Disposable {
                 }
             })
         );
+    }
+
+    public toggleBlockMode(newBlockMode: boolean): void {
+        this.blockMode = newBlockMode;
+        if (!this.blockMode) {
+            this.blocks = undefined;
+        } else {
+            const queries = this.lazyLoadQueries();
+            if (queries !== undefined) {
+                this.blocks = getBlockTrees(this.tree, queries);
+            }
+        }
     }
 
     async dispose(): Promise<void> {
@@ -86,6 +125,13 @@ export class FileTree implements vscode.Disposable {
         }
 
         this.tree = this.parser.parse(event.document.getText(), this.tree);
+        if (this.blockMode) {
+            const queries = this.lazyLoadQueries();
+            if (queries !== undefined) {
+                this.blocks = getBlockTrees(this.tree, queries);
+            }
+        }
+        this.version = event.document.version;
         this.onUpdateEmitter.fire();
     }
 

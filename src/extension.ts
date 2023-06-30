@@ -62,39 +62,45 @@ export function activate(context: vscode.ExtensionContext): void {
     );
 
     let blockModeEnabled = false;
+    const onBlockModeChange = new vscode.EventEmitter<boolean>();
     const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
     statusBar.text = "-- BLOCK MODE --";
 
-    context.subscriptions.push(
+    const uiDisposables = [
         statusBar,
         vscode.window.registerCustomEditorProvider(
             CodeBlocksEditorProvider.viewType,
             new CodeBlocksEditorProvider(context)
         ),
         vscode.workspace.registerTextDocumentContentProvider(TreeViewer.scheme, TreeViewer.treeViewer),
+    ];
+
+    const eventListeners = [
         onActiveFileTreeChange.event((newFileTree) => {
             TreeViewer.treeViewer.viewFileTree(newFileTree);
         }),
         onActiveFileTreeChange.event((newFileTree) => {
             activeFileTree = newFileTree;
-            console.log(activeFileTree?.toString());
         }),
+        onBlockModeChange.event(async (newBlockMode) => {
+            blockModeEnabled = newBlockMode;
+            await vscode.commands.executeCommand("setContext", "codeBlocks.blockMode", blockModeEnabled);
+            blockModeEnabled ? statusBar.show() : statusBar.hide();
+        }),
+        onBlockModeChange.event((newBlockMode) => activeFileTree?.toggleBlockMode(newBlockMode)),
         vscode.window.onDidChangeActiveTextEditor(async (editor) => {
             onActiveFileTreeChange.fire(await getEditorFileTree(parsersDir, editor));
         }),
+    ];
+
+    const commands = [
         vscode.commands.registerCommand("codeBlocks.open", reopenWithCodeBocksEditor),
         vscode.commands.registerCommand("codeBlocks.openToTheSide", openCodeBlocksEditorToTheSide),
-        vscode.commands.registerCommand("codeBlocks.toggle", async () => {
-            blockModeEnabled = !blockModeEnabled;
-            await vscode.commands.executeCommand("setContext", "codeBlocks.blockMode", blockModeEnabled);
-            if (blockModeEnabled) {
-                statusBar.show();
-            } else {
-                statusBar.hide();
-            }
-        }),
+        vscode.commands.registerCommand("codeBlocks.toggle", () => onBlockModeChange.fire(!blockModeEnabled)),
         vscode.commands.registerCommand("codeBlocks.openTreeViewer", async () => {
             await TreeViewer.treeViewer.open();
-        })
-    );
+        }),
+    ];
+
+    context.subscriptions.push(...uiDisposables, ...eventListeners, ...commands);
 }
