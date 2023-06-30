@@ -1,4 +1,4 @@
-import { Point, SyntaxNode } from "web-tree-sitter";
+import { Range, SyntaxNode, Tree } from "web-tree-sitter";
 
 export type UpdateSelectionDirection =
     | "add-previous"
@@ -81,13 +81,13 @@ export class Selection {
         }
     }
 
-    public getRange(): { start: number; end: number; startPosition: Point; endPosition: Point } {
+    public getRange(): Range {
         const firstNode = this.selectedSiblings[0];
         const lastNode = this.selectedSiblings[this.selectedSiblings.length - 1];
 
         return {
-            start: firstNode.startIndex,
-            end: lastNode.endIndex,
+            startIndex: firstNode.startIndex,
+            endIndex: lastNode.endIndex,
             startPosition: firstNode.startPosition,
             endPosition: lastNode.endPosition,
         };
