@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import Parser, { Language, Tree } from "web-tree-sitter";
+import Parser, { Language, SyntaxNode, Tree } from "web-tree-sitter";
 
 import { Selection } from "./codeBlocks/Selection";
 import { parserFinishedInit } from "./extension";
@@ -87,5 +87,26 @@ export class FileTree implements vscode.Disposable {
         }
 
         return new Selection(nodeAtCursor, this.version);
+    }
+
+    public toString(): string {
+        function nodeToString(node: SyntaxNode, indent = 0): string {
+            function nodeRangeToString(node: SyntaxNode): string {
+                const start = node.startPosition;
+                const end = node.endPosition;
+
+                return `${start.row}:${start.column} - ${end.row}:${end.column}`;
+            }
+
+            const nodeString = `${" ".repeat(indent)}${node.type} [${nodeRangeToString(node)}]`;
+            if (node.namedChildCount === 0) {
+                return nodeString;
+            } else {
+                const childrenString = node.namedChildren.map((n) => nodeToString(n, indent + 2)).join("\n");
+                return nodeString + "\n" + childrenString;
+            }
+        }
+
+        return nodeToString(this.tree.rootNode);
     }
 }

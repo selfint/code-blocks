@@ -24,9 +24,12 @@ suite("FileTree", function () {
                 content,
             });
             const fileTree = await FileTree.new(language, document);
-            expect(fileTree.tree.rootNode.toString()).to.equal(
-                "(source_file (function_item name: (identifier) parameters: (parameters) body: (block)))"
-            );
+            expect("\n" + fileTree.toString()).to.equal(`
+source_file [0:0 - 0:12]
+  function_item [0:0 - 0:12]
+    identifier [0:3 - 0:7]
+    parameters [0:7 - 0:9]
+    block [0:10 - 0:12]`);
 
             const edit = new vscode.WorkspaceEdit();
             edit.replace(
@@ -37,9 +40,10 @@ suite("FileTree", function () {
 
             await vscode.workspace.applyEdit(edit);
 
-            expect(fileTree.tree.rootNode.toString()).to.equal(
-                "(source_file (struct_item name: (type_identifier)))"
-            );
+            expect("\n" + fileTree.toString()).to.equal(`
+source_file [0:0 - 0:9]
+  struct_item [0:0 - 0:9]
+    type_identifier [0:7 - 0:8]`);
         });
     });
 });
