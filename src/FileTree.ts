@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import Parser, { Language, SyntaxNode, Tree } from "web-tree-sitter";
 
-import { Selection } from "./codeBlocks/Selection";
+import { Selection } from "./Selection";
 import { parserFinishedInit } from "./extension";
 
 function positionToPoint(pos: vscode.Position): Parser.Point {
