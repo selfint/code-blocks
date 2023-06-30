@@ -235,8 +235,7 @@
   "scripts": {
     "install:all": "yarn install && cd webview-ui && yarn install",
     "start:webview": "cd webview-ui && yarn run dev",
-    "build:webview": "cd webview-ui && yarn run build",
-    "check:webview": "cd webview-ui && yarn run build",
+    "build:webview": "cd webview-ui && yarn run build && yarn run check",
     "vscode:prepublish": "yarn run esbuild-base --minify",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
