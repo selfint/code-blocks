@@ -29,7 +29,7 @@ export class Selection {
 
     public getText(text: string): string {
         const selectionRange = this.getRange();
-        const selectionText = text.substring(selectionRange.start, selectionRange.end);
+        const selectionText = text.substring(selectionRange.startIndex, selectionRange.endIndex);
 
         return selectionText;
     }
