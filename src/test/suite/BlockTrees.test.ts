@@ -1,8 +1,8 @@
-import * as Installer from "../../../Installer";
+import * as Installer from "../../Installer";
 import * as assert from "assert";
 import * as vscode from "vscode";
-import { BlockTree, getBlockTrees } from "../../../BlockTree";
-import { FileTree } from "../../../FileTree";
+import { BlockTree, getBlockTrees } from "../../BlockTree";
+import { FileTree } from "../../FileTree";
 import { expect } from "chai";
 
 function box(text: string, indent: number): string {
