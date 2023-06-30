@@ -44,7 +44,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
         for (const query of languageQueries) {
             queries.push(language.query(query));
         }
-        const fileTree = await FileTree.new(language, document.getText());
+        const fileTree = await FileTree.new(language, document);
 
         new CodeBlocksEditor(this.context, document, webviewPanel, queries, fileTree);
     }

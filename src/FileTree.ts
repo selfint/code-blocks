@@ -1,7 +1,8 @@
 import * as vscode from "vscode";
-import { Language, Tree } from "web-tree-sitter";
+import Parser, { Language, Tree } from "web-tree-sitter";
 
-import { Parser, parserFinishedInit } from "./extension";
+import { Selection } from "./codeBlocks/Selection";
+import { parserFinishedInit } from "./extension";
 
 function positionToPoint(pos: vscode.Position): Parser.Point {
     return {
@@ -13,18 +14,25 @@ function positionToPoint(pos: vscode.Position): Parser.Point {
 export class FileTree {
     public parser: Parser;
     public tree: Tree;
+    public document: vscode.TextDocument;
+    public version: number;
+    public selection: Selection | undefined;
 
-    private constructor(parser: Parser, text: string) {
+    private constructor(parser: Parser, document: vscode.TextDocument) {
         this.parser = parser;
-        this.tree = parser.parse(text);
+        this.tree = parser.parse(document.getText());
+        this.document = document;
+        this.version = document.version;
+
+        this.selection = undefined;
     }
 
-    public static async new(language: Language, text: string): Promise<FileTree> {
+    public static async new(language: Language, document: vscode.TextDocument): Promise<FileTree> {
         await parserFinishedInit;
         const parser = new Parser();
         parser.setLanguage(language);
 
-        return new FileTree(parser, text);
+        return new FileTree(parser, document);
     }
 
     public update(event: vscode.TextDocumentChangeEvent): void {
@@ -48,5 +56,17 @@ export class FileTree {
         }
 
         this.tree = this.parser.parse(event.document.getText(), this.tree);
+    }
+
+    public startSelection(cursorIndex: number): Selection | undefined {
+        const nodeAtCursor = this.tree.rootNode.namedDescendantForIndex(cursorIndex);
+        // ignore root nodes, probably only includes 'file' - like nodes
+        // TODO: test more parsers to ensure this is always the correct action
+        if (nodeAtCursor.parent === null) {
+            return undefined;
+        }
+
+        this.selection = new Selection(nodeAtCursor, this.version);
+        return this.selection;
     }
 }

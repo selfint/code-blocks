@@ -64,7 +64,10 @@ suite("blockTrees", function () {
             assert.ok(rust);
 
             const text = "fn foo() {}\nfn bar() {}";
-            const fileTree = await FileTree.new(rust, text);
+            const fileTree = await FileTree.new(
+                rust,
+                await vscode.workspace.openTextDocument({ language: "rust", content: text })
+            );
             const queries = [rust.query("(function_item) @item")];
             const blocksTrees = codeBlocks.getBlockTrees(fileTree.tree, queries);
 
@@ -101,7 +104,10 @@ fn grandma() {
     }
 }
 `;
-            const fileTree = await FileTree.new(rust, text);
+            const fileTree = await FileTree.new(
+                rust,
+                await vscode.workspace.openTextDocument({ language: "rust", content: text })
+            );
             const queries = [rust.query("(function_item) @item")];
             const blocksTrees = codeBlocks.getBlockTrees(fileTree.tree, queries);
 
