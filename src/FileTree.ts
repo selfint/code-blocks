@@ -121,35 +121,28 @@ export class FileTree implements vscode.Disposable {
         }
 
         // find lowest common parent of start and end nodes
-        const lowestCommonParent = ((): SyntaxNode | undefined => {
-            const startParentInEndParents = startParents.findIndex(
-                (startParent) => endParents.findIndex((endParent) => endParent.equals(startParent)) !== -1
+        const lowestCommonParent = ((): SyntaxNode => {
+            const startParentInEndParents = startParents.findIndex((startParent) =>
+                endParents.some((endParent) => endParent.equals(startParent))
             );
-            const endParentInStartParents = endParents.findIndex(
-                (endParent) => startParents.findIndex((startParent) => startParent.equals(endParent)) !== -1
+            const endParentInStartParents = endParents.findIndex((endParent) =>
+                startParents.some((startParent) => startParent.equals(endParent))
             );
 
             if (0 <= startParentInEndParents && startParentInEndParents <= endParentInStartParents) {
-                return startParents.at(startParentInEndParents);
+                return startParents[startParentInEndParents];
             } else if (0 <= endParentInStartParents) {
-                return endParents.at(endParentInStartParents);
+                return endParents[endParentInStartParents];
             } else {
-                return undefined;
+                // should be impossible
+                throw new Error("got start and end nodes without a common parent");
             }
         })();
 
-        if (lowestCommonParent === undefined) {
-            // should be impossible
-            throw new Error("got start and end nodes without a common parent");
-        }
-
         // get all named children in the common parent from start to end nodes
-        const selectedNodes = [];
-        for (const child of lowestCommonParent.namedChildren) {
-            if (child.endIndex > startNode.startIndex && child.startIndex <= endNode.endIndex) {
-                selectedNodes.push(child);
-            }
-        }
+        const selectedNodes = lowestCommonParent.namedChildren.filter(
+            (child) => child.endIndex > startNode.startIndex && child.startIndex <= endNode.endIndex
+        );
 
         // aren't the nodes already sorted?
         // TODO: check if we can remove this
