@@ -12,9 +12,10 @@ export function getLanguageConfig(languageId: string): LanguageConfig {
         return vscode.workspace.getConfiguration(`[${languageId}]`)[`codeBlocks.${c}`] ?? d;
     }
 
+    const npmPackageName = get("npmPackageName", `tree-sitter-${languageId}`);
     return {
-        npmPackageName: get("npmPackageName", `tree-sitter-${languageId}`),
-        parserName: get("parserName", `tree-sitter-${languageId}`),
+        npmPackageName,
+        parserName: get("parserName", npmPackageName),
         subdirectory: get("subdirectory"),
         queries: get("queries"),
     };
