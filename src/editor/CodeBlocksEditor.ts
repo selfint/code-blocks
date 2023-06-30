@@ -106,7 +106,7 @@ export class CodeBlocksEditor {
     }
 
     private subscribeToDocEvents(): void {
-        const disposables: vscode.Disposable[] = [];
+        const disposables: vscode.Disposable[] = [this.fileTree];
         const webviewPanel = this.webviewPanel;
 
         // handle messages from webview
@@ -128,16 +128,7 @@ export class CodeBlocksEditor {
         );
 
         // re-render ui when this document's text changes
-        vscode.workspace.onDidChangeTextDocument(
-            async (e: vscode.TextDocumentChangeEvent) => {
-                if (e.document.uri.toString() === this.document.uri.toString()) {
-                    this.fileTree.update(e);
-                    await this.drawBlocks();
-                }
-            },
-            undefined,
-            disposables
-        );
+        this.fileTree.onUpdate(async () => await this.drawBlocks());
 
         webviewPanel.onDidDispose(() =>
             disposables.forEach((d) => {

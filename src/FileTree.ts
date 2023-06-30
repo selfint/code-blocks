@@ -11,12 +11,16 @@ function positionToPoint(pos: vscode.Position): Parser.Point {
     };
 }
 
-export class FileTree {
+export class FileTree implements vscode.Disposable {
     public parser: Parser;
     public tree: Tree;
     public document: vscode.TextDocument;
     public version: number;
-    public selection: Selection | undefined;
+
+    private onUpdateEmitter: vscode.EventEmitter<void> = new vscode.EventEmitter();
+    public onUpdate = this.onUpdateEmitter.event;
+
+    private disposables: vscode.Disposable[];
 
     private constructor(parser: Parser, document: vscode.TextDocument) {
         this.parser = parser;
@@ -24,7 +28,22 @@ export class FileTree {
         this.document = document;
         this.version = document.version;
 
-        this.selection = undefined;
+        this.disposables = [this.onUpdateEmitter];
+        this.disposables.push(
+            vscode.workspace.onDidChangeTextDocument((event) => {
+                if (event.document.uri.toString() === this.document.uri.toString()) {
+                    this.update(event);
+                }
+            })
+        );
+    }
+
+    async dispose(): Promise<void> {
+        await Promise.all(
+            this.disposables.map(async (d) => {
+                await d.dispose();
+            })
+        );
     }
 
     public static async new(language: Language, document: vscode.TextDocument): Promise<FileTree> {
@@ -35,7 +54,7 @@ export class FileTree {
         return new FileTree(parser, document);
     }
 
-    public update(event: vscode.TextDocumentChangeEvent): void {
+    private update(event: vscode.TextDocumentChangeEvent): void {
         for (const change of event.contentChanges) {
             const startIndex = change.rangeOffset;
             const oldEndIndex = change.rangeOffset + change.rangeLength;
@@ -56,6 +75,7 @@ export class FileTree {
         }
 
         this.tree = this.parser.parse(event.document.getText(), this.tree);
+        this.onUpdateEmitter.fire();
     }
 
     public startSelection(cursorIndex: number): Selection | undefined {
@@ -66,7 +86,6 @@ export class FileTree {
             return undefined;
         }
 
-        this.selection = new Selection(nodeAtCursor, this.version);
-        return this.selection;
+        return new Selection(nodeAtCursor, this.version);
     }
 }
