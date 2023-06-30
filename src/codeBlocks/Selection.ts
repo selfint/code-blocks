@@ -9,22 +9,21 @@ export type UpdateSelectionDirection =
     | "child";
 
 export class Selection {
-    /**
-     * List of nodes representing selection node start -> parent -> grandparent -> ... -> current.
-     */
-    public ancestryChain: SyntaxNode[];
+    public constructor(
+        /**
+         * List of nodes representing selection node start -> parent -> grandparent -> ... -> current.
+         */
+        public ancestryChain: SyntaxNode[],
 
-    /**
-     * List of nodes representing the currently selected nodes.
-     */
-    public selectedSiblings: SyntaxNode[];
+        /**
+         * List of nodes representing the currently selected nodes.
+         */
+        public selectedSiblings: SyntaxNode[],
+        public version: number
+    ) {}
 
-    public version: number;
-
-    public constructor(node: SyntaxNode, version: number) {
-        this.ancestryChain = [node];
-        this.selectedSiblings = [node];
-        this.version = version;
+    public static fromNode(node: SyntaxNode, version: number): Selection {
+        return new Selection([node], [node], version);
     }
 
     public getText(text: string): string {

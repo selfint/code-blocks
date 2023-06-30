@@ -86,7 +86,81 @@ export class FileTree implements vscode.Disposable {
             return undefined;
         }
 
-        return new Selection(nodeAtCursor, this.version);
+        return Selection.fromNode(nodeAtCursor, this.version);
+    }
+
+    public resolveVscodeSelection(vscodeSelection: vscode.Selection): Selection | undefined {
+        const root = this.tree.rootNode;
+        const startNode = root.namedDescendantForPosition(positionToPoint(vscodeSelection.start));
+        const endPosition = positionToPoint(vscodeSelection.end);
+        // we want an inclusive range, but vscode.Selection has an exclusive end value
+        endPosition.column -= 1;
+        const endNode = root.namedDescendantForPosition(endPosition);
+
+        if (startNode.equals(endNode)) {
+            return Selection.fromNode(startNode, this.version);
+        }
+
+        // ignore entire file selections
+        if (startNode.parent === null || endNode.parent === null) {
+            return undefined;
+        }
+
+        const startParents: SyntaxNode[] = [startNode.parent];
+        const endParents: SyntaxNode[] = [endNode.parent];
+
+        const lowestCommonParent = (): SyntaxNode | undefined => {
+            const startParentInEndParents = startParents.findIndex(
+                (startParent) => endParents.findIndex((endParent) => endParent.equals(startParent)) !== -1
+            );
+            const endParentInStartParents = endParents.findIndex(
+                (endParent) => startParents.findIndex((startParent) => startParent.equals(endParent)) !== -1
+            );
+
+            if (0 <= startParentInEndParents && startParentInEndParents <= endParentInStartParents) {
+                return startParents.at(startParentInEndParents);
+            } else if (0 <= endParentInStartParents) {
+                return endParents.at(endParentInStartParents);
+            } else {
+                return undefined;
+            }
+        };
+
+        let commonParent: SyntaxNode | undefined = undefined;
+        while (startParents.at(-1)?.parent || endParents.at(-1)?.parent) {
+            commonParent = lowestCommonParent();
+            if (commonParent !== undefined) {
+                break;
+            }
+
+            const nextStartParent = startParents.at(-1)?.parent;
+            if (nextStartParent) {
+                startParents.push(nextStartParent);
+            }
+            const nextEndParent = endParents.at(-1)?.parent;
+            if (nextEndParent) {
+                endParents.push(nextEndParent);
+            }
+        }
+
+        if (commonParent === undefined) {
+            // should be impossible
+            throw new Error("got start and end nodes without a common parent");
+        }
+
+        // get all named children in the common parent from start position to end position
+        const selectedNodes = [];
+        for (const child of commonParent.namedChildren) {
+            if (child.endIndex > startNode.startIndex && child.startIndex <= endNode.endIndex) {
+                selectedNodes.push(child);
+            }
+        }
+
+        // aren't the nodes already sorted?
+        // TODO: check if we can remove this
+        selectedNodes.sort((a, b) => a.startIndex - b.startIndex);
+
+        return new Selection([startNode], selectedNodes, this.version);
     }
 
     public toString(): string {
