@@ -227,7 +227,8 @@
         ]
       },
       "[csharp]": {
-        "codeBlocks.npmPackageName": "tree-sitter-c-sharp"
+        "codeBlocks.npmPackageName": "tree-sitter-c-sharp",
+        "codeBlocks.parserName": "tree-sitter-c_sharp"
       }
     }
   },
