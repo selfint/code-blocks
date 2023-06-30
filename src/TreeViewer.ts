@@ -3,7 +3,7 @@ import { FileTree } from "./FileTree";
 
 export class TreeViewer implements vscode.TextDocumentContentProvider {
     public static readonly scheme = "codeBlocks";
-    public static readonly uri = vscode.Uri.parse(`${TreeViewer.scheme}://view`);
+    public static readonly uri = vscode.Uri.parse(`${TreeViewer.scheme}://view/tree`);
     readonly eventEmitter = new vscode.EventEmitter<vscode.Uri>();
     onDidChange: vscode.Event<vscode.Uri> | undefined = this.eventEmitter.event;
 

@@ -89,6 +89,9 @@ export function activate(context: vscode.ExtensionContext): void {
         }),
         onBlockModeChange.event((newBlockMode) => activeFileTree?.toggleBlockMode(newBlockMode)),
         vscode.window.onDidChangeActiveTextEditor(async (editor) => {
+            if (editor?.document.uri.toString() === TreeViewer.uri.toString()) {
+                return;
+            }
             onActiveFileTreeChange.fire(await getEditorFileTree(parsersDir, editor));
         }),
     ];
