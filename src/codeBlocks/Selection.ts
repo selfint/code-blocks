@@ -1,4 +1,4 @@
-import { Range, SyntaxNode, Tree } from "web-tree-sitter";
+import { Range, SyntaxNode } from "web-tree-sitter";
 
 export type UpdateSelectionDirection =
     | "add-previous"
