@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import Parser, { Language, SyntaxNode, Tree } from "web-tree-sitter";
 
+import { Result, err, ok } from "./result";
 import { Selection } from "./Selection";
 import { parserFinishedInit } from "./extension";
 
@@ -11,6 +12,15 @@ function positionToPoint(pos: vscode.Position): Parser.Point {
     };
 }
 
+function pointToPosition(point: Parser.Point): vscode.Position {
+    return new vscode.Position(point.row, point.column);
+}
+
+function parserRangeToVscodeRange(range: Parser.Range): vscode.Range {
+    return new vscode.Range(pointToPosition(range.startPosition), pointToPosition(range.endPosition));
+}
+
+export type MoveSelectionDirection = "swap-previous";
 export class FileTree implements vscode.Disposable {
     public parser: Parser;
     public tree: Tree;
@@ -147,6 +157,55 @@ export class FileTree implements vscode.Disposable {
         selectedNodes.sort((a, b) => a.startIndex - b.startIndex);
 
         return new Selection([startNode], selectedNodes, this.version);
+    }
+
+    public async moveSelection(
+        selection: Selection,
+        direction: MoveSelectionDirection
+    ): Promise<Result<Selection | undefined, string>> {
+        if (selection.version !== this.version) {
+            return err(
+                `Got invalid selection version ${selection.version}, fileTree version is ${this.version}`
+            );
+        }
+
+        if (this.version !== this.document.version) {
+            return err(
+                `Can't move because fileTree version ${this.version}, isn't document version ${this.document.version}`
+            );
+        }
+
+        const edit = new vscode.WorkspaceEdit();
+        const selectionText = selection.getText(this.document.getText());
+
+        switch (direction) {
+            case "swap-previous": {
+                const previousNode = selection.selectedSiblings[0].previousNamedSibling;
+                if (!previousNode) {
+                    return err(`Can't move to ${direction}, previous node of selection is null`);
+                }
+
+                // swap previous node text and selection text
+                edit.replace(
+                    this.document.uri,
+                    parserRangeToVscodeRange(selection.getRange()),
+                    previousNode.text
+                );
+                edit.replace(
+                    this.document.uri,
+                    new vscode.Range(
+                        pointToPosition(previousNode.startPosition),
+                        pointToPosition(previousNode.endPosition)
+                    ),
+                    selectionText
+                );
+                break;
+            }
+        }
+
+        await vscode.workspace.applyEdit(edit);
+
+        return ok(undefined);
     }
 
     public toString(): string {
