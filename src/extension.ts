@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
+import { FileTree, MoveSelectionDirection } from "./FileTree";
 import { CodeBlocksEditorProvider } from "./editor/CodeBlocksEditorProvider";
-import { FileTree } from "./FileTree";
 import Parser from "web-tree-sitter";
 import { TreeViewer } from "./TreeViewer";
 import { getLanguage } from "./Installer";
@@ -49,6 +49,30 @@ async function getEditorFileTree(
         } else {
             return await FileTree.new(language, activeDocument);
         }
+    }
+}
+
+async function moveSelection(direction: MoveSelectionDirection): Promise<void> {
+    if (activeFileTree === undefined || vscode.window.activeTextEditor === undefined) {
+        return;
+    }
+
+    const selection = activeFileTree.resolveVscodeSelection(vscode.window.activeTextEditor.selection);
+    if (selection === undefined) {
+        return;
+    }
+
+    const result = await activeFileTree.moveSelection(selection, direction);
+    switch (result.status) {
+        case "ok":
+            vscode.window.activeTextEditor.selection = result.result;
+            break;
+
+        case "err":
+            console.log(`Failed to move selection: ${result.result}`);
+            // TODO: add this as a text box above the cursor (can vscode do that?)
+            void vscode.window.showErrorMessage(result.result);
+            break;
     }
 }
 
@@ -105,23 +129,7 @@ export function activate(context: vscode.ExtensionContext): void {
             async () => await TreeViewer.treeViewer.open()
         ),
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        vscode.commands.registerCommand("codeBlocks.moveUp", async () => {
-            if (activeFileTree === undefined || vscode.window.activeTextEditor === undefined) {
-                return;
-            }
-
-            const selection = activeFileTree.resolveVscodeSelection(vscode.window.activeTextEditor.selection);
-            if (selection === undefined) {
-                return;
-            }
-
-            const result = await activeFileTree.moveSelection(selection, "swap-previous");
-            if (result.status !== "ok") {
-                console.log(result);
-                // TODO: add this as a text box above the cursor (can vscode do that?)
-                void vscode.window.showErrorMessage(result.result);
-            }
-        }),
+        vscode.commands.registerCommand("codeBlocks.moveUp", async () => moveSelection("swap-previous")),
     ];
 
     context.subscriptions.push(...uiDisposables, ...eventListeners, ...commands);

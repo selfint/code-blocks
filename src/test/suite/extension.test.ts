@@ -53,7 +53,7 @@ source_file [0:0 - 0:12]
     });
 
     suite(".moveUp", function () {
-        test("moves selection up", async () => {
+        test("moves selection up and updates selection", async () => {
             const activeEditor = await openDocument("fn main() {} fn foo() { }", "rust");
             await vscode.commands.executeCommand("codeBlocks.toggle");
             await awaitFileTreeLoaded();
@@ -65,6 +65,7 @@ source_file [0:0 - 0:12]
             await vscode.commands.executeCommand("codeBlocks.moveUp");
 
             expect(activeEditor.document.getText()).to.equal("fn foo() { } fn main() {}");
+            expect(activeEditor.document.getText(activeEditor.selection)).to.equal("fn foo() { }");
         });
     });
 });

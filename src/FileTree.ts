@@ -208,7 +208,7 @@ export class FileTree implements vscode.Disposable {
     public async moveSelection(
         selection: Selection,
         direction: MoveSelectionDirection
-    ): Promise<Result<Selection | undefined, string>> {
+    ): Promise<Result<vscode.Selection, string>> {
         if (selection.version !== this.version) {
             return err(
                 `Got invalid selection version ${selection.version}, fileTree version is ${this.version}`
@@ -223,6 +223,7 @@ export class FileTree implements vscode.Disposable {
 
         const edit = new vscode.WorkspaceEdit();
         const selectionText = selection.getText(this.document.getText());
+        let newSelection: vscode.Selection;
 
         switch (direction) {
             case "swap-previous": {
@@ -246,13 +247,18 @@ export class FileTree implements vscode.Disposable {
                     ),
                     selectionText
                 );
+
+                newSelection = new vscode.Selection(
+                    pointToPosition(previousNode.startPosition),
+                    pointToPosition(previousNode.endPosition)
+                );
                 break;
             }
         }
 
         await vscode.workspace.applyEdit(edit);
 
-        return ok(undefined);
+        return ok(newSelection);
     }
 
     public toString(): string {
