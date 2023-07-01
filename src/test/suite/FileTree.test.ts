@@ -62,14 +62,18 @@ source_file [0:0 - 0:9]
                 expectedSelectionText: string | undefined
             ): Promise<void> {
                 const fileTree = await buildFileTree(content);
-                const selection = fileTree.resolveVscodeSelection(
-                    new vscode.Selection(
-                        new vscode.Position(selectionRange[0], selectionRange[1]),
-                        new vscode.Position(selectionRange[2], selectionRange[3])
-                    )
+                const vscodeSelection = new vscode.Selection(
+                    new vscode.Position(selectionRange[0], selectionRange[1]),
+                    new vscode.Position(selectionRange[2], selectionRange[3])
                 );
+                const selection = fileTree.resolveVscodeSelection(vscodeSelection);
 
-                expect(selection?.getText(content)).to.equal(expectedSelectionText);
+                expect(selection?.getText(content)).to.equal(
+                    expectedSelectionText,
+                    `Initial selection content: ${(
+                        await vscode.workspace.openTextDocument({ content })
+                    ).getText(vscodeSelection)}`
+                );
             }
 
             test("is node when selection is node range", async () => {
