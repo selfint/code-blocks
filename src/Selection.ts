@@ -1,4 +1,6 @@
+import * as vscode from "vscode";
 import { Range, SyntaxNode } from "web-tree-sitter";
+import { pointToPosition } from "./FileTree";
 
 export type UpdateSelectionDirection =
     | "add-previous"
@@ -90,5 +92,10 @@ export class Selection {
             startPosition: firstNode.startPosition,
             endPosition: lastNode.endPosition,
         };
+    }
+
+    public toVscodeSelection(): vscode.Selection {
+        const range = this.getRange();
+        return new vscode.Selection(pointToPosition(range.startPosition), pointToPosition(range.endPosition));
     }
 }

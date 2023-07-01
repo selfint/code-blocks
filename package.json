@@ -99,6 +99,22 @@
       {
         "command": "codeBlocks.openTreeViewer",
         "title": "Code Blocks: Open tree viewer"
+      },
+      {
+        "command": "codeBlocks.startSelection",
+        "title": "Code Blocks: Start scope selection"
+      },
+      {
+        "command": "codeBlocks.selectParent",
+        "title": "Code Blocks: Scope selection - parent"
+      },
+      {
+        "command": "codeBlocks.selectNext",
+        "title": "Code Blocks: Scope selection - next"
+      },
+      {
+        "command": "codeBlocks.selectPrevious",
+        "title": "Code Blocks: Scope selection - previous"
       }
     ],
     "keybindings": [

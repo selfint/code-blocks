@@ -130,6 +130,30 @@ export function activate(context: vscode.ExtensionContext): void {
         ),
         vscode.commands.registerCommand("codeBlocks.moveUp", async () => moveSelection("swap-previous")),
         vscode.commands.registerCommand("codeBlocks.moveDown", async () => moveSelection("swap-next")),
+        vscode.commands.registerCommand("codeBlocks.startSelection", () => {
+            if (vscode.window.activeTextEditor?.document === undefined || activeFileTree === undefined) {
+                return;
+            }
+
+            const activeEditor = vscode.window.activeTextEditor;
+            const cursorIndex = activeEditor.document.offsetAt(activeEditor.selection.active);
+            const selection = activeFileTree.startSelection(cursorIndex);
+            if (selection !== undefined) {
+                activeEditor.selection = selection.toVscodeSelection();
+            }
+        }),
+        vscode.commands.registerCommand("codeBlocks.selectParent", () => {
+            if (vscode.window.activeTextEditor?.document === undefined || activeFileTree === undefined) {
+                return;
+            }
+
+            const activeEditor = vscode.window.activeTextEditor;
+            const selection = activeFileTree.resolveVscodeSelection(activeEditor.selection);
+            if (selection !== undefined) {
+                selection.update("parent");
+                activeEditor.selection = selection.toVscodeSelection();
+            }
+        }),
     ];
 
     context.subscriptions.push(...uiDisposables, ...eventListeners, ...commands);

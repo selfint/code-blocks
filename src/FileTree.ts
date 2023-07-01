@@ -13,7 +13,7 @@ function positionToPoint(pos: vscode.Position): Parser.Point {
     };
 }
 
-function pointToPosition(point: Parser.Point): vscode.Position {
+export function pointToPosition(point: Parser.Point): vscode.Position {
     return new vscode.Position(point.row, point.column);
 }
 
