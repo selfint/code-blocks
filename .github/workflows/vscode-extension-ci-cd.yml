@@ -18,6 +18,7 @@ env:
 
 jobs:
     test:
+        timeout-minutes: 5
         strategy:
             fail-fast: false
             matrix:
