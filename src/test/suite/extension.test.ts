@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { activeFileTree, onActiveFileTreeChange } from "../../extension";
 import { CodeBlocksEditorProvider } from "../../editor/CodeBlocksEditorProvider";
 import { TreeViewer } from "../../TreeViewer";
 import { expect } from "chai";
@@ -14,6 +15,12 @@ async function openDocument(content: string, language: string): Promise<vscode.T
 
 suite("codeBlocks commands", function () {
     this.timeout(process.env.TEST_TIMEOUT ?? "2s");
+
+    async function awaitFileTreeLoaded(): Promise<void> {
+        while (activeFileTree === undefined) {
+            await new Promise<void>((r) => onActiveFileTreeChange.event(() => r()));
+        }
+    }
 
     suite(".open", function () {
         this.beforeAll(() => {
@@ -33,6 +40,7 @@ suite("codeBlocks commands", function () {
         test("shows file tree", async () => {
             await openDocument("fn main() {}", "rust");
             await vscode.commands.executeCommand("codeBlocks.openTreeViewer");
+            await awaitFileTreeLoaded();
 
             const treeViewerDocument = await vscode.workspace.openTextDocument(TreeViewer.uri);
             expect("\n" + treeViewerDocument.getText()).to.be.equal(`
@@ -48,6 +56,7 @@ source_file [0:0 - 0:12]
         test("moves selection up", async () => {
             const activeEditor = await openDocument("fn main() {} fn foo() { }", "rust");
             await vscode.commands.executeCommand("codeBlocks.toggle");
+            await awaitFileTreeLoaded();
 
             activeEditor.selection = new vscode.Selection(
                 new vscode.Position(0, 14),

@@ -52,11 +52,11 @@ async function getEditorFileTree(
     }
 }
 
+export const onActiveFileTreeChange = new vscode.EventEmitter<FileTree | undefined>();
+export let activeFileTree: FileTree | undefined = undefined;
 export function activate(context: vscode.ExtensionContext): void {
     const parsersDir = join(context.extensionPath, "parsers");
 
-    let activeFileTree: FileTree | undefined = undefined;
-    const onActiveFileTreeChange = new vscode.EventEmitter<FileTree | undefined>();
     void getEditorFileTree(parsersDir, vscode.window.activeTextEditor).then((activeFileTree) =>
         onActiveFileTreeChange.fire(activeFileTree)
     );
@@ -99,17 +99,11 @@ export function activate(context: vscode.ExtensionContext): void {
     const commands = [
         vscode.commands.registerCommand("codeBlocks.open", reopenWithCodeBocksEditor),
         vscode.commands.registerCommand("codeBlocks.openToTheSide", openCodeBlocksEditorToTheSide),
-        vscode.commands.registerCommand("codeBlocks.toggle", async () => {
-            if (activeFileTree === undefined) {
-                onActiveFileTreeChange.fire(
-                    await getEditorFileTree(parsersDir, vscode.window.activeTextEditor)
-                );
-            }
-            onBlockModeChange.fire(!blockModeEnabled);
-        }),
-        vscode.commands.registerCommand("codeBlocks.openTreeViewer", async () => {
-            await TreeViewer.treeViewer.open();
-        }),
+        vscode.commands.registerCommand("codeBlocks.toggle", () => onBlockModeChange.fire(!blockModeEnabled)),
+        vscode.commands.registerCommand(
+            "codeBlocks.openTreeViewer",
+            async () => await TreeViewer.treeViewer.open()
+        ),
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         vscode.commands.registerCommand("codeBlocks.moveUp", async () => {
             if (activeFileTree === undefined || vscode.window.activeTextEditor === undefined) {
