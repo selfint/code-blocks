@@ -52,37 +52,50 @@ source_file [0:0 - 0:12]
         });
     });
 
+    async function applyMoveMethod(
+        content: string,
+        selection: vscode.Selection,
+        command: "codeBlocks.moveDown" | "codeBlocks.moveUp"
+    ): Promise<{
+        newContent: string;
+        newSelectionContent: string;
+    }> {
+        const activeEditor = await openDocument(content, "rust");
+        await vscode.commands.executeCommand("codeBlocks.toggle");
+        await awaitFileTreeLoaded();
+
+        activeEditor.selection = selection;
+        await vscode.commands.executeCommand(command);
+
+        return {
+            newContent: activeEditor.document.getText(),
+            newSelectionContent: activeEditor.document.getText(activeEditor.selection),
+        };
+    }
+
     suite(".moveUp", function () {
-        test("moves selection up and updates selection", async () => {
-            const activeEditor = await openDocument("fn main() {} fn foo() { }", "rust");
-            await vscode.commands.executeCommand("codeBlocks.toggle");
-            await awaitFileTreeLoaded();
-
-            activeEditor.selection = new vscode.Selection(
-                new vscode.Position(0, 14),
-                new vscode.Position(0, 23)
+        test("move methods", async () => {
+            const { newContent, newSelectionContent } = await applyMoveMethod(
+                "fn main() {} fn foo() { }",
+                new vscode.Selection(new vscode.Position(0, 14), new vscode.Position(0, 23)),
+                "codeBlocks.moveUp"
             );
-            await vscode.commands.executeCommand("codeBlocks.moveUp");
 
-            expect(activeEditor.document.getText()).to.equal("fn foo() { } fn main() {}");
-            expect(activeEditor.document.getText(activeEditor.selection)).to.equal("fn foo() { }");
+            expect(newContent).to.equal("fn foo() { } fn main() {}");
+            expect(newSelectionContent).to.equal("fn foo() { }");
         });
     });
 
     suite(".moveDown", function () {
         test("moves selection down and updates selection", async () => {
-            const activeEditor = await openDocument("fn main() { }\nfn f() { }", "rust");
-            void vscode.commands.executeCommand("codeBlocks.toggle");
-            await awaitFileTreeLoaded();
-
-            activeEditor.selection = new vscode.Selection(
-                new vscode.Position(0, 1),
-                new vscode.Position(0, 10)
+            const { newContent, newSelectionContent } = await applyMoveMethod(
+                "fn main() { }\nfn f() { }",
+                new vscode.Selection(new vscode.Position(0, 1), new vscode.Position(0, 10)),
+                "codeBlocks.moveDown"
             );
-            await vscode.commands.executeCommand("codeBlocks.moveDown");
 
-            expect(activeEditor.document.getText()).to.equal("fn f() { }\nfn main() { }");
-            expect(activeEditor.document.getText(activeEditor.selection)).to.equal("fn main() { }");
+            expect(newContent).to.equal("fn f() { }\nfn main() { }");
+            expect(newSelectionContent).to.equal("fn main() { }");
         });
     });
 
@@ -114,12 +127,20 @@ source_file [0:0 - 0:12]
                 new vscode.Position(0, 10)
             );
 
-            for (let i = 0; i < 1000; i++) {
-                await vscode.commands.executeCommand("codeBlocks.moveDown");
-                await vscode.commands.executeCommand("codeBlocks.moveUp");
+            const moves = [];
+            for (let i = 0; i < 10000; i++) {
+                moves.push(vscode.commands.executeCommand("codeBlocks.moveDown"));
+                moves.push(vscode.commands.executeCommand("codeBlocks.moveUp"));
             }
 
-            expect(activeEditor.document.getText()).to.equal("fn main() { }\nfn f() { }");
+            await Promise.all(moves);
+
+            // which moves happen first is undefined, but result should
+            // be either of these
+            expect(activeEditor.document.getText()).to.be.oneOf([
+                "fn main() { }\nfn f() { }",
+                "fn f() { }\nfn main() { }",
+            ]);
             expect(activeEditor.document.getText(activeEditor.selection)).to.equal("fn main() { }");
         }).timeout(process.env.TEST_TIMEOUT ?? "1m");
     });

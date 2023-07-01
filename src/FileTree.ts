@@ -205,91 +205,101 @@ export class FileTree implements vscode.Disposable {
         return new Selection([startNode], selectedNodes, this.version);
     }
 
+    private moveSelectionLock = false;
     public async moveSelection(
         selection: Selection,
         direction: MoveSelectionDirection
     ): Promise<Result<vscode.Selection, string>> {
-        if (selection.version !== this.version) {
-            return err(
-                `Got invalid selection version ${selection.version}, fileTree version is ${this.version}`
-            );
+        if (this.moveSelectionLock) {
+            return err("Can't move because another move is currently happening");
         }
+        this.moveSelectionLock = true;
 
-        if (this.version !== this.document.version) {
-            return err(
-                `Can't move because fileTree version ${this.version}, isn't document version ${this.document.version}`
-            );
-        }
-
-        const edit = new vscode.WorkspaceEdit();
-        const selectionText = selection.getText(this.document.getText());
-        let newSelection: vscode.Selection;
-
-        switch (direction) {
-            case "swap-previous": {
-                // TODO: if block mode, resolve previous block
-                const previousNode = selection.selectedSiblings[0].previousNamedSibling;
-                if (!previousNode) {
-                    return err(`Can't move to ${direction}, previous node of selection is null`);
-                }
-
-                // swap previous node text and selection text
-                edit.replace(
-                    this.document.uri,
-                    parserRangeToVscodeRange(selection.getRange()),
-                    previousNode.text
+        try {
+            if (selection.version !== this.version) {
+                return err(
+                    `Got invalid selection version ${selection.version}, fileTree version is ${this.version}`
                 );
-                edit.replace(
-                    this.document.uri,
-                    new vscode.Range(
+            }
+
+            if (this.version !== this.document.version) {
+                return err(
+                    `Can't move because fileTree version ${this.version}, isn't document version ${this.document.version}`
+                );
+            }
+
+            const edit = new vscode.WorkspaceEdit();
+            const selectionText = selection.getText(this.document.getText());
+            let newSelection: vscode.Selection;
+
+            switch (direction) {
+                case "swap-previous": {
+                    // TODO: if block mode, resolve previous block
+                    const previousNode = selection.selectedSiblings[0].previousNamedSibling;
+                    if (!previousNode) {
+                        return err(`Can't move to ${direction}, previous node of selection is null`);
+                    }
+
+                    // swap previous node text and selection text
+                    edit.replace(
+                        this.document.uri,
+                        parserRangeToVscodeRange(selection.getRange()),
+                        previousNode.text
+                    );
+                    edit.replace(
+                        this.document.uri,
+                        new vscode.Range(
+                            pointToPosition(previousNode.startPosition),
+                            pointToPosition(previousNode.endPosition)
+                        ),
+                        selectionText
+                    );
+
+                    await vscode.workspace.applyEdit(edit);
+
+                    newSelection = new vscode.Selection(
                         pointToPosition(previousNode.startPosition),
                         pointToPosition(previousNode.endPosition)
-                    ),
-                    selectionText
-                );
-
-                await vscode.workspace.applyEdit(edit);
-
-                newSelection = new vscode.Selection(
-                    pointToPosition(previousNode.startPosition),
-                    pointToPosition(previousNode.endPosition)
-                );
-                break;
-            }
-            case "swap-next": {
-                // TODO: if block mode, resolve previous block
-                const nextNode = selection.selectedSiblings.at(-1)?.nextNamedSibling;
-                if (!nextNode) {
-                    return err(`Can't move to ${direction}, next node of selection is null`);
+                    );
+                    break;
                 }
+                case "swap-next": {
+                    // TODO: if block mode, resolve previous block
+                    const nextNode = selection.selectedSiblings.at(-1)?.nextNamedSibling;
+                    if (!nextNode) {
+                        return err(`Can't move to ${direction}, next node of selection is null`);
+                    }
 
-                // swap next node text and selection text
-                edit.replace(
-                    this.document.uri,
-                    new vscode.Range(
-                        pointToPosition(nextNode.startPosition),
-                        pointToPosition(nextNode.endPosition)
-                    ),
-                    selectionText
-                );
-                edit.replace(
-                    this.document.uri,
-                    parserRangeToVscodeRange(selection.getRange()),
-                    nextNode.text
-                );
+                    // swap next node text and selection text
+                    edit.replace(
+                        this.document.uri,
+                        new vscode.Range(
+                            pointToPosition(nextNode.startPosition),
+                            pointToPosition(nextNode.endPosition)
+                        ),
+                        selectionText
+                    );
+                    edit.replace(
+                        this.document.uri,
+                        parserRangeToVscodeRange(selection.getRange()),
+                        nextNode.text
+                    );
 
-                await vscode.workspace.applyEdit(edit);
+                    await vscode.workspace.applyEdit(edit);
 
-                const indexShift = selectionText.length - nextNode.text.length;
-                newSelection = new vscode.Selection(
-                    this.document.positionAt(nextNode.startIndex - indexShift),
-                    this.document.positionAt(nextNode.endIndex - indexShift)
-                );
-                break;
+                    const indexShift = selectionText.length - nextNode.text.length;
+                    newSelection = new vscode.Selection(
+                        this.document.positionAt(nextNode.startIndex - indexShift),
+                        this.document.positionAt(nextNode.endIndex - indexShift)
+                    );
+                    break;
+                }
             }
-        }
 
-        return ok(newSelection);
+            return ok(newSelection);
+        } finally {
+            this.moveSelectionLock = false;
+        }
     }
 
     public toString(): string {
