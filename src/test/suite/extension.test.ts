@@ -68,4 +68,59 @@ source_file [0:0 - 0:12]
             expect(activeEditor.document.getText(activeEditor.selection)).to.equal("fn foo() { }");
         });
     });
+
+    suite(".moveDown", function () {
+        test("moves selection down and updates selection", async () => {
+            const activeEditor = await openDocument("fn main() { }\nfn f() { }", "rust");
+            void vscode.commands.executeCommand("codeBlocks.toggle");
+            await awaitFileTreeLoaded();
+
+            activeEditor.selection = new vscode.Selection(
+                new vscode.Position(0, 1),
+                new vscode.Position(0, 10)
+            );
+            await vscode.commands.executeCommand("codeBlocks.moveDown");
+
+            expect(activeEditor.document.getText()).to.equal("fn f() { }\nfn main() { }");
+            expect(activeEditor.document.getText(activeEditor.selection)).to.equal("fn main() { }");
+        });
+    });
+
+    suite("repeat moves", function () {
+        test("move down/up returns to original", async () => {
+            const activeEditor = await openDocument("fn main() { }\nfn f() { }", "rust");
+            void vscode.commands.executeCommand("codeBlocks.toggle");
+            await awaitFileTreeLoaded();
+
+            activeEditor.selection = new vscode.Selection(
+                new vscode.Position(0, 1),
+                new vscode.Position(0, 10)
+            );
+
+            await vscode.commands.executeCommand("codeBlocks.moveDown");
+            await vscode.commands.executeCommand("codeBlocks.moveUp");
+
+            expect(activeEditor.document.getText()).to.equal("fn main() { }\nfn f() { }");
+            expect(activeEditor.document.getText(activeEditor.selection)).to.equal("fn main() { }");
+        });
+
+        test("moving without awaiting is stable", async () => {
+            const activeEditor = await openDocument("fn main() { }\nfn f() { }", "rust");
+            void vscode.commands.executeCommand("codeBlocks.toggle");
+            await awaitFileTreeLoaded();
+
+            activeEditor.selection = new vscode.Selection(
+                new vscode.Position(0, 1),
+                new vscode.Position(0, 10)
+            );
+
+            for (let i = 0; i < 1000; i++) {
+                await vscode.commands.executeCommand("codeBlocks.moveDown");
+                await vscode.commands.executeCommand("codeBlocks.moveUp");
+            }
+
+            expect(activeEditor.document.getText()).to.equal("fn main() { }\nfn f() { }");
+            expect(activeEditor.document.getText(activeEditor.selection)).to.equal("fn main() { }");
+        }).timeout(process.env.TEST_TIMEOUT ?? "1m");
+    });
 });

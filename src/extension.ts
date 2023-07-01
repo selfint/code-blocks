@@ -128,8 +128,8 @@ export function activate(context: vscode.ExtensionContext): void {
             "codeBlocks.openTreeViewer",
             async () => await TreeViewer.treeViewer.open()
         ),
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         vscode.commands.registerCommand("codeBlocks.moveUp", async () => moveSelection("swap-previous")),
+        vscode.commands.registerCommand("codeBlocks.moveDown", async () => moveSelection("swap-next")),
     ];
 
     context.subscriptions.push(...uiDisposables, ...eventListeners, ...commands);

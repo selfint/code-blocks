@@ -21,7 +21,7 @@ function parserRangeToVscodeRange(range: Parser.Range): vscode.Range {
     return new vscode.Range(pointToPosition(range.startPosition), pointToPosition(range.endPosition));
 }
 
-export type MoveSelectionDirection = "swap-previous";
+export type MoveSelectionDirection = "swap-previous" | "swap-next";
 export class FileTree implements vscode.Disposable {
     public parser: Parser;
     public tree: Tree;
@@ -248,15 +248,46 @@ export class FileTree implements vscode.Disposable {
                     selectionText
                 );
 
+                await vscode.workspace.applyEdit(edit);
+
                 newSelection = new vscode.Selection(
                     pointToPosition(previousNode.startPosition),
                     pointToPosition(previousNode.endPosition)
                 );
                 break;
             }
-        }
+            case "swap-next": {
+                // TODO: if block mode, resolve previous block
+                const nextNode = selection.selectedSiblings.at(-1)?.nextNamedSibling;
+                if (!nextNode) {
+                    return err(`Can't move to ${direction}, next node of selection is null`);
+                }
 
-        await vscode.workspace.applyEdit(edit);
+                // swap next node text and selection text
+                edit.replace(
+                    this.document.uri,
+                    new vscode.Range(
+                        pointToPosition(nextNode.startPosition),
+                        pointToPosition(nextNode.endPosition)
+                    ),
+                    selectionText
+                );
+                edit.replace(
+                    this.document.uri,
+                    parserRangeToVscodeRange(selection.getRange()),
+                    nextNode.text
+                );
+
+                await vscode.workspace.applyEdit(edit);
+
+                const indexShift = selectionText.length - nextNode.text.length;
+                newSelection = new vscode.Selection(
+                    this.document.positionAt(nextNode.startIndex - indexShift),
+                    this.document.positionAt(nextNode.endIndex - indexShift)
+                );
+                break;
+            }
+        }
 
         return ok(newSelection);
     }
