@@ -4,6 +4,7 @@ import { FileTree } from "./FileTree";
 export class TreeViewer implements vscode.TextDocumentContentProvider {
     public static readonly scheme = "codeBlocks";
     public static readonly uri = vscode.Uri.parse(`${TreeViewer.scheme}://view/tree`);
+    public static readonly placeholder = "Syntax tree not available";
     readonly eventEmitter = new vscode.EventEmitter<vscode.Uri>();
     onDidChange: vscode.Event<vscode.Uri> | undefined = this.eventEmitter.event;
 
@@ -35,6 +36,6 @@ export class TreeViewer implements vscode.TextDocumentContentProvider {
     }
 
     provideTextDocumentContent(_uri: vscode.Uri, _ct: vscode.CancellationToken): string {
-        return this.fileTree?.toString() ?? "Syntax tree not available";
+        return this.fileTree?.toString() ?? TreeViewer.placeholder;
     }
 }
