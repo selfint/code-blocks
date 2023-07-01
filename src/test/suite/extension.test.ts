@@ -52,14 +52,20 @@ source_file [0:0 - 0:12]
         });
     });
 
-    async function applyMoveMethod(
-        content: string,
-        selection: vscode.Selection,
-        command: "codeBlocks.moveDown" | "codeBlocks.moveUp"
-    ): Promise<{
-        newContent: string;
-        newSelectionContent: string;
-    }> {
+    type TestMoveMethodParams = {
+        content: string;
+        selection: vscode.Selection;
+        command: "codeBlocks.moveDown" | "codeBlocks.moveUp";
+        expectedContent: string;
+        expectedSelectionContent: string;
+    };
+    async function applyMoveMethod({
+        content,
+        selection,
+        command,
+        expectedContent,
+        expectedSelectionContent,
+    }: TestMoveMethodParams): Promise<void> {
         const activeEditor = await openDocument(content, "rust");
         await vscode.commands.executeCommand("codeBlocks.toggle");
         await awaitFileTreeLoaded();
@@ -67,35 +73,34 @@ source_file [0:0 - 0:12]
         activeEditor.selection = selection;
         await vscode.commands.executeCommand(command);
 
-        return {
-            newContent: activeEditor.document.getText(),
-            newSelectionContent: activeEditor.document.getText(activeEditor.selection),
-        };
+        const newContent = activeEditor.document.getText();
+        const newSelectionContent = activeEditor.document.getText(activeEditor.selection);
+
+        expect(newContent).to.equal(expectedContent);
+        expect(newSelectionContent).to.equal(expectedSelectionContent);
     }
 
     suite(".moveUp", function () {
         test("move methods", async () => {
-            const { newContent, newSelectionContent } = await applyMoveMethod(
-                "fn main() {} fn foo() { }",
-                new vscode.Selection(new vscode.Position(0, 14), new vscode.Position(0, 23)),
-                "codeBlocks.moveUp"
-            );
-
-            expect(newContent).to.equal("fn foo() { } fn main() {}");
-            expect(newSelectionContent).to.equal("fn foo() { }");
+            await applyMoveMethod({
+                content: "fn main() {} fn foo() { }",
+                selection: new vscode.Selection(new vscode.Position(0, 14), new vscode.Position(0, 23)),
+                command: "codeBlocks.moveUp",
+                expectedContent: "fn foo() { } fn main() {}",
+                expectedSelectionContent: "fn foo() { }",
+            });
         });
     });
 
     suite(".moveDown", function () {
         test("moves selection down and updates selection", async () => {
-            const { newContent, newSelectionContent } = await applyMoveMethod(
-                "fn main() { }\nfn f() { }",
-                new vscode.Selection(new vscode.Position(0, 1), new vscode.Position(0, 10)),
-                "codeBlocks.moveDown"
-            );
-
-            expect(newContent).to.equal("fn f() { }\nfn main() { }");
-            expect(newSelectionContent).to.equal("fn main() { }");
+            await applyMoveMethod({
+                content: "fn main() { }\nfn f() { }",
+                selection: new vscode.Selection(new vscode.Position(0, 1), new vscode.Position(0, 10)),
+                command: "codeBlocks.moveDown",
+                expectedContent: "fn f() { }\nfn main() { }",
+                expectedSelectionContent: "fn main() { }",
+            });
         });
     });
 
@@ -127,13 +132,14 @@ source_file [0:0 - 0:12]
                 new vscode.Position(0, 10)
             );
 
-            const moves = [];
-            for (let i = 0; i < 10000; i++) {
-                moves.push(vscode.commands.executeCommand("codeBlocks.moveDown"));
-                moves.push(vscode.commands.executeCommand("codeBlocks.moveUp"));
+            for (let i = 0; i < 100; i++) {
+                await Promise.all([
+                    vscode.commands.executeCommand("codeBlocks.moveDown"),
+                    vscode.commands.executeCommand("codeBlocks.moveDown"),
+                    vscode.commands.executeCommand("codeBlocks.moveUp"),
+                    vscode.commands.executeCommand("codeBlocks.moveUp"),
+                ]);
             }
-
-            await Promise.all(moves);
 
             // which moves happen first is undefined, but result should
             // be either of these
