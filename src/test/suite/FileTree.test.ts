@@ -182,7 +182,7 @@ source_file [0:0 - 0:9]
             });
 
             suite("after-parent", function () {
-                test.only("single node selection", async () => {
+                test("single node selection", async () => {
                     await testMoveSelection(
                         "fn main() { if true { @let a = [1, 2, 3];@ } }",
                         "after-parent",
@@ -191,7 +191,7 @@ source_file [0:0 - 0:9]
                     );
                 });
 
-                test.only("multiple node selection", async () => {
+                test("multiple node selection", async () => {
                     await testMoveSelection(
                         "fn main() {\n    @let a = [1, 2, 3];\n    let b = 123;@  }",
                         "after-parent",
