@@ -158,6 +158,26 @@ source_file [0:0 - 0:9]
                     );
                 });
             });
+
+            suite("swap-next", function () {
+                test("single node selection", async () => {
+                    await testMoveSelection(
+                        "fn main() { let a = [1, 2, 3]; }",
+                        [0, 24, 0, 25],
+                        "swap-next",
+                        "fn main() { let a = [1, 3, 2]; }"
+                    );
+                });
+
+                test("multiple node selection", async () => {
+                    await testMoveSelection(
+                        "fn main() { let a = [1, 2, 3]; }",
+                        [0, 21, 0, 25],
+                        "swap-next",
+                        "fn main() { let a = [3, 1, 2]; }"
+                    );
+                });
+            });
         });
     });
 
