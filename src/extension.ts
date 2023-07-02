@@ -3,6 +3,7 @@ import { FileTree, MoveSelectionDirection } from "./FileTree";
 import { CodeBlocksEditorProvider } from "./editor/CodeBlocksEditorProvider";
 import Parser from "web-tree-sitter";
 import { TreeViewer } from "./TreeViewer";
+import { UpdateSelectionDirection } from "./Selection";
 import { getLanguage } from "./Installer";
 import { join } from "path";
 
@@ -52,6 +53,19 @@ async function getEditorFileTree(
     }
 }
 
+function updateSelection(direction: UpdateSelectionDirection): void {
+    if (vscode.window.activeTextEditor?.document === undefined || activeFileTree === undefined) {
+        return;
+    }
+
+    const activeEditor = vscode.window.activeTextEditor;
+    const selection = activeFileTree.resolveVscodeSelection(activeEditor.selection);
+    if (selection !== undefined) {
+        selection.update(direction);
+        activeEditor.selection = selection.toVscodeSelection();
+    }
+}
+
 async function moveSelection(direction: MoveSelectionDirection): Promise<void> {
     if (activeFileTree === undefined || vscode.window.activeTextEditor === undefined) {
         return;
@@ -85,6 +99,7 @@ export function activate(context: vscode.ExtensionContext): void {
         onActiveFileTreeChange.fire(activeFileTree)
     );
 
+    // TODO: change block mode to mean the entire extension is enabled, not just query blocks
     let blockModeEnabled = false;
     const onBlockModeChange = new vscode.EventEmitter<boolean>();
     const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
@@ -135,18 +150,9 @@ export function activate(context: vscode.ExtensionContext): void {
                 activeEditor.selection = selection.toVscodeSelection();
             }
         }),
-        vscode.commands.registerCommand("codeBlocks.selectParent", () => {
-            if (vscode.window.activeTextEditor?.document === undefined || activeFileTree === undefined) {
-                return;
-            }
-
-            const activeEditor = vscode.window.activeTextEditor;
-            const selection = activeFileTree.resolveVscodeSelection(activeEditor.selection);
-            if (selection !== undefined) {
-                selection.update("parent");
-                activeEditor.selection = selection.toVscodeSelection();
-            }
-        }),
+        vscode.commands.registerCommand("codeBlocks.selectParent", () => updateSelection("parent")),
+        vscode.commands.registerCommand("codeBlocks.selectNext", () => updateSelection("add-next")),
+        vscode.commands.registerCommand("codeBlocks.selectPrevious", () => updateSelection("add-previous")),
     ];
 
     context.subscriptions.push(...uiDisposables, ...eventListeners, ...commands);
