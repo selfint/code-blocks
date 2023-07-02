@@ -136,6 +136,16 @@ source_file [0:0 - 0:12]
             });
         });
 
+        suite(".selectParent", function () {
+            test("expands to current node", async () => {
+                await testSelectionCommands(
+                    "fn main() { pub fn foo() { @ } }",
+                    ["codeBlocks.selectParent", "codeBlocks.selectParent", "codeBlocks.selectParent"],
+                    "fn main() { pub fn foo() {  } }"
+                );
+            });
+        });
+
         suite(".moveUp", function () {
             test("moves selection up and updates selection", async () => {
                 await testsCommands({

@@ -198,6 +198,15 @@ export class FileTree implements vscode.Disposable {
             throw new Error("got start and end nodes without a common parent");
         }
 
+        // if we are selecting all the nodes in the lowest common parent
+        // we are selecting the parent
+        if (
+            startNode.startIndex === lowestCommonParent.startIndex &&
+            endNode.endIndex === lowestCommonParent.endIndex
+        ) {
+            return Selection.fromNode(lowestCommonParent, this.version);
+        }
+
         // get all named children in the common parent from start to end nodes
         const selectedNodes = lowestCommonParent.namedChildren.filter(
             (child) => child.endIndex > startNode.startIndex && child.startIndex <= endNode.endIndex
