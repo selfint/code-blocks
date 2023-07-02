@@ -190,6 +190,15 @@ source_file [0:0 - 0:9]
                         "let a = [1, 2, 3];"
                     );
                 });
+
+                test.only("multiple node selection", async () => {
+                    await testMoveSelection(
+                        "fn main() {\n    @let a = [1, 2, 3];\n    let b = 123;@  }",
+                        "after-parent",
+                        "fn main() {\n      }let a = [1, 2, 3];\n    let b = 123;",
+                        "let a = [1, 2, 3];\n    let b = 123;"
+                    );
+                });
             });
         });
     });
