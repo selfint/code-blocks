@@ -70,18 +70,18 @@ More examples below.
 
 ### Tl;dr
 
-| Command                                                       | Usage                                                                                 |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `codeBlocks.toggle`                                           | Toggle "block mode" on / off                                                          |
-| `codeBlocks.moveUp` / `codeBlocks.moveDown`                   | Move the current block up / down                                                      |
-| `codeBlocks.moveUpForce` / `codeBlocks.moveDownForce`         | Move the current block up / down, even if doing so escapes the current block's scope  |
-| `codeBlocks.navigateUp` / `codeBlocks.navigateDown`           | Jump to the previous / next block                                                     |
-| `codeBlocks.navigateUpForce` / `codeBlocks.navigateDownForce` | Jump to the previous / next block, even if doing so escapes the current block's scope |
-| `codeBlocks.selectBlock`                                      | Select the current block                                                              |
-| `codeBlocks.selectNext`                                       | Expand selection to next block                                                        |
-| `codeBlocks.selectPrevious`                                   | Expand selection to previous block                                                    |
-| `codeBlocks.selectParent`                                     | Expand selection to parent                                                            |
-| `codeBlocks.selectChild`                                      | Reduce selection to first child                                                       |
+| Command                                                       | Usage                                            |
+| ------------------------------------------------------------- | ------------------------------------------------ |
+| `codeBlocks.toggle`                                           | Toggle "block mode" on / off                     |
+| `codeBlocks.moveUp` / `codeBlocks.moveDown`                   | Move the current block up / down                 |
+| `codeBlocks.moveUpForce` / `codeBlocks.moveDownForce`         | Move the current block before / after its parent |
+| `codeBlocks.navigateUp` / `codeBlocks.navigateDown`           | Jump to the previous / next block                |
+| `codeBlocks.navigateUpForce` / `codeBlocks.navigateDownForce` | Jump to the parent / child block                 |
+| `codeBlocks.selectBlock`                                      | Select the current block                         |
+| `codeBlocks.selectNext`                                       | Expand selection to next block                   |
+| `codeBlocks.selectPrevious`                                   | Expand selection to previous block               |
+| `codeBlocks.selectParent`                                     | Expand selection to parent                       |
+| `codeBlocks.selectChild`                                      | Reduce selection to first child                  |
 
 ### Keybindings
 
@@ -89,10 +89,10 @@ These are the default key bindings, they are only active when "block mode" is on
 
 | Command                        | Keybinding (cmd on mac) |
 | ------------------------------ | ----------------------- |
-| `codeBlocks.moveUp`            | `alt+up`                |
-| `codeBlocks.moveDown`          | `alt+down`              |
-| `codeBlocks.moveUpForce`       | `alt+shift+up`          |
-| `codeBlocks.moveDownForce`     | `alt+shift+down`        |
+| `codeBlocks.moveUp`            | `alt+left`              |
+| `codeBlocks.moveDown`          | `alt+right`             |
+| `codeBlocks.moveUpForce`       | `alt+up`                |
+| `codeBlocks.moveDownForce`     | `alt+down`              |
 | `codeBlocks.navigateUp`        | `ctrl/cmd+up`           |
 | `codeBlocks.navigateDown`      | `ctrl/cmd+down`         |
 | `codeBlocks.navigateUpForce`   | `ctrl/cmd+shift+up`     |

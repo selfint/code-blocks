@@ -2,6 +2,7 @@ import * as Installer from "../../Installer";
 import * as vscode from "vscode";
 import { FileTree, MoveSelectionDirection } from "../../FileTree";
 import { Language } from "web-tree-sitter";
+import { Selection } from "../../Selection";
 import assert from "assert";
 import { expect } from "chai";
 import { parsersDir } from "./parsersDir";
@@ -55,32 +56,35 @@ source_file [0:0 - 0:9]
             });
         });
 
+        async function testResolveVscodeSelection(
+            content: string,
+            expectedSelectionText: string | undefined
+        ): Promise<[Selection, FileTree]> {
+            const cursor = "@";
+            const selectionStart = content.indexOf(cursor);
+            content = content.replace(cursor, "");
+            const selectionEnd = content.indexOf(cursor);
+            content = content.replace(cursor, "");
+
+            const fileTree = await buildFileTree(content);
+            const vscodeSelection = new vscode.Selection(
+                fileTree.document.positionAt(selectionStart),
+                fileTree.document.positionAt(selectionEnd)
+            );
+            const selection = fileTree.resolveVscodeSelection(vscodeSelection);
+
+            assert.ok(selection, "selection was undefined");
+            expect(selection.getText(content)).to.equal(
+                expectedSelectionText,
+                `Initial selection content: ${(await vscode.workspace.openTextDocument({ content })).getText(
+                    vscodeSelection
+                )}`
+            );
+
+            return [selection, fileTree];
+        }
+
         suite(".resolveVscodeSelection", () => {
-            async function testResolveVscodeSelection(
-                content: string,
-                expectedSelectionText: string | undefined
-            ): Promise<void> {
-                const cursor = "@";
-                const selectionStart = content.indexOf(cursor);
-                content = content.replace(cursor, "");
-                const selectionEnd = content.indexOf(cursor);
-                content = content.replace(cursor, "");
-
-                const fileTree = await buildFileTree(content);
-                const vscodeSelection = new vscode.Selection(
-                    fileTree.document.positionAt(selectionStart),
-                    fileTree.document.positionAt(selectionEnd)
-                );
-                const selection = fileTree.resolveVscodeSelection(vscodeSelection);
-
-                expect(selection?.getText(content)).to.equal(
-                    expectedSelectionText,
-                    `Initial selection content: ${(
-                        await vscode.workspace.openTextDocument({ content })
-                    ).getText(vscodeSelection)}`
-                );
-            }
-
             test("is node when selection is node range", async () => {
                 await testResolveVscodeSelection("fn main() { @let a = 1;@ let b = 2; }", "let a = 1;");
             });
@@ -114,22 +118,13 @@ source_file [0:0 - 0:9]
         suite(".moveSelection", function () {
             async function testMoveSelection(
                 content: string,
-                selectionRange: [number, number, number, number],
                 direction: MoveSelectionDirection,
                 expectedContent: string,
                 expectedSelectionContent: string
             ): Promise<void> {
-                const fileTree = await buildFileTree(content);
-                const selection = fileTree.resolveVscodeSelection(
-                    new vscode.Selection(
-                        new vscode.Position(selectionRange[0], selectionRange[1]),
-                        new vscode.Position(selectionRange[2], selectionRange[3])
-                    )
-                );
-                assert.ok(selection);
-                expect(fileTree.document.getText(selection.toVscodeSelection())).to.equal(
-                    expectedSelectionContent,
-                    "specified selection didn't match expected selection"
+                const [selection, fileTree] = await testResolveVscodeSelection(
+                    content,
+                    expectedSelectionContent
                 );
 
                 const result = await fileTree.moveSelection(selection, direction);
@@ -149,8 +144,7 @@ source_file [0:0 - 0:9]
             suite("swap-previous", function () {
                 test("single node selection", async () => {
                     await testMoveSelection(
-                        "fn main() { let a = [1, 2, 3]; }",
-                        [0, 24, 0, 25],
+                        "fn main() { let a = [1, @2@, 3]; }",
                         "swap-previous",
                         "fn main() { let a = [2, 1, 3]; }",
                         "2"
@@ -159,8 +153,7 @@ source_file [0:0 - 0:9]
 
                 test("multiple node selection", async () => {
                     await testMoveSelection(
-                        "fn main() { let a = [1, 2, 3]; }",
-                        [0, 24, 0, 28],
+                        "fn main() { let a = [1, @2, 3@]; }",
                         "swap-previous",
                         "fn main() { let a = [2, 3, 1]; }",
                         "2, 3"
@@ -171,8 +164,7 @@ source_file [0:0 - 0:9]
             suite("swap-next", function () {
                 test("single node selection", async () => {
                     await testMoveSelection(
-                        "fn main() { let a = [1, 2, 3]; }",
-                        [0, 24, 0, 25],
+                        "fn main() { let a = [1, @2@, 3]; }",
                         "swap-next",
                         "fn main() { let a = [1, 3, 2]; }",
                         "2"
@@ -181,11 +173,50 @@ source_file [0:0 - 0:9]
 
                 test("multiple node selection", async () => {
                     await testMoveSelection(
-                        "fn main() { let a = [1, 2, 3]; }",
-                        [0, 21, 0, 25],
+                        "fn main() { let a = [@1, 2@, 3]; }",
                         "swap-next",
                         "fn main() { let a = [3, 1, 2]; }",
                         "1, 2"
+                    );
+                });
+            });
+
+            suite("after-parent", function () {
+                test("single node selection", async () => {
+                    await testMoveSelection(
+                        "fn main() { if true { @let a = [1, 2, 3];@ } }",
+                        "after-parent",
+                        "fn main() { if true {  }let a = [1, 2, 3]; }",
+                        "let a = [1, 2, 3];"
+                    );
+                });
+
+                test("multiple node selection", async () => {
+                    await testMoveSelection(
+                        "fn main() {\n    @let a = [1, 2, 3];\n    let b = 123;@  }",
+                        "after-parent",
+                        "fn main() {\n      }let a = [1, 2, 3];\n    let b = 123;",
+                        "let a = [1, 2, 3];\n    let b = 123;"
+                    );
+                });
+            });
+
+            suite("before-parent", function () {
+                test("single node selection", async () => {
+                    await testMoveSelection(
+                        "fn main() { { @let a = [1, 2, 3];@ } }",
+                        "before-parent",
+                        "fn main() { let a = [1, 2, 3];{  } }",
+                        "let a = [1, 2, 3];"
+                    );
+                });
+
+                test("multiple node selection", async () => {
+                    await testMoveSelection(
+                        "fn main() { { @let a = [1, 2, 3]; let b = 123;@ } }",
+                        "before-parent",
+                        "fn main() { let a = [1, 2, 3]; let b = 123;{  } }",
+                        "let a = [1, 2, 3]; let b = 123;"
                     );
                 });
             });

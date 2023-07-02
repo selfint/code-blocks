@@ -20,7 +20,7 @@ env:
 
 jobs:
     test:
-        timeout-minutes: 5
+        timeout-minutes: 60
         strategy:
             fail-fast: false
             matrix:
@@ -36,7 +36,16 @@ jobs:
             - name: Install extension dependencies
               run: yarn run install:all
             - name: Build webview
+              if: runner.os != 'macos'
               run: yarn run build:webview
+            # TODO: fix this command getting stuck on macos
+            - name: Build webview
+              if: runner.os == 'macos'
+              uses: nick-fields/retry@v2
+              with:
+                  timeout_minutes: 1
+                  max_attempts: 5
+                  command: yarn run build:webview
             - name: Run tests
               uses: coactions/setup-xvfb@v1
               with:
