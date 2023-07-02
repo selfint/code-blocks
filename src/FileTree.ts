@@ -240,10 +240,12 @@ export class FileTree implements vscode.Disposable {
                         return err(`Can't move to ${direction}, previous node of selection is null`);
                     }
 
+                    const selectionRange = selection.getRange();
+
                     // swap previous node text and selection text
                     edit.replace(
                         this.document.uri,
-                        parserRangeToVscodeRange(selection.getRange()),
+                        parserRangeToVscodeRange(selectionRange),
                         previousNode.text
                     );
                     edit.replace(
@@ -255,11 +257,16 @@ export class FileTree implements vscode.Disposable {
                         selectionText
                     );
 
+                    // cache previous node start index before edit
+                    // since the tree will catch the edit, and the next node's
+                    // start/end indices will change
+                    const previousNodeStartIndex = previousNode.startIndex;
                     await vscode.workspace.applyEdit(edit);
-
                     newSelection = new vscode.Selection(
-                        pointToPosition(previousNode.startPosition),
-                        pointToPosition(previousNode.endPosition)
+                        this.document.positionAt(previousNodeStartIndex),
+                        this.document.positionAt(
+                            previousNodeStartIndex + selectionRange.endIndex - selectionRange.startIndex
+                        )
                     );
                     break;
                 }
@@ -271,6 +278,7 @@ export class FileTree implements vscode.Disposable {
                     }
 
                     // swap next node text and selection text
+                    const selectionRange = selection.getRange();
                     edit.replace(
                         this.document.uri,
                         new vscode.Range(
@@ -279,18 +287,18 @@ export class FileTree implements vscode.Disposable {
                         ),
                         selectionText
                     );
-                    edit.replace(
-                        this.document.uri,
-                        parserRangeToVscodeRange(selection.getRange()),
-                        nextNode.text
-                    );
+                    edit.replace(this.document.uri, parserRangeToVscodeRange(selectionRange), nextNode.text);
 
+                    // calculate forward index shift before applying edit
+                    // since the tree will catch the edit, and the next node's
+                    // start/end indices will change
+                    const forwardShift = nextNode.endIndex - selectionRange.endIndex;
                     await vscode.workspace.applyEdit(edit);
 
-                    const indexShift = selectionText.length - nextNode.text.length;
+                    // end index is exclusive, so selection *really* ends at endIndex - 1
                     newSelection = new vscode.Selection(
-                        this.document.positionAt(nextNode.startIndex - indexShift),
-                        this.document.positionAt(nextNode.endIndex - indexShift)
+                        this.document.positionAt(selectionRange.startIndex + forwardShift),
+                        this.document.positionAt(selectionRange.endIndex + forwardShift)
                     );
                     break;
                 }

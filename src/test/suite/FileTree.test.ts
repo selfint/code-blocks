@@ -122,7 +122,8 @@ source_file [0:0 - 0:9]
                 content: string,
                 selectionRange: [number, number, number, number],
                 direction: MoveSelectionDirection,
-                expectedContent: string
+                expectedContent: string,
+                expectedSelectionContent: string
             ): Promise<void> {
                 const fileTree = await buildFileTree(content);
                 const selection = fileTree.resolveVscodeSelection(
@@ -132,11 +133,23 @@ source_file [0:0 - 0:9]
                     )
                 );
                 assert.ok(selection);
+                expect(fileTree.document.getText(selection.toVscodeSelection())).to.equal(
+                    expectedSelectionContent,
+                    "specified selection didn't match expected selection"
+                );
 
                 const result = await fileTree.moveSelection(selection, direction);
 
                 expect(result.status).to.equal("ok");
-                expect(fileTree.document.getText()).to.equal(expectedContent);
+                expect(fileTree.document.getText()).to.equal(
+                    expectedContent,
+                    "move didn't create expected content"
+                );
+                // @ts-expect-error result is ok, checked 2 lines before
+                expect(fileTree.document.getText(result.result)).to.equal(
+                    expectedSelectionContent,
+                    "move didn't preserve selection"
+                );
             }
 
             suite("swap-previous", function () {
@@ -145,7 +158,8 @@ source_file [0:0 - 0:9]
                         "fn main() { let a = [1, 2, 3]; }",
                         [0, 24, 0, 25],
                         "swap-previous",
-                        "fn main() { let a = [2, 1, 3]; }"
+                        "fn main() { let a = [2, 1, 3]; }",
+                        "2"
                     );
                 });
 
@@ -154,7 +168,8 @@ source_file [0:0 - 0:9]
                         "fn main() { let a = [1, 2, 3]; }",
                         [0, 24, 0, 28],
                         "swap-previous",
-                        "fn main() { let a = [2, 3, 1]; }"
+                        "fn main() { let a = [2, 3, 1]; }",
+                        "2, 3"
                     );
                 });
             });
@@ -165,7 +180,8 @@ source_file [0:0 - 0:9]
                         "fn main() { let a = [1, 2, 3]; }",
                         [0, 24, 0, 25],
                         "swap-next",
-                        "fn main() { let a = [1, 3, 2]; }"
+                        "fn main() { let a = [1, 3, 2]; }",
+                        "2"
                     );
                 });
 
@@ -174,7 +190,8 @@ source_file [0:0 - 0:9]
                         "fn main() { let a = [1, 2, 3]; }",
                         [0, 21, 0, 25],
                         "swap-next",
-                        "fn main() { let a = [3, 1, 2]; }"
+                        "fn main() { let a = [3, 1, 2]; }",
+                        "1, 2"
                     );
                 });
             });

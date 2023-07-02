@@ -60,12 +60,13 @@ source_file [0:0 - 0:12]
                 | "codeBlocks.selectNext"
                 | "codeBlocks.selectParent"
             )[],
-            expectedSelectionContent: string
+            expectedSelectionContent: string,
+            language = "rust"
         ): Promise<vscode.TextEditor> {
             const cursor = "@";
             const cursorIndex = content.indexOf(cursor);
             content = content.replace(cursor, "");
-            const activeEditor = await openDocument(content, "rust");
+            const activeEditor = await openDocument(content, language);
             await vscode.commands.executeCommand("codeBlocks.toggle");
             await awaitFileTreeLoaded();
             activeEditor.selection = new vscode.Selection(
@@ -134,6 +135,16 @@ source_file [0:0 - 0:12]
                     expectedSelectionContent: "fn foo() { }",
                 });
             });
+
+            test("multiple nodes selected", async () => {
+                await testsCommands({
+                    content: "fn main() { let a = [1, 2, @3, 4, 5]; }",
+                    selectionCommands: ["codeBlocks.selectPrevious"],
+                    moveCommands: ["codeBlocks.moveUp"],
+                    expectedContent: "fn main() { let a = [2, 3, 1, 4, 5]; }",
+                    expectedSelectionContent: "2, 3",
+                });
+            });
         });
 
         suite(".moveDown", function () {
@@ -144,6 +155,16 @@ source_file [0:0 - 0:12]
                     moveCommands: ["codeBlocks.moveDown"],
                     expectedContent: "fn foo() {} fn main() {}",
                     expectedSelectionContent: "fn main() {}",
+                });
+            });
+
+            test("multiple nodes selected", async () => {
+                await testsCommands({
+                    content: "fn main() { let a = [1, 2, @3, 4, 5]; }",
+                    selectionCommands: ["codeBlocks.selectNext"],
+                    moveCommands: ["codeBlocks.moveDown"],
+                    expectedContent: "fn main() { let a = [1, 2, 5, 3, 4]; }",
+                    expectedSelectionContent: "3, 4",
                 });
             });
         });
