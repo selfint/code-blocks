@@ -200,6 +200,26 @@ source_file [0:0 - 0:9]
                     );
                 });
             });
+
+            suite.only("before-parent", function () {
+                test("single node selection", async () => {
+                    await testMoveSelection(
+                        "fn main() { { @let a = [1, 2, 3];@ } }",
+                        "before-parent",
+                        "fn main() { let a = [1, 2, 3];{  } }",
+                        "let a = [1, 2, 3];"
+                    );
+                });
+
+                test("multiple node selection", async () => {
+                    await testMoveSelection(
+                        "fn main() { { @let a = [1, 2, 3]; let b = 123;@ } }",
+                        "before-parent",
+                        "fn main() { let a = [1, 2, 3]; let b = 123;{  } }",
+                        "let a = [1, 2, 3]; let b = 123;"
+                    );
+                });
+            });
         });
     });
 

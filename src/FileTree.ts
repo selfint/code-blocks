@@ -21,7 +21,7 @@ function parserRangeToVscodeRange(range: Parser.Range): vscode.Range {
     return new vscode.Range(pointToPosition(range.startPosition), pointToPosition(range.endPosition));
 }
 
-export type MoveSelectionDirection = "swap-previous" | "swap-next" | "after-parent";
+export type MoveSelectionDirection = "swap-previous" | "swap-next" | "after-parent" | "before-parent";
 export class FileTree implements vscode.Disposable {
     public parser: Parser;
     public tree: Tree;
@@ -315,12 +315,69 @@ export class FileTree implements vscode.Disposable {
                 }
                 case "after-parent":
                     return this.afterParent(selection);
+                case "before-parent":
+                    return this.beforeParent(selection);
             }
 
             return ok(newSelection);
         } finally {
             this.moveSelectionLock = false;
         }
+    }
+
+    private async beforeParent(selection: Selection): Promise<Result<vscode.Selection, string>> {
+        const edit = new vscode.WorkspaceEdit();
+        const selectionText = selection.getText(this.document.getText());
+        const selectionRange = selection.getRange();
+
+        const parent = selection.ancestryChain.at(-1)?.parent;
+        if (!parent) {
+            return err("Can't move to after-parent, parent node of selection is null");
+        }
+
+        const nextNamedSibling = parent.nextNamedSibling;
+        const previousNamedSibling = parent.previousNamedSibling;
+
+        let newBeforeSpacing =
+            previousNamedSibling === null
+                ? undefined
+                : this.document.getText(
+                      new vscode.Selection(
+                          this.document.positionAt(previousNamedSibling.endIndex + 1),
+                          this.document.positionAt(parent.startIndex)
+                      )
+                  );
+
+        let newAfterSpacing =
+            nextNamedSibling === null
+                ? undefined
+                : this.document.getText(
+                      new vscode.Selection(
+                          this.document.positionAt(parent.endIndex + 1),
+                          this.document.positionAt(nextNamedSibling.startIndex)
+                      )
+                  );
+
+        // try to fill in the spaces as best we can
+        newBeforeSpacing = newBeforeSpacing ?? newAfterSpacing ?? "";
+        newAfterSpacing = newAfterSpacing ?? newBeforeSpacing;
+
+        const newText = selectionText + newAfterSpacing;
+        // remove old selection
+        edit.replace(this.document.uri, parserRangeToVscodeRange(selectionRange), "");
+        // insert new selection
+        edit.insert(this.document.uri, pointToPosition(parent.startPosition), newText);
+
+        const selectionLength = selectionRange.endIndex - selectionRange.startIndex;
+        const newStartIndex = parent.startIndex;
+        await vscode.workspace.applyEdit(edit);
+
+        const newSelection = new vscode.Selection(
+            this.document.positionAt(newStartIndex),
+            this.document.positionAt(newStartIndex + selectionLength)
+        );
+
+        return ok(newSelection);
     }
 
     private async afterParent(selection: Selection): Promise<Result<vscode.Selection, string>> {
