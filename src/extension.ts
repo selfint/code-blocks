@@ -96,7 +96,6 @@ async function moveSelection(direction: MoveSelectionDirection): Promise<void> {
             break;
 
         case "err":
-            console.log(`Failed to move selection: ${result.result}`);
             // TODO: add this as a text box above the cursor (can vscode do that?)
             void vscode.window.showErrorMessage(result.result);
             break;
