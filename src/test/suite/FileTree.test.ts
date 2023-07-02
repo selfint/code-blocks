@@ -180,6 +180,17 @@ source_file [0:0 - 0:9]
                     );
                 });
             });
+
+            suite("after-parent", function () {
+                test.only("single node selection", async () => {
+                    await testMoveSelection(
+                        "fn main() { if true { @let a = [1, 2, 3];@ } }",
+                        "after-parent",
+                        "fn main() { if true {  }let a = [1, 2, 3]; }",
+                        "let a = [1, 2, 3];"
+                    );
+                });
+            });
         });
     });
 
