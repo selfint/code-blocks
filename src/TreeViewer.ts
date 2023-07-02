@@ -5,7 +5,8 @@ export class TreeViewer implements vscode.TextDocumentContentProvider {
     public static readonly scheme = "codeBlocks";
     public static readonly uri = vscode.Uri.parse(`${TreeViewer.scheme}://view/tree`);
     public static readonly placeholder = "Syntax tree not available";
-    readonly eventEmitter = new vscode.EventEmitter<vscode.Uri>();
+    public readonly eventEmitter = new vscode.EventEmitter<vscode.Uri>();
+    public onDidChange: vscode.Event<vscode.Uri> | undefined = this.eventEmitter.event;
 
     private fileTree: FileTree | undefined = undefined;
     private static singleton: TreeViewer | undefined = undefined;
@@ -15,8 +16,6 @@ export class TreeViewer implements vscode.TextDocumentContentProvider {
             TreeViewer.singleton = new TreeViewer();
             return TreeViewer.singleton;
         })();
-
-    public static onDidChange: vscode.Event<vscode.Uri> | undefined = this.treeViewer.eventEmitter.event;
 
     private constructor() {
         /* */
