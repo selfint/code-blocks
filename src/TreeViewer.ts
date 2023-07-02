@@ -21,7 +21,7 @@ export class TreeViewer implements vscode.TextDocumentContentProvider {
         /* */
     }
 
-    public async open(): Promise<void> {
+    public static async open(): Promise<void> {
         await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(TreeViewer.uri), {
             viewColumn: vscode.ViewColumn.Beside,
             preserveFocus: true,

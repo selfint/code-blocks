@@ -124,10 +124,7 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand("codeBlocks.open", reopenWithCodeBocksEditor),
         vscode.commands.registerCommand("codeBlocks.openToTheSide", openCodeBlocksEditorToTheSide),
         vscode.commands.registerCommand("codeBlocks.toggle", () => onBlockModeChange.fire(!blockModeEnabled)),
-        vscode.commands.registerCommand(
-            "codeBlocks.openTreeViewer",
-            async () => await TreeViewer.treeViewer.open()
-        ),
+        vscode.commands.registerCommand("codeBlocks.openTreeViewer", async () => await TreeViewer.open()),
         vscode.commands.registerCommand("codeBlocks.moveUp", async () => moveSelection("swap-previous")),
         vscode.commands.registerCommand("codeBlocks.moveDown", async () => moveSelection("swap-next")),
         vscode.commands.registerCommand("codeBlocks.startSelection", () => {
