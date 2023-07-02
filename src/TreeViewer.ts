@@ -5,8 +5,8 @@ export class TreeViewer implements vscode.TextDocumentContentProvider {
     public static readonly scheme = "codeBlocks";
     public static readonly uri = vscode.Uri.parse(`${TreeViewer.scheme}://view/tree`);
     public static readonly placeholder = "Syntax tree not available";
-    readonly eventEmitter = new vscode.EventEmitter<vscode.Uri>();
-    onDidChange: vscode.Event<vscode.Uri> | undefined = this.eventEmitter.event;
+    public readonly eventEmitter = new vscode.EventEmitter<vscode.Uri>();
+    public onDidChange: vscode.Event<vscode.Uri> | undefined = this.eventEmitter.event;
 
     private fileTree: FileTree | undefined = undefined;
     private static singleton: TreeViewer | undefined = undefined;
@@ -21,7 +21,7 @@ export class TreeViewer implements vscode.TextDocumentContentProvider {
         /* */
     }
 
-    public async open(): Promise<void> {
+    public static async open(): Promise<void> {
         await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(TreeViewer.uri), {
             viewColumn: vscode.ViewColumn.Beside,
             preserveFocus: true,
@@ -29,10 +29,10 @@ export class TreeViewer implements vscode.TextDocumentContentProvider {
         });
     }
 
-    public viewFileTree(fileTree: FileTree | undefined): void {
-        this.fileTree = fileTree;
-        this.eventEmitter.fire(TreeViewer.uri);
-        this.fileTree?.onUpdate(() => this.eventEmitter.fire(TreeViewer.uri));
+    public static viewFileTree(fileTree: FileTree | undefined): void {
+        this.treeViewer.fileTree = fileTree;
+        this.treeViewer.eventEmitter.fire(TreeViewer.uri);
+        this.treeViewer.fileTree?.onUpdate(() => this.treeViewer.eventEmitter.fire(TreeViewer.uri));
     }
 
     provideTextDocumentContent(_uri: vscode.Uri, _ct: vscode.CancellationToken): string {

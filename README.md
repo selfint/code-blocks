@@ -78,6 +78,10 @@ More examples below.
 | `codeBlocks.navigateUp` / `codeBlocks.navigateDown`           | Jump to the previous / next block                                                     |
 | `codeBlocks.navigateUpForce` / `codeBlocks.navigateDownForce` | Jump to the previous / next block, even if doing so escapes the current block's scope |
 | `codeBlocks.selectBlock`                                      | Select the current block                                                              |
+| `codeBlocks.startSelection`                                   | Select the current block                                                              |
+| `codeBlocks.selectNext`                                       | Expand selection to next block                                                        |
+| `codeBlocks.selectPrevious`                                   | Expand selection to previous block                                                    |
+| `codeBlocks.selectParent`                                     | Expand selection to parent                                                            |
 
 ### Keybindings
 
@@ -93,6 +97,9 @@ These are the default key bindings, they are only active when "block mode" is on
 | `codeBlocks.navigateDown`      | `ctrl/cmd+down`         |
 | `codeBlocks.navigateUpForce`   | `ctrl/cmd+shift+up`     |
 | `codeBlocks.navigateDownForce` | `ctrl/cmd+shift+down`   |
+| `codeBlocks.selectNext`        | `shift+right`           |
+| `codeBlocks.selectPrevious`    | `shift+left`            |
+| `codeBlocks.selectParent`      | `shift+up`              |
 
 These commands are not bound by default:
 

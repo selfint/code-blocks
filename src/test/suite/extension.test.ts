@@ -56,23 +56,24 @@ source_file [0:0 - 0:12]
         async function testSelectionCommands(
             content: string,
             selectionCommands: (
+                | "codeBlocks.startSelection"
                 | "codeBlocks.selectPrevious"
                 | "codeBlocks.selectNext"
                 | "codeBlocks.selectParent"
             )[],
-            expectedSelectionContent: string
+            expectedSelectionContent: string,
+            language = "rust"
         ): Promise<vscode.TextEditor> {
             const cursor = "@";
             const cursorIndex = content.indexOf(cursor);
             content = content.replace(cursor, "");
-            const activeEditor = await openDocument(content, "rust");
+            const activeEditor = await openDocument(content, language);
             await vscode.commands.executeCommand("codeBlocks.toggle");
             await awaitFileTreeLoaded();
             activeEditor.selection = new vscode.Selection(
                 activeEditor.document.positionAt(cursorIndex),
                 activeEditor.document.positionAt(cursorIndex)
             );
-            await vscode.commands.executeCommand("codeBlocks.startSelection");
 
             for (const command of selectionCommands) {
                 await vscode.commands.executeCommand(command);
@@ -86,6 +87,7 @@ source_file [0:0 - 0:12]
 
             return activeEditor;
         }
+
         type TestMoveMethodParams = {
             content: string;
             selectionCommands: (
@@ -124,6 +126,16 @@ source_file [0:0 - 0:12]
             );
         }
 
+        suite(".startSelection", function () {
+            test("expands to current node", async () => {
+                await testSelectionCommands(
+                    "fn main() { let a = [1, 2@22, 3]; }",
+                    ["codeBlocks.startSelection"],
+                    "222"
+                );
+            });
+        });
+
         suite(".moveUp", function () {
             test("moves selection up and updates selection", async () => {
                 await testsCommands({
@@ -132,6 +144,16 @@ source_file [0:0 - 0:12]
                     moveCommands: ["codeBlocks.moveUp"],
                     expectedContent: "fn foo() { } fn main() {}",
                     expectedSelectionContent: "fn foo() { }",
+                });
+            });
+
+            test("multiple nodes selected", async () => {
+                await testsCommands({
+                    content: "fn main() { let a = [1, 2, @3, 4, 5]; }",
+                    selectionCommands: ["codeBlocks.selectPrevious"],
+                    moveCommands: ["codeBlocks.moveUp"],
+                    expectedContent: "fn main() { let a = [2, 3, 1, 4, 5]; }",
+                    expectedSelectionContent: "2, 3",
                 });
             });
         });
@@ -144,6 +166,23 @@ source_file [0:0 - 0:12]
                     moveCommands: ["codeBlocks.moveDown"],
                     expectedContent: "fn foo() {} fn main() {}",
                     expectedSelectionContent: "fn main() {}",
+                });
+            });
+
+            test("multiple nodes selected", async () => {
+                await testsCommands({
+                    content: "fn main() { let a = [1, 2, @3, 4, 5]; }",
+                    selectionCommands: ["codeBlocks.selectNext"],
+                    moveCommands: ["codeBlocks.moveDown"],
+                    expectedContent: "fn main() { let a = [1, 2, 5, 3, 4]; }",
+                    expectedSelectionContent: "3, 4",
+                });
+                await testsCommands({
+                    content: "fn main() { let a = [1, @2, 3]; }",
+                    selectionCommands: ["codeBlocks.selectPrevious"],
+                    moveCommands: ["codeBlocks.moveDown"],
+                    expectedContent: "fn main() { let a = [3, 1, 2]; }",
+                    expectedSelectionContent: "1, 2",
                 });
             });
         });

@@ -3,6 +3,7 @@ import { FileTree, MoveSelectionDirection } from "./FileTree";
 import { CodeBlocksEditorProvider } from "./editor/CodeBlocksEditorProvider";
 import Parser from "web-tree-sitter";
 import { TreeViewer } from "./TreeViewer";
+import { UpdateSelectionDirection } from "./Selection";
 import { getLanguage } from "./Installer";
 import { join } from "path";
 
@@ -52,6 +53,32 @@ async function getEditorFileTree(
     }
 }
 
+function startSelection(): void {
+    if (vscode.window.activeTextEditor?.document === undefined || activeFileTree === undefined) {
+        return;
+    }
+
+    const activeEditor = vscode.window.activeTextEditor;
+    const cursorIndex = activeEditor.document.offsetAt(activeEditor.selection.active);
+    const selection = activeFileTree.startSelection(cursorIndex);
+    if (selection !== undefined) {
+        activeEditor.selection = selection.toVscodeSelection();
+    }
+}
+
+function updateSelection(direction: UpdateSelectionDirection): void {
+    if (vscode.window.activeTextEditor?.document === undefined || activeFileTree === undefined) {
+        return;
+    }
+
+    const activeEditor = vscode.window.activeTextEditor;
+    const selection = activeFileTree.resolveVscodeSelection(activeEditor.selection);
+    if (selection !== undefined) {
+        selection.update(direction);
+        activeEditor.selection = selection.toVscodeSelection();
+    }
+}
+
 async function moveSelection(direction: MoveSelectionDirection): Promise<void> {
     if (activeFileTree === undefined || vscode.window.activeTextEditor === undefined) {
         return;
@@ -85,6 +112,7 @@ export function activate(context: vscode.ExtensionContext): void {
         onActiveFileTreeChange.fire(activeFileTree)
     );
 
+    // TODO: change block mode to mean the entire extension is enabled, not just query blocks
     let blockModeEnabled = false;
     const onBlockModeChange = new vscode.EventEmitter<boolean>();
     const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
@@ -100,12 +128,8 @@ export function activate(context: vscode.ExtensionContext): void {
     ];
 
     const eventListeners = [
-        onActiveFileTreeChange.event((newFileTree) => {
-            TreeViewer.treeViewer.viewFileTree(newFileTree);
-        }),
-        onActiveFileTreeChange.event((newFileTree) => {
-            activeFileTree = newFileTree;
-        }),
+        onActiveFileTreeChange.event((newFileTree) => TreeViewer.viewFileTree(newFileTree)),
+        onActiveFileTreeChange.event((newFileTree) => (activeFileTree = newFileTree)),
         onBlockModeChange.event(async (newBlockMode) => {
             blockModeEnabled = newBlockMode;
             await vscode.commands.executeCommand("setContext", "codeBlocks.blockMode", blockModeEnabled);
@@ -120,40 +144,22 @@ export function activate(context: vscode.ExtensionContext): void {
         }),
     ];
 
+    const cmd = (
+        command: string,
+        callback: (...args: unknown[]) => unknown,
+        thisArg?: unknown
+    ): vscode.Disposable => vscode.commands.registerCommand(command, callback, thisArg);
     const commands = [
-        vscode.commands.registerCommand("codeBlocks.open", reopenWithCodeBocksEditor),
-        vscode.commands.registerCommand("codeBlocks.openToTheSide", openCodeBlocksEditorToTheSide),
-        vscode.commands.registerCommand("codeBlocks.toggle", () => onBlockModeChange.fire(!blockModeEnabled)),
-        vscode.commands.registerCommand(
-            "codeBlocks.openTreeViewer",
-            async () => await TreeViewer.treeViewer.open()
-        ),
-        vscode.commands.registerCommand("codeBlocks.moveUp", async () => moveSelection("swap-previous")),
-        vscode.commands.registerCommand("codeBlocks.moveDown", async () => moveSelection("swap-next")),
-        vscode.commands.registerCommand("codeBlocks.startSelection", () => {
-            if (vscode.window.activeTextEditor?.document === undefined || activeFileTree === undefined) {
-                return;
-            }
-
-            const activeEditor = vscode.window.activeTextEditor;
-            const cursorIndex = activeEditor.document.offsetAt(activeEditor.selection.active);
-            const selection = activeFileTree.startSelection(cursorIndex);
-            if (selection !== undefined) {
-                activeEditor.selection = selection.toVscodeSelection();
-            }
-        }),
-        vscode.commands.registerCommand("codeBlocks.selectParent", () => {
-            if (vscode.window.activeTextEditor?.document === undefined || activeFileTree === undefined) {
-                return;
-            }
-
-            const activeEditor = vscode.window.activeTextEditor;
-            const selection = activeFileTree.resolveVscodeSelection(activeEditor.selection);
-            if (selection !== undefined) {
-                selection.update("parent");
-                activeEditor.selection = selection.toVscodeSelection();
-            }
-        }),
+        cmd("codeBlocks.open", async () => await reopenWithCodeBocksEditor()),
+        cmd("codeBlocks.openToTheSide", async () => await openCodeBlocksEditorToTheSide()),
+        cmd("codeBlocks.toggle", () => onBlockModeChange.fire(!blockModeEnabled)),
+        cmd("codeBlocks.openTreeViewer", async () => await TreeViewer.open()),
+        cmd("codeBlocks.moveUp", async () => await moveSelection("swap-previous")),
+        cmd("codeBlocks.moveDown", async () => await moveSelection("swap-next")),
+        cmd("codeBlocks.startSelection", startSelection),
+        cmd("codeBlocks.selectParent", () => updateSelection("parent")),
+        cmd("codeBlocks.selectNext", () => updateSelection("add-next")),
+        cmd("codeBlocks.selectPrevious", () => updateSelection("add-previous")),
     ];
 
     context.subscriptions.push(...uiDisposables, ...eventListeners, ...commands);
