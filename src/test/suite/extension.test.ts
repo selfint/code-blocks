@@ -4,6 +4,11 @@ import { CodeBlocksEditorProvider } from "../../editor/CodeBlocksEditorProvider"
 import { TreeViewer } from "../../TreeViewer";
 import { expect } from "chai";
 
+/**
+ * Languages with .wasm parsers tracked by git
+ */
+type SupportedTestLanguages = "rust" | "typescriptreact";
+
 async function openDocument(content: string, language: string): Promise<vscode.TextEditor> {
     return await vscode.window.showTextDocument(
         await vscode.workspace.openTextDocument({
@@ -65,7 +70,7 @@ source_file [0:0 - 0:12]
                 | "codeBlocks.selectChild"
             )[],
             expectedSelectionContent: string,
-            language: "rust" | "typescriptreact" = "rust"
+            language: SupportedTestLanguages = "rust"
         ): Promise<vscode.TextEditor> {
             const cursor = "@";
             const cursorIndex = content.indexOf(cursor);
@@ -94,15 +99,21 @@ source_file [0:0 - 0:12]
         type TestMoveMethodParams = {
             content: string;
             selectionCommands: (
+                | "codeBlocks.selectBlock"
                 | "codeBlocks.selectPrevious"
                 | "codeBlocks.selectNext"
                 | "codeBlocks.selectParent"
                 | "codeBlocks.selectChild"
             )[];
-            moveCommands: ("codeBlocks.moveDown" | "codeBlocks.moveUp")[];
+            moveCommands: (
+                | "codeBlocks.moveDown"
+                | "codeBlocks.moveUp"
+                | "codeBlocks.moveUpForce"
+                | "codeBlocks.moveDownForce"
+            )[];
             expectedContent: string;
             expectedSelectionContent: string;
-            language: "rust" | "typescriptreact";
+            language: SupportedTestLanguages;
         };
         async function testCommands({
             content,
@@ -225,6 +236,54 @@ source_file [0:0 - 0:12]
                     moveCommands: ["codeBlocks.moveDown"],
                     expectedContent: "fn main() { let a = [3, 1, 2]; }",
                     expectedSelectionContent: "1, 2",
+                    language: "rust",
+                });
+            });
+        });
+
+        suite(".moveUpForce", function () {
+            test("moves selection up and updates selection", async () => {
+                await testCommands({
+                    content: "fn main() { { let a = 1@; }}",
+                    selectionCommands: ["codeBlocks.selectBlock"],
+                    moveCommands: ["codeBlocks.moveUpForce"],
+                    expectedContent: "fn main() { let a = 1;{  }}",
+                    expectedSelectionContent: "let a = 1;",
+                    language: "rust",
+                });
+            });
+
+            test("multiple nodes selected", async () => {
+                await testCommands({
+                    content: "fn main() { { let a = 1@; let b = 2; }}",
+                    selectionCommands: ["codeBlocks.selectNext"],
+                    moveCommands: ["codeBlocks.moveUpForce"],
+                    expectedContent: "fn main() { let a = 1; let b = 2;{  }}",
+                    expectedSelectionContent: "let a = 1; let b = 2;",
+                    language: "rust",
+                });
+            });
+        });
+
+        suite(".moveDownForce", function () {
+            test("moves selection up and updates selection", async () => {
+                await testCommands({
+                    content: "fn main() { { let a = 1@; }}",
+                    selectionCommands: ["codeBlocks.selectBlock"],
+                    moveCommands: ["codeBlocks.moveDownForce"],
+                    expectedContent: "fn main() { {  }let a = 1;}",
+                    expectedSelectionContent: "let a = 1;",
+                    language: "rust",
+                });
+            });
+
+            test("multiple nodes selected", async () => {
+                await testCommands({
+                    content: "fn main() { { let a = 1@; let b = 2; }}",
+                    selectionCommands: ["codeBlocks.selectNext"],
+                    moveCommands: ["codeBlocks.moveDownForce"],
+                    expectedContent: "fn main() { {  }let a = 1; let b = 2;}",
+                    expectedSelectionContent: "let a = 1; let b = 2;",
                     language: "rust",
                 });
             });

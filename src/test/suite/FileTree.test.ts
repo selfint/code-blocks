@@ -201,7 +201,7 @@ source_file [0:0 - 0:9]
                 });
             });
 
-            suite.only("before-parent", function () {
+            suite("before-parent", function () {
                 test("single node selection", async () => {
                     await testMoveSelection(
                         "fn main() { { @let a = [1, 2, 3];@ } }",

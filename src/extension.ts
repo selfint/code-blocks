@@ -154,6 +154,7 @@ export function activate(context: vscode.ExtensionContext): void {
         cmd("codeBlocks.toggle", () => onBlockModeChange.fire(!blockModeEnabled)),
         cmd("codeBlocks.openTreeViewer", async () => await TreeViewer.open()),
         cmd("codeBlocks.moveUp", async () => await moveSelection("swap-previous")),
+        cmd("codeBlocks.moveUpForce", async () => await moveSelection("before-parent")),
         cmd("codeBlocks.moveDown", async () => await moveSelection("swap-next")),
         cmd("codeBlocks.moveDownForce", async () => await moveSelection("after-parent")),
         cmd("codeBlocks.selectBlock", selectBlock),
