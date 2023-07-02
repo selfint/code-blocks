@@ -53,24 +53,15 @@ source_file [0:0 - 0:12]
     });
 
     suite("Move/Select commands", function () {
-        type TestMoveMethodParams = {
-            content: string;
+        async function testSelectionCommands(
+            content: string,
             selectionCommands: (
                 | "codeBlocks.selectPrevious"
                 | "codeBlocks.selectNext"
                 | "codeBlocks.selectParent"
-            )[];
-            moveCommands: ("codeBlocks.moveDown" | "codeBlocks.moveUp")[];
-            expectedContent: string;
-            expectedSelectionContent: string;
-        };
-        async function testsCommands({
-            content,
-            selectionCommands,
-            moveCommands,
-            expectedContent,
-            expectedSelectionContent,
-        }: TestMoveMethodParams): Promise<void> {
+            )[],
+            expectedSelectionContent: string
+        ): Promise<vscode.TextEditor> {
             const cursor = "@";
             const cursorIndex = content.indexOf(cursor);
             content = content.replace(cursor, "");
@@ -93,6 +84,32 @@ source_file [0:0 - 0:12]
                 "selection commands didn't produce desired selection"
             );
 
+            return activeEditor;
+        }
+        type TestMoveMethodParams = {
+            content: string;
+            selectionCommands: (
+                | "codeBlocks.selectPrevious"
+                | "codeBlocks.selectNext"
+                | "codeBlocks.selectParent"
+            )[];
+            moveCommands: ("codeBlocks.moveDown" | "codeBlocks.moveUp")[];
+            expectedContent: string;
+            expectedSelectionContent: string;
+        };
+        async function testsCommands({
+            content,
+            selectionCommands,
+            moveCommands,
+            expectedContent,
+            expectedSelectionContent,
+        }: TestMoveMethodParams): Promise<void> {
+            const activeEditor = await testSelectionCommands(
+                content,
+                selectionCommands,
+                expectedSelectionContent
+            );
+
             for (const command of moveCommands) {
                 await vscode.commands.executeCommand(command);
             }
@@ -108,7 +125,7 @@ source_file [0:0 - 0:12]
         }
 
         suite(".moveUp", function () {
-            test.only("moves selection up and updates selection", async () => {
+            test("moves selection up and updates selection", async () => {
                 await testsCommands({
                     content: "fn main() {} fn foo() { @}",
                     selectionCommands: ["codeBlocks.selectParent"],
@@ -121,35 +138,32 @@ source_file [0:0 - 0:12]
 
         suite(".moveDown", function () {
             test("moves selection down and updates selection", async () => {
-                // await testsCommands({
-                //     content: "fn main() { }\nfn f() { }",
-                //     selection: new vscode.Selection(new vscode.Position(0, 1), new vscode.Position(0, 10)),
-                //     moveCommands: ["codeBlocks.moveDown"],
-                //     expectedContent: "fn f() { }\nfn main() { }",
-                //     expectedSelectionContent: "fn main() { }",
-                // });
+                await testsCommands({
+                    content: "fn main() {@} fn foo() {}",
+                    selectionCommands: ["codeBlocks.selectParent"],
+                    moveCommands: ["codeBlocks.moveDown"],
+                    expectedContent: "fn foo() {} fn main() {}",
+                    expectedSelectionContent: "fn main() {}",
+                });
             });
         });
 
         suite("repeat moves", function () {
             test("move down/up returns to original", async () => {
-                // await testsCommands({
-                //     content: "fn main() { }\nfn f() { }",
-                //     selection: new vscode.Selection(new vscode.Position(0, 1), new vscode.Position(0, 10)),
-                //     moveCommands: ["codeBlocks.moveDown", "codeBlocks.moveUp"],
-                //     expectedContent: "fn main() { }\nfn f() { }",
-                //     expectedSelectionContent: "fn main() { }",
-                // });
+                await testsCommands({
+                    content: "fn main() {@}\nfn f() {}",
+                    selectionCommands: ["codeBlocks.selectParent"],
+                    moveCommands: ["codeBlocks.moveDown", "codeBlocks.moveUp"],
+                    expectedContent: "fn main() {}\nfn f() {}",
+                    expectedSelectionContent: "fn main() {}",
+                });
             });
 
             test("moving without awaiting is stable", async () => {
-                const activeEditor = await openDocument("fn main() { }\nfn f() { }", "rust");
-                void vscode.commands.executeCommand("codeBlocks.toggle");
-                await awaitFileTreeLoaded();
-
-                activeEditor.selection = new vscode.Selection(
-                    new vscode.Position(0, 1),
-                    new vscode.Position(0, 10)
+                const activeEditor = await testSelectionCommands(
+                    "fn main() {@} fn f() {}",
+                    ["codeBlocks.selectParent"],
+                    "fn main() {}"
                 );
 
                 for (let i = 0; i < 100; i++) {
@@ -164,10 +178,10 @@ source_file [0:0 - 0:12]
                 // which moves happen first is undefined, but result should
                 // be either of these
                 expect(activeEditor.document.getText()).to.be.oneOf([
-                    "fn main() { }\nfn f() { }",
-                    "fn f() { }\nfn main() { }",
+                    "fn main() {} fn f() {}",
+                    "fn f() {} fn main() {}",
                 ]);
-                expect(activeEditor.document.getText(activeEditor.selection)).to.equal("fn main() { }");
+                expect(activeEditor.document.getText(activeEditor.selection)).to.equal("fn main() {}");
             }).timeout(process.env.TEST_TIMEOUT ?? "1m");
         });
     });
