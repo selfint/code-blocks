@@ -42,6 +42,9 @@ export class Selection {
         const parent = this.ancestryChain.at(-1)?.parent ?? undefined;
         const child = this.ancestryChain.at(-2) ?? undefined;
 
+        // TODO: respect block mode
+        // also, in block mode, maybe we can add 'ignored' nodes
+        // which are always skipped and we go to their parent or something?
         switch (direction) {
             case "add-previous":
                 if (prevSibling !== undefined) {
