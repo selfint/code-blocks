@@ -161,6 +161,24 @@
         "key": "ctrl+shift+down",
         "mac": "cmd+shift+down",
         "when": "editorTextFocus && codeBlocks.blockMode"
+      },
+      {
+        "command": "codeBlocks.selectNext",
+        "key": "shift+right",
+        "mac": "shift+right",
+        "when": "editorTextFocus && codeBlocks.blockMode"
+      },
+      {
+        "command": "codeBlocks.selectPrevious",
+        "key": "shift+left",
+        "mac": "shift+left",
+        "when": "editorTextFocus && codeBlocks.blockMode"
+      },
+      {
+        "command": "codeBlocks.selectParent",
+        "key": "shift+up",
+        "mac": "shift+up",
+        "when": "editorTextFocus && codeBlocks.blockMode"
       }
     ],
     "configuration": {
