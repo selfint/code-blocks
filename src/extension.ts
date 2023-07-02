@@ -100,12 +100,8 @@ export function activate(context: vscode.ExtensionContext): void {
     ];
 
     const eventListeners = [
-        onActiveFileTreeChange.event((newFileTree) => {
-            TreeViewer.treeViewer.viewFileTree(newFileTree);
-        }),
-        onActiveFileTreeChange.event((newFileTree) => {
-            activeFileTree = newFileTree;
-        }),
+        onActiveFileTreeChange.event((newFileTree) => TreeViewer.viewFileTree(newFileTree)),
+        onActiveFileTreeChange.event((newFileTree) => (activeFileTree = newFileTree)),
         onBlockModeChange.event(async (newBlockMode) => {
             blockModeEnabled = newBlockMode;
             await vscode.commands.executeCommand("setContext", "codeBlocks.blockMode", blockModeEnabled);

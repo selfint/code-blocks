@@ -6,7 +6,6 @@ export class TreeViewer implements vscode.TextDocumentContentProvider {
     public static readonly uri = vscode.Uri.parse(`${TreeViewer.scheme}://view/tree`);
     public static readonly placeholder = "Syntax tree not available";
     readonly eventEmitter = new vscode.EventEmitter<vscode.Uri>();
-    onDidChange: vscode.Event<vscode.Uri> | undefined = this.eventEmitter.event;
 
     private fileTree: FileTree | undefined = undefined;
     private static singleton: TreeViewer | undefined = undefined;
@@ -16,6 +15,8 @@ export class TreeViewer implements vscode.TextDocumentContentProvider {
             TreeViewer.singleton = new TreeViewer();
             return TreeViewer.singleton;
         })();
+
+    public static onDidChange: vscode.Event<vscode.Uri> | undefined = this.treeViewer.eventEmitter.event;
 
     private constructor() {
         /* */
@@ -29,10 +30,10 @@ export class TreeViewer implements vscode.TextDocumentContentProvider {
         });
     }
 
-    public viewFileTree(fileTree: FileTree | undefined): void {
-        this.fileTree = fileTree;
-        this.eventEmitter.fire(TreeViewer.uri);
-        this.fileTree?.onUpdate(() => this.eventEmitter.fire(TreeViewer.uri));
+    public static viewFileTree(fileTree: FileTree | undefined): void {
+        this.treeViewer.fileTree = fileTree;
+        this.treeViewer.eventEmitter.fire(TreeViewer.uri);
+        this.treeViewer.fileTree?.onUpdate(() => this.treeViewer.eventEmitter.fire(TreeViewer.uri));
     }
 
     provideTextDocumentContent(_uri: vscode.Uri, _ct: vscode.CancellationToken): string {
