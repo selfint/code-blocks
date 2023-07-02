@@ -6,7 +6,7 @@ export class TreeViewer implements vscode.TextDocumentContentProvider {
     public static readonly uri = vscode.Uri.parse(`${TreeViewer.scheme}://view/tree`);
     public static readonly placeholder = "Syntax tree not available";
     public readonly eventEmitter = new vscode.EventEmitter<vscode.Uri>();
-    public onDidChange: vscode.Event<vscode.Uri> | undefined = this.eventEmitter.event;
+    public onDidChange: vscode.Event<vscode.Uri> = this.eventEmitter.event;
 
     private fileTree: FileTree | undefined = undefined;
     private static singleton: TreeViewer | undefined = undefined;

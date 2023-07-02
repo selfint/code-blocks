@@ -38,9 +38,11 @@ suite("codeBlocks commands", function () {
 
     suite(".openTreeViewer", function () {
         test("shows file tree", async () => {
+            const treeUpdated = new Promise<void>((r) => TreeViewer.treeViewer.onDidChange(() => r()));
             await openDocument("fn main() {}", "rust");
             await vscode.commands.executeCommand("codeBlocks.openTreeViewer");
             await awaitFileTreeLoaded();
+            await treeUpdated;
 
             const treeViewerDocument = await vscode.workspace.openTextDocument(TreeViewer.uri);
             expect("\n" + treeViewerDocument.getText()).to.be.equal(`
@@ -56,10 +58,11 @@ source_file [0:0 - 0:12]
         async function testSelectionCommands(
             content: string,
             selectionCommands: (
-                | "codeBlocks.startSelection"
+                | "codeBlocks.selectBlock"
                 | "codeBlocks.selectPrevious"
                 | "codeBlocks.selectNext"
                 | "codeBlocks.selectParent"
+                | "codeBlocks.selectChild"
             )[],
             expectedSelectionContent: string,
             language = "rust"
@@ -94,6 +97,7 @@ source_file [0:0 - 0:12]
                 | "codeBlocks.selectPrevious"
                 | "codeBlocks.selectNext"
                 | "codeBlocks.selectParent"
+                | "codeBlocks.selectChild"
             )[];
             moveCommands: ("codeBlocks.moveDown" | "codeBlocks.moveUp")[];
             expectedContent: string;
@@ -126,12 +130,32 @@ source_file [0:0 - 0:12]
             );
         }
 
-        suite(".startSelection", function () {
+        suite(".selectBlock", function () {
             test("expands to current node", async () => {
                 await testSelectionCommands(
                     "fn main() { let a = [1, 2@22, 3]; }",
-                    ["codeBlocks.startSelection"],
+                    ["codeBlocks.selectBlock"],
                     "222"
+                );
+            });
+        });
+
+        suite(".selectParent", function () {
+            test("expands to current node", async () => {
+                await testSelectionCommands(
+                    "fn main() { pub fn foo() { @ } }",
+                    ["codeBlocks.selectParent", "codeBlocks.selectParent", "codeBlocks.selectParent"],
+                    "fn main() { pub fn foo() {  } }"
+                );
+            });
+        });
+
+        suite(".selectChild", function () {
+            test("contracts to first named child", async () => {
+                await testSelectionCommands(
+                    "fn main() { pub fn foo() { @ } }",
+                    ["codeBlocks.selectParent", "codeBlocks.selectChild"],
+                    "pub"
                 );
             });
         });

@@ -81,7 +81,12 @@ export class Selection {
                 if (child !== undefined) {
                     this.selectedSiblings = [child];
                     this.ancestryChain.pop();
+                } else if (this.selectedSiblings[0].firstNamedChild !== null) {
+                    // default to the first named child of the first selected sibling
+                    this.selectedSiblings = [this.selectedSiblings[0].firstNamedChild];
+                    this.ancestryChain = [this.selectedSiblings[0]];
                 }
+                break;
         }
     }
 

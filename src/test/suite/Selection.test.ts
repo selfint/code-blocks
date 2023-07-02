@@ -23,7 +23,7 @@ async function getCursorSelectionText(
     });
 
     const fileTree = await FileTree.new(language[1], doc);
-    const selection = fileTree.startSelection(cursorIndex);
+    const selection = fileTree.selectBlock(cursorIndex);
 
     if (selection === undefined) {
         return undefined;
@@ -69,6 +69,9 @@ suite("Selection", function () {
                 expect(await selectionAt("fn main() { @ }")).to.equal("{  }");
                 expect(await selectionAt("fn main() { @ }", ["parent"])).to.equal("fn main() {  }");
                 expect(await selectionAt("fn main() { @ }", ["parent", "child"])).to.equal("{  }");
+                expect(
+                    await selectionAt("fn main() { pub fn foo() { @ } }", ["parent", "parent", "parent"])
+                ).to.equal("fn main() { pub fn foo() {  } }");
             });
 
             test("Update selection previous/next", async () => {
