@@ -52,6 +52,18 @@ async function getEditorFileTree(
         }
     }
 }
+function startSelection(): void {
+    if (vscode.window.activeTextEditor?.document === undefined || activeFileTree === undefined) {
+        return;
+    }
+
+    const activeEditor = vscode.window.activeTextEditor;
+    const cursorIndex = activeEditor.document.offsetAt(activeEditor.selection.active);
+    const selection = activeFileTree.startSelection(cursorIndex);
+    if (selection !== undefined) {
+        activeEditor.selection = selection.toVscodeSelection();
+    }
+}
 
 function updateSelection(direction: UpdateSelectionDirection): void {
     if (vscode.window.activeTextEditor?.document === undefined || activeFileTree === undefined) {
@@ -138,18 +150,7 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand("codeBlocks.openTreeViewer", async () => await TreeViewer.open()),
         vscode.commands.registerCommand("codeBlocks.moveUp", async () => moveSelection("swap-previous")),
         vscode.commands.registerCommand("codeBlocks.moveDown", async () => moveSelection("swap-next")),
-        vscode.commands.registerCommand("codeBlocks.startSelection", () => {
-            if (vscode.window.activeTextEditor?.document === undefined || activeFileTree === undefined) {
-                return;
-            }
-
-            const activeEditor = vscode.window.activeTextEditor;
-            const cursorIndex = activeEditor.document.offsetAt(activeEditor.selection.active);
-            const selection = activeFileTree.startSelection(cursorIndex);
-            if (selection !== undefined) {
-                activeEditor.selection = selection.toVscodeSelection();
-            }
-        }),
+        vscode.commands.registerCommand("codeBlocks.startSelection", () => startSelection),
         vscode.commands.registerCommand("codeBlocks.selectParent", () => updateSelection("parent")),
         vscode.commands.registerCommand("codeBlocks.selectNext", () => updateSelection("add-next")),
         vscode.commands.registerCommand("codeBlocks.selectPrevious", () => updateSelection("add-previous")),
