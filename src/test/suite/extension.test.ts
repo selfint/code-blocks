@@ -38,9 +38,11 @@ suite("codeBlocks commands", function () {
 
     suite(".openTreeViewer", function () {
         test("shows file tree", async () => {
+            const treeUpdated = new Promise<void>((r) => TreeViewer.treeViewer.onDidChange(() => r()));
             await openDocument("fn main() {}", "rust");
             await vscode.commands.executeCommand("codeBlocks.openTreeViewer");
             await awaitFileTreeLoaded();
+            await treeUpdated;
 
             const treeViewerDocument = await vscode.workspace.openTextDocument(TreeViewer.uri);
             expect("\n" + treeViewerDocument.getText()).to.be.equal(`
