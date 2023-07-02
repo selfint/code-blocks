@@ -144,17 +144,22 @@ export function activate(context: vscode.ExtensionContext): void {
         }),
     ];
 
+    const cmd = (
+        command: string,
+        callback: (...args: unknown[]) => unknown,
+        thisArg?: unknown
+    ): vscode.Disposable => vscode.commands.registerCommand(command, callback, thisArg);
     const commands = [
-        vscode.commands.registerCommand("codeBlocks.open", reopenWithCodeBocksEditor),
-        vscode.commands.registerCommand("codeBlocks.openToTheSide", openCodeBlocksEditorToTheSide),
-        vscode.commands.registerCommand("codeBlocks.toggle", () => onBlockModeChange.fire(!blockModeEnabled)),
-        vscode.commands.registerCommand("codeBlocks.openTreeViewer", async () => await TreeViewer.open()),
-        vscode.commands.registerCommand("codeBlocks.moveUp", async () => moveSelection("swap-previous")),
-        vscode.commands.registerCommand("codeBlocks.moveDown", async () => moveSelection("swap-next")),
-        vscode.commands.registerCommand("codeBlocks.startSelection", startSelection),
-        vscode.commands.registerCommand("codeBlocks.selectParent", () => updateSelection("parent")),
-        vscode.commands.registerCommand("codeBlocks.selectNext", () => updateSelection("add-next")),
-        vscode.commands.registerCommand("codeBlocks.selectPrevious", () => updateSelection("add-previous")),
+        cmd("codeBlocks.open", async () => await reopenWithCodeBocksEditor()),
+        cmd("codeBlocks.openToTheSide", async () => await openCodeBlocksEditorToTheSide()),
+        cmd("codeBlocks.toggle", () => onBlockModeChange.fire(!blockModeEnabled)),
+        cmd("codeBlocks.openTreeViewer", async () => await TreeViewer.open()),
+        cmd("codeBlocks.moveUp", async () => await moveSelection("swap-previous")),
+        cmd("codeBlocks.moveDown", async () => await moveSelection("swap-next")),
+        cmd("codeBlocks.startSelection", startSelection),
+        cmd("codeBlocks.selectParent", () => updateSelection("parent")),
+        cmd("codeBlocks.selectNext", () => updateSelection("add-next")),
+        cmd("codeBlocks.selectPrevious", () => updateSelection("add-previous")),
     ];
 
     context.subscriptions.push(...uiDisposables, ...eventListeners, ...commands);
