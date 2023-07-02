@@ -135,7 +135,7 @@ export class FileTree implements vscode.Disposable {
         this.onUpdateEmitter.fire();
     }
 
-    public startSelection(cursorIndex: number): Selection | undefined {
+    public selectBlock(cursorIndex: number): Selection | undefined {
         const nodeAtCursor = this.tree.rootNode.namedDescendantForIndex(cursorIndex);
         // ignore root nodes, probably only includes 'file' - like nodes
         // TODO: test more parsers to ensure this is always the correct action
@@ -148,7 +148,7 @@ export class FileTree implements vscode.Disposable {
 
     public resolveVscodeSelection(vscodeSelection: vscode.Selection): Selection | undefined {
         if (vscodeSelection.start.isEqual(vscodeSelection.end)) {
-            return this.startSelection(this.document.offsetAt(vscodeSelection.start));
+            return this.selectBlock(this.document.offsetAt(vscodeSelection.start));
         }
 
         const root = this.tree.rootNode;

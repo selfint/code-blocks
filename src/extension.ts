@@ -53,14 +53,14 @@ async function getEditorFileTree(
     }
 }
 
-function startSelection(): void {
+function selectBlock(): void {
     if (vscode.window.activeTextEditor?.document === undefined || activeFileTree === undefined) {
         return;
     }
 
     const activeEditor = vscode.window.activeTextEditor;
     const cursorIndex = activeEditor.document.offsetAt(activeEditor.selection.active);
-    const selection = activeFileTree.startSelection(cursorIndex);
+    const selection = activeFileTree.selectBlock(cursorIndex);
     if (selection !== undefined) {
         activeEditor.selection = selection.toVscodeSelection();
     }
@@ -156,8 +156,9 @@ export function activate(context: vscode.ExtensionContext): void {
         cmd("codeBlocks.openTreeViewer", async () => await TreeViewer.open()),
         cmd("codeBlocks.moveUp", async () => await moveSelection("swap-previous")),
         cmd("codeBlocks.moveDown", async () => await moveSelection("swap-next")),
-        cmd("codeBlocks.startSelection", startSelection),
+        cmd("codeBlocks.selectBlock", selectBlock),
         cmd("codeBlocks.selectParent", () => updateSelection("parent")),
+        cmd("codeBlocks.selectChild", () => updateSelection("child")),
         cmd("codeBlocks.selectNext", () => updateSelection("add-next")),
         cmd("codeBlocks.selectPrevious", () => updateSelection("add-previous")),
     ];

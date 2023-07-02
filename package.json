@@ -101,12 +101,12 @@
         "title": "Code Blocks: Open tree viewer"
       },
       {
-        "command": "codeBlocks.startSelection",
-        "title": "Code Blocks: Start scope selection"
-      },
-      {
         "command": "codeBlocks.selectParent",
         "title": "Code Blocks: Scope selection - parent"
+      },
+      {
+        "command": "codeBlocks.selectChild",
+        "title": "Code Blocks: Scope selection - child"
       },
       {
         "command": "codeBlocks.selectNext",
@@ -178,6 +178,12 @@
         "command": "codeBlocks.selectParent",
         "key": "shift+up",
         "mac": "shift+up",
+        "when": "editorTextFocus && codeBlocks.blockMode"
+      },
+      {
+        "command": "codeBlocks.selectChild",
+        "key": "shift+down",
+        "mac": "shift+down",
         "when": "editorTextFocus && codeBlocks.blockMode"
       }
     ],

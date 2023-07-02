@@ -23,7 +23,7 @@ async function getCursorSelectionText(
     });
 
     const fileTree = await FileTree.new(language[1], doc);
-    const selection = fileTree.startSelection(cursorIndex);
+    const selection = fileTree.selectBlock(cursorIndex);
 
     if (selection === undefined) {
         return undefined;
