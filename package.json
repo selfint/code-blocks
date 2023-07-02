@@ -120,22 +120,22 @@
     "keybindings": [
       {
         "command": "codeBlocks.moveUp",
-        "key": "alt+up",
+        "key": "alt+left",
         "when": "editorTextFocus && codeBlocks.blockMode"
       },
       {
         "command": "codeBlocks.moveDown",
-        "key": "alt+down",
+        "key": "alt+right",
         "when": "editorTextFocus && codeBlocks.blockMode"
       },
       {
         "command": "codeBlocks.moveUpForce",
-        "key": "alt+shift+up",
+        "key": "alt+up",
         "when": "editorTextFocus && codeBlocks.blockMode"
       },
       {
         "command": "codeBlocks.moveDownForce",
-        "key": "alt+shift+down",
+        "key": "alt+down",
         "when": "editorTextFocus && codeBlocks.blockMode"
       },
       {

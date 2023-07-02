@@ -89,10 +89,10 @@ These are the default key bindings, they are only active when "block mode" is on
 
 | Command                        | Keybinding (cmd on mac) |
 | ------------------------------ | ----------------------- |
-| `codeBlocks.moveUp`            | `alt+up`                |
-| `codeBlocks.moveDown`          | `alt+down`              |
-| `codeBlocks.moveUpForce`       | `alt+shift+up`          |
-| `codeBlocks.moveDownForce`     | `alt+shift+down`        |
+| `codeBlocks.moveUp`            | `alt+left`              |
+| `codeBlocks.moveDown`          | `alt+right`             |
+| `codeBlocks.moveUpForce`       | `alt+up`                |
+| `codeBlocks.moveDownForce`     | `alt+down`              |
 | `codeBlocks.navigateUp`        | `ctrl/cmd+up`           |
 | `codeBlocks.navigateDown`      | `ctrl/cmd+down`         |
 | `codeBlocks.navigateUpForce`   | `ctrl/cmd+shift+up`     |
