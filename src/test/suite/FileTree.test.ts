@@ -58,13 +58,18 @@ source_file [0:0 - 0:9]
         suite(".resolveVscodeSelection", () => {
             async function testResolveVscodeSelection(
                 content: string,
-                selectionRange: [number, number, number, number],
                 expectedSelectionText: string | undefined
             ): Promise<void> {
+                const cursor = "@";
+                const selectionStart = content.indexOf(cursor);
+                content = content.replace(cursor, "");
+                const selectionEnd = content.indexOf(cursor);
+                content = content.replace(cursor, "");
+
                 const fileTree = await buildFileTree(content);
                 const vscodeSelection = new vscode.Selection(
-                    new vscode.Position(selectionRange[0], selectionRange[1]),
-                    new vscode.Position(selectionRange[2], selectionRange[3])
+                    fileTree.document.positionAt(selectionStart),
+                    fileTree.document.positionAt(selectionEnd)
                 );
                 const selection = fileTree.resolveVscodeSelection(vscodeSelection);
 
@@ -77,41 +82,30 @@ source_file [0:0 - 0:9]
             }
 
             test("is node when selection is node range", async () => {
-                await testResolveVscodeSelection(
-                    "fn main() { let a = 1; let b = 2; }",
-                    [0, 12, 0, 22],
-                    "let a = 1;"
-                );
+                await testResolveVscodeSelection("fn main() { @let a = 1;@ let b = 2; }", "let a = 1;");
             });
 
             test("expands to node when range within node range", async () => {
-                await testResolveVscodeSelection(
-                    "fn main() { let a = 1; let b = 2; }",
-                    [0, 18, 0, 20],
-                    "let a = 1;"
-                );
+                await testResolveVscodeSelection("fn main() { let a @= @1; let b = 2; }", "let a = 1;");
             });
 
             test("is multiple nodes when range is multiple nodes range", async () => {
                 await testResolveVscodeSelection(
-                    "fn main() { let a = 1; let b = 2; }",
-                    [0, 12, 0, 33],
+                    "fn main() { @let a = 1; let b = 2;@ }",
                     "let a = 1; let b = 2;"
                 );
             });
 
             test("is multiple nodes when range within multiple nodes ranges", async () => {
                 await testResolveVscodeSelection(
-                    "fn main() { let a = 1; let b = 2; }",
-                    [0, 15, 0, 24],
+                    "fn main() { let @a = 1; let@ b = 2; }",
                     "let a = 1; let b = 2;"
                 );
             });
 
             test("expands scope when selection crosses node parent range", async () => {
                 await testResolveVscodeSelection(
-                    "fn main() { fn foo() { let a = 1; } let b = 2; }",
-                    [0, 26, 0, 38],
+                    "fn main() { fn foo() { let a@ = 1; } let @b = 2; }",
                     "fn foo() { let a = 1; } let b = 2;"
                 );
             });
