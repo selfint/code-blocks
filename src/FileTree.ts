@@ -147,6 +147,10 @@ export class FileTree implements vscode.Disposable {
     }
 
     public resolveVscodeSelection(vscodeSelection: vscode.Selection): Selection | undefined {
+        if (vscodeSelection.start.isEqual(vscodeSelection.end)) {
+            return this.startSelection(this.document.offsetAt(vscodeSelection.start));
+        }
+
         const root = this.tree.rootNode;
         const startNode = root.namedDescendantForPosition(positionToPoint(vscodeSelection.start));
         const endPosition = positionToPoint(vscodeSelection.end);

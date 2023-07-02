@@ -56,6 +56,7 @@ source_file [0:0 - 0:12]
         async function testSelectionCommands(
             content: string,
             selectionCommands: (
+                | "codeBlocks.startSelection"
                 | "codeBlocks.selectPrevious"
                 | "codeBlocks.selectNext"
                 | "codeBlocks.selectParent"
@@ -73,7 +74,6 @@ source_file [0:0 - 0:12]
                 activeEditor.document.positionAt(cursorIndex),
                 activeEditor.document.positionAt(cursorIndex)
             );
-            await vscode.commands.executeCommand("codeBlocks.startSelection");
 
             for (const command of selectionCommands) {
                 await vscode.commands.executeCommand(command);
@@ -87,6 +87,7 @@ source_file [0:0 - 0:12]
 
             return activeEditor;
         }
+
         type TestMoveMethodParams = {
             content: string;
             selectionCommands: (
@@ -124,6 +125,16 @@ source_file [0:0 - 0:12]
                 "move command didn't preserve selection content"
             );
         }
+
+        suite(".startSelection", function () {
+            test("expands to current node", async () => {
+                await testSelectionCommands(
+                    "fn main() { let a = [1, 2@22, 3]; }",
+                    ["codeBlocks.startSelection"],
+                    "222"
+                );
+            });
+        });
 
         suite(".moveUp", function () {
             test("moves selection up and updates selection", async () => {
@@ -165,6 +176,13 @@ source_file [0:0 - 0:12]
                     moveCommands: ["codeBlocks.moveDown"],
                     expectedContent: "fn main() { let a = [1, 2, 5, 3, 4]; }",
                     expectedSelectionContent: "3, 4",
+                });
+                await testsCommands({
+                    content: "fn main() { let a = [1, @2, 3]; }",
+                    selectionCommands: ["codeBlocks.selectPrevious"],
+                    moveCommands: ["codeBlocks.moveDown"],
+                    expectedContent: "fn main() { let a = [3, 1, 2]; }",
+                    expectedSelectionContent: "1, 2",
                 });
             });
         });
