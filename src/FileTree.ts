@@ -435,6 +435,85 @@ export class FileTree implements vscode.Disposable {
         return ok(newSelection);
     }
 
+    public async teleportSelection(
+        selection: Selection,
+        targetSelection: Selection
+    ): Promise<Result<vscode.Selection, string>> {
+        if (this.version !== this.document.version) {
+            return err("Can't teleport selection since tree version != document version");
+        }
+
+        if (selection.toVscodeSelection().contains(targetSelection.toVscodeSelection())) {
+            return err("Can't teleport selection into target selection it contains");
+        }
+
+        const edit = new vscode.WorkspaceEdit();
+        const selectionText = selection.getText(this.document.getText());
+        const selectionRange = selection.getRange();
+
+        const targetSelectionRange = targetSelection.getRange();
+
+        const nextNamedSibling = targetSelection.selectedSiblings.at(-1)?.nextNamedSibling ?? null;
+        const previousNamedSibling = targetSelection.selectedSiblings[0].previousNamedSibling;
+
+        // try to fill in the spaces as best we can
+        // get the spacing between the target selection and its previous sibling
+        // if it doesn't have one, try its next sibling
+        // finally, default to ""
+        const newBeforeSpacing =
+            previousNamedSibling === null
+                ? nextNamedSibling === null
+                    ? ""
+                    : this.document.getText(
+                          new vscode.Selection(
+                              this.document.positionAt(targetSelectionRange.endIndex),
+                              this.document.positionAt(nextNamedSibling.startIndex)
+                          )
+                      )
+                : this.document.getText(
+                      new vscode.Selection(
+                          this.document.positionAt(previousNamedSibling.endIndex),
+                          this.document.positionAt(targetSelectionRange.startIndex)
+                      )
+                  );
+
+        const newText = newBeforeSpacing + selectionText;
+
+        if (targetSelectionRange.endIndex > selectionRange.startIndex) {
+            // insert new selection
+            edit.insert(this.document.uri, pointToPosition(targetSelectionRange.endPosition), newText);
+            // remove old selection
+            edit.replace(this.document.uri, parserRangeToVscodeRange(selectionRange), "");
+
+            const selectionLength = selectionRange.endIndex - selectionRange.startIndex;
+            const newStartIndex = targetSelectionRange.endIndex - selectionLength + newBeforeSpacing.length;
+            await vscode.workspace.applyEdit(edit);
+
+            const newSelection = new vscode.Selection(
+                this.document.positionAt(newStartIndex),
+                this.document.positionAt(newStartIndex + selectionLength)
+            );
+
+            return ok(newSelection);
+        } else {
+            // remove old selection
+            edit.replace(this.document.uri, parserRangeToVscodeRange(selectionRange), "");
+            // insert new selection
+            edit.insert(this.document.uri, pointToPosition(targetSelectionRange.endPosition), newText);
+
+            const selectionLength = selectionRange.endIndex - selectionRange.startIndex;
+            const newStartIndex = targetSelectionRange.endIndex + newBeforeSpacing.length;
+            await vscode.workspace.applyEdit(edit);
+
+            const newSelection = new vscode.Selection(
+                this.document.positionAt(newStartIndex),
+                this.document.positionAt(newStartIndex + selectionLength)
+            );
+
+            return ok(newSelection);
+        }
+    }
+
     public toString(): string {
         function nodeToString(node: SyntaxNode, indent = 0): string {
             function nodeRangeToString(node: SyntaxNode): string {
