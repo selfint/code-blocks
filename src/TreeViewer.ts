@@ -27,6 +27,8 @@ export class TreeViewer implements vscode.TextDocumentContentProvider {
             preserveFocus: true,
             preview: true,
         });
+
+        this.viewFileTree(this.treeViewer.fileTree);
     }
 
     public static viewFileTree(fileTree: FileTree | undefined): void {
