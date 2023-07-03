@@ -54,23 +54,41 @@ export class CodeBlocksEditor {
         } as UpdateMessage);
     }
 
-    private async moveBlock(_message: MoveCommand): Promise<void> {
-        // const args: MoveBlockArgs = {
-        //     queries: this.queries,
-        //     text: this.document.getText(),
-        //     libraryPath: this.libraryPath,
-        //     languageFnSymbol: this.languageFnSymbol,
-        //     srcBlock: message.args.src,
-        //     dstBlock: message.args.dst,
-        //     force: false,
-        // };
-        // const response = await core.moveBlock(this.codeBlocksCliPath, args);
-        // if (response === undefined) {
-        //     return;
-        // }
-        // const edit = new vscode.WorkspaceEdit();
-        // edit.replace(this.document.uri, new vscode.Range(0, 0, this.document.lineCount, 0), response.text);
-        // await vscode.workspace.applyEdit(edit);
+    private async moveBlock(message: MoveCommand): Promise<void> {
+        const { src, dst, force } = message.args;
+        const srcSelection = this.fileTree.resolveVscodeSelection(
+            new vscode.Selection(
+                new vscode.Position(src.startRow, src.startCol),
+                new vscode.Position(src.endRow, src.endCol)
+            )
+        );
+        const dstSelection = this.fileTree.resolveVscodeSelection(
+            new vscode.Selection(
+                new vscode.Position(dst.startRow, dst.startCol),
+                new vscode.Position(dst.endRow, dst.endCol)
+            )
+        );
+
+        if (srcSelection === undefined || dstSelection === undefined) {
+            return;
+        }
+
+        const srcParent = srcSelection.ancestryChain.at(-1)?.parent ?? null;
+        const dstParent = srcSelection.ancestryChain.at(-1)?.parent ?? null;
+
+        // ensure either parents are equal, or force is enabled
+        if (srcParent === null || dstParent === null) {
+            if (srcParent !== dstParent && !force) {
+                return;
+            }
+        } else if (!srcParent.equals(dstParent) && !force) {
+            return;
+        }
+
+        const result = await this.fileTree.teleportSelection(srcSelection, dstSelection);
+        if (result.status === "err") {
+            void vscode.window.showErrorMessage(`Failed to move block: ${result.result}`);
+        }
     }
 
     private initWebview(): void {
