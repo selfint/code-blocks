@@ -62,6 +62,8 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: 16
+            - name: Install vsce
+              run: npm i -g @vscode/vsce
             - name: Install extension dependencies
               run: yarn run install:all
             - name: Build webview
