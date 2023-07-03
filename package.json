@@ -140,26 +140,26 @@
       },
       {
         "command": "codeBlocks.navigateUp",
+        "key": "ctrl+left",
+        "mac": "cmd+left",
+        "when": "editorTextFocus && codeBlocks.blockMode"
+      },
+      {
+        "command": "codeBlocks.navigateDown",
+        "key": "ctrl+right",
+        "mac": "cmd+right",
+        "when": "editorTextFocus && codeBlocks.blockMode"
+      },
+      {
+        "command": "codeBlocks.navigateUpForce",
         "key": "ctrl+up",
         "mac": "cmd+up",
         "when": "editorTextFocus && codeBlocks.blockMode"
       },
       {
-        "command": "codeBlocks.navigateDown",
+        "command": "codeBlocks.navigateDownForce",
         "key": "ctrl+down",
         "mac": "cmd+down",
-        "when": "editorTextFocus && codeBlocks.blockMode"
-      },
-      {
-        "command": "codeBlocks.navigateUpForce",
-        "key": "ctrl+shift+up",
-        "mac": "cmd+shift+up",
-        "when": "editorTextFocus && codeBlocks.blockMode"
-      },
-      {
-        "command": "codeBlocks.navigateDownForce",
-        "key": "ctrl+shift+down",
-        "mac": "cmd+shift+down",
         "when": "editorTextFocus && codeBlocks.blockMode"
       },
       {

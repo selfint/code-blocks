@@ -27,6 +27,138 @@ suite("codeBlocks commands", function () {
         }
     }
 
+    type SelectionCommand =
+        | "codeBlocks.selectBlock"
+        | "codeBlocks.selectPrevious"
+        | "codeBlocks.selectNext"
+        | "codeBlocks.selectParent"
+        | "codeBlocks.selectChild";
+
+    async function testSelectionCommands(
+        content: string,
+        selectionCommands: SelectionCommand[],
+        expectedSelectionContent: string,
+        language: SupportedTestLanguages = "rust"
+    ): Promise<vscode.TextEditor> {
+        const cursor = "@";
+        const cursorIndex = content.indexOf(cursor);
+        content = content.replace(cursor, "");
+        const activeEditor = await openDocument(content, language);
+        await vscode.commands.executeCommand("codeBlocks.toggle");
+        await awaitFileTreeLoaded();
+        activeEditor.selection = new vscode.Selection(
+            activeEditor.document.positionAt(cursorIndex),
+            activeEditor.document.positionAt(cursorIndex)
+        );
+
+        for (const command of selectionCommands) {
+            await vscode.commands.executeCommand(command);
+        }
+
+        const selectionContent = activeEditor.document.getText(activeEditor.selection);
+        expect(selectionContent).to.equal(
+            expectedSelectionContent,
+            "selection commands didn't produce desired selection"
+        );
+
+        return activeEditor;
+    }
+
+    type MoveCommand =
+        | "codeBlocks.moveDown"
+        | "codeBlocks.moveUp"
+        | "codeBlocks.moveUpForce"
+        | "codeBlocks.moveDownForce";
+
+    type TestMoveCommandsParams = {
+        content: string;
+        selectionCommands: SelectionCommand[];
+        moveCommands: MoveCommand[];
+        expectedContent: string;
+        expectedSelectionContent: string;
+        language: SupportedTestLanguages;
+    };
+    async function testMoveCommands({
+        content,
+        selectionCommands,
+        moveCommands,
+        expectedContent,
+        expectedSelectionContent,
+        language,
+    }: TestMoveCommandsParams): Promise<void> {
+        const activeEditor = await testSelectionCommands(
+            content,
+            selectionCommands,
+            expectedSelectionContent,
+            language
+        );
+
+        for (const command of moveCommands) {
+            await vscode.commands.executeCommand(command);
+        }
+
+        const newContent = activeEditor.document.getText();
+        const newSelectionContent = activeEditor.document.getText(activeEditor.selection);
+
+        expect(newContent).to.equal(expectedContent, "move command didn't produce desired content");
+        expect(newSelectionContent).to.equal(
+            expectedSelectionContent,
+            "move command didn't preserve selection content"
+        );
+    }
+
+    type NavigationCommand =
+        | "codeBlocks.navigateDown"
+        | "codeBlocks.navigateUp"
+        | "codeBlocks.navigateUpForce"
+        | "codeBlocks.navigateDownForce";
+
+    type TestNavigationCommandsParams = {
+        content: string;
+        selectionCommands: SelectionCommand[];
+        navigateCommands: NavigationCommand[];
+        expectedSelectionContent: string;
+        language: SupportedTestLanguages;
+    };
+    async function testNavigateCommands({
+        content,
+        selectionCommands,
+        navigateCommands: moveCommands,
+        expectedSelectionContent,
+        language,
+    }: TestNavigationCommandsParams): Promise<void> {
+        const targetCursor = "#";
+        const expectedNavigationDestinationIndex = content.replace(/@/g, "").indexOf(targetCursor);
+        content = content.replace(targetCursor, "");
+
+        const activeEditor = await testSelectionCommands(
+            content,
+            selectionCommands,
+            expectedSelectionContent,
+            language
+        );
+
+        for (const command of moveCommands) {
+            await vscode.commands.executeCommand(command);
+        }
+
+        const newCursorIndex = activeEditor.document.offsetAt(activeEditor.selection.active);
+
+        const cleanContent = content.replace(/@/g, "");
+        expect(newCursorIndex).to.equal(
+            expectedNavigationDestinationIndex,
+            "navigation commands didn't arrive to expected destination" +
+                `\n\tactual: ${
+                    cleanContent.substring(0, newCursorIndex) + "#" + cleanContent.substring(newCursorIndex)
+                }` +
+                `\n\texpect: ${
+                    cleanContent.substring(0, expectedNavigationDestinationIndex) +
+                    "#" +
+                    cleanContent.substring(expectedNavigationDestinationIndex)
+                }\n`
+        );
+    }
+
     suite(".open", function () {
         this.beforeAll(() => {
             return void vscode.window.showInformationMessage("Start code-blocks.open tests");
@@ -59,91 +191,7 @@ source_file [0:0 - 0:12]
         });
     });
 
-    suite("Move/Select commands", function () {
-        async function testSelectionCommands(
-            content: string,
-            selectionCommands: (
-                | "codeBlocks.selectBlock"
-                | "codeBlocks.selectPrevious"
-                | "codeBlocks.selectNext"
-                | "codeBlocks.selectParent"
-                | "codeBlocks.selectChild"
-            )[],
-            expectedSelectionContent: string,
-            language: SupportedTestLanguages = "rust"
-        ): Promise<vscode.TextEditor> {
-            const cursor = "@";
-            const cursorIndex = content.indexOf(cursor);
-            content = content.replace(cursor, "");
-            const activeEditor = await openDocument(content, language);
-            await vscode.commands.executeCommand("codeBlocks.toggle");
-            await awaitFileTreeLoaded();
-            activeEditor.selection = new vscode.Selection(
-                activeEditor.document.positionAt(cursorIndex),
-                activeEditor.document.positionAt(cursorIndex)
-            );
-
-            for (const command of selectionCommands) {
-                await vscode.commands.executeCommand(command);
-            }
-
-            const selectionContent = activeEditor.document.getText(activeEditor.selection);
-            expect(selectionContent).to.equal(
-                expectedSelectionContent,
-                "selection commands didn't produce desired selection"
-            );
-
-            return activeEditor;
-        }
-
-        type TestMoveMethodParams = {
-            content: string;
-            selectionCommands: (
-                | "codeBlocks.selectBlock"
-                | "codeBlocks.selectPrevious"
-                | "codeBlocks.selectNext"
-                | "codeBlocks.selectParent"
-                | "codeBlocks.selectChild"
-            )[];
-            moveCommands: (
-                | "codeBlocks.moveDown"
-                | "codeBlocks.moveUp"
-                | "codeBlocks.moveUpForce"
-                | "codeBlocks.moveDownForce"
-            )[];
-            expectedContent: string;
-            expectedSelectionContent: string;
-            language: SupportedTestLanguages;
-        };
-        async function testCommands({
-            content,
-            selectionCommands,
-            moveCommands,
-            expectedContent,
-            expectedSelectionContent,
-            language,
-        }: TestMoveMethodParams): Promise<void> {
-            const activeEditor = await testSelectionCommands(
-                content,
-                selectionCommands,
-                expectedSelectionContent,
-                language
-            );
-
-            for (const command of moveCommands) {
-                await vscode.commands.executeCommand(command);
-            }
-
-            const newContent = activeEditor.document.getText();
-            const newSelectionContent = activeEditor.document.getText(activeEditor.selection);
-
-            expect(newContent).to.equal(expectedContent, "move command didn't produce desired content");
-            expect(newSelectionContent).to.equal(
-                expectedSelectionContent,
-                "move command didn't preserve selection content"
-            );
-        }
-
+    suite("Select commands", function () {
         suite(".selectBlock", function () {
             test("expands to current node", async () => {
                 await testSelectionCommands(
@@ -184,10 +232,12 @@ source_file [0:0 - 0:12]
                 );
             });
         });
+    });
 
+    suite("Move commands", function () {
         suite(".moveUp", function () {
             test("moves selection up and updates selection", async () => {
-                await testCommands({
+                await testMoveCommands({
                     content: "fn main() {} fn foo() { @}",
                     selectionCommands: ["codeBlocks.selectParent"],
                     moveCommands: ["codeBlocks.moveUp"],
@@ -198,7 +248,7 @@ source_file [0:0 - 0:12]
             });
 
             test("multiple nodes selected", async () => {
-                await testCommands({
+                await testMoveCommands({
                     content: "fn main() { let a = [1, 2, @3, 4, 5]; }",
                     selectionCommands: ["codeBlocks.selectPrevious"],
                     moveCommands: ["codeBlocks.moveUp"],
@@ -211,7 +261,7 @@ source_file [0:0 - 0:12]
 
         suite(".moveDown", function () {
             test("moves selection down and updates selection", async () => {
-                await testCommands({
+                await testMoveCommands({
                     content: "fn main() {@} fn foo() {}",
                     selectionCommands: ["codeBlocks.selectParent"],
                     moveCommands: ["codeBlocks.moveDown"],
@@ -222,7 +272,7 @@ source_file [0:0 - 0:12]
             });
 
             test("multiple nodes selected", async () => {
-                await testCommands({
+                await testMoveCommands({
                     content: "fn main() { let a = [1, 2, @3, 4, 5]; }",
                     selectionCommands: ["codeBlocks.selectNext"],
                     moveCommands: ["codeBlocks.moveDown"],
@@ -230,7 +280,7 @@ source_file [0:0 - 0:12]
                     expectedSelectionContent: "3, 4",
                     language: "rust",
                 });
-                await testCommands({
+                await testMoveCommands({
                     content: "fn main() { let a = [1, @2, 3]; }",
                     selectionCommands: ["codeBlocks.selectPrevious"],
                     moveCommands: ["codeBlocks.moveDown"],
@@ -243,7 +293,7 @@ source_file [0:0 - 0:12]
 
         suite(".moveUpForce", function () {
             test("moves selection up and updates selection", async () => {
-                await testCommands({
+                await testMoveCommands({
                     content: "fn main() { { let a = 1@; }}",
                     selectionCommands: ["codeBlocks.selectBlock"],
                     moveCommands: ["codeBlocks.moveUpForce"],
@@ -254,7 +304,7 @@ source_file [0:0 - 0:12]
             });
 
             test("multiple nodes selected", async () => {
-                await testCommands({
+                await testMoveCommands({
                     content: "fn main() { { let a = 1@; let b = 2; }}",
                     selectionCommands: ["codeBlocks.selectNext"],
                     moveCommands: ["codeBlocks.moveUpForce"],
@@ -267,7 +317,7 @@ source_file [0:0 - 0:12]
 
         suite(".moveDownForce", function () {
             test("moves selection up and updates selection", async () => {
-                await testCommands({
+                await testMoveCommands({
                     content: "fn main() { { let a = 1@; }}",
                     selectionCommands: ["codeBlocks.selectBlock"],
                     moveCommands: ["codeBlocks.moveDownForce"],
@@ -278,7 +328,7 @@ source_file [0:0 - 0:12]
             });
 
             test("multiple nodes selected", async () => {
-                await testCommands({
+                await testMoveCommands({
                     content: "fn main() { { let a = 1@; let b = 2; }}",
                     selectionCommands: ["codeBlocks.selectNext"],
                     moveCommands: ["codeBlocks.moveDownForce"],
@@ -291,7 +341,7 @@ source_file [0:0 - 0:12]
 
         suite("repeat moves", function () {
             test("move down/up returns to original", async () => {
-                await testCommands({
+                await testMoveCommands({
                     content: "fn main() {@}\nfn f() {}",
                     selectionCommands: ["codeBlocks.selectParent"],
                     moveCommands: ["codeBlocks.moveDown", "codeBlocks.moveUp"],
@@ -324,6 +374,139 @@ source_file [0:0 - 0:12]
                     "fn f() {} fn main() {}",
                 ]);
                 expect(activeEditor.document.getText(activeEditor.selection)).to.equal("fn main() {}");
+            }).timeout(process.env.TEST_TIMEOUT ?? "1m");
+        });
+    });
+
+    suite("Navigate commands", function () {
+        suite(".navigateUp", function () {
+            test("navigates to previous", async () => {
+                await testNavigateCommands({
+                    content: "#fn main() {} fn foo() { @}",
+                    selectionCommands: ["codeBlocks.selectParent"],
+                    navigateCommands: ["codeBlocks.navigateUp"],
+                    expectedSelectionContent: "fn foo() { }",
+                    language: "rust",
+                });
+            });
+
+            test("multiple nodes selected", async () => {
+                await testNavigateCommands({
+                    content: "fn main() { let a = [#1, 2, @3, 4, 5]; }",
+                    selectionCommands: ["codeBlocks.selectPrevious"],
+                    navigateCommands: ["codeBlocks.navigateUp"],
+                    expectedSelectionContent: "2, 3",
+                    language: "rust",
+                });
+            });
+        });
+
+        suite(".navigateDown", function () {
+            test("navigates to next", async () => {
+                await testNavigateCommands({
+                    content: "fn main() {@} #fn foo() {}",
+                    selectionCommands: ["codeBlocks.selectParent"],
+                    navigateCommands: ["codeBlocks.navigateDown"],
+                    expectedSelectionContent: "fn main() {}",
+                    language: "rust",
+                });
+            });
+
+            test("multiple nodes selected", async () => {
+                await testNavigateCommands({
+                    content: "fn main() { let a = [1, 2, @3, 4, #5]; }",
+                    selectionCommands: ["codeBlocks.selectNext"],
+                    navigateCommands: ["codeBlocks.navigateDown"],
+                    expectedSelectionContent: "3, 4",
+                    language: "rust",
+                });
+                await testNavigateCommands({
+                    content: "fn main() { let a = [1, @2, #3]; }",
+                    selectionCommands: ["codeBlocks.selectPrevious"],
+                    navigateCommands: ["codeBlocks.navigateDown"],
+                    expectedSelectionContent: "1, 2",
+                    language: "rust",
+                });
+            });
+        });
+
+        suite(".navigateUpForce", function () {
+            test("navigates to parent start", async () => {
+                await testNavigateCommands({
+                    content: "fn main() { #{ let a = 1@; }}",
+                    selectionCommands: ["codeBlocks.selectBlock"],
+                    navigateCommands: ["codeBlocks.navigateUpForce"],
+                    expectedSelectionContent: "let a = 1;",
+                    language: "rust",
+                });
+            });
+
+            test("multiple nodes selected", async () => {
+                await testNavigateCommands({
+                    content: "fn main() { #{ let a = 1@; let b = 2; }}",
+                    selectionCommands: ["codeBlocks.selectNext"],
+                    navigateCommands: ["codeBlocks.navigateUpForce"],
+                    expectedSelectionContent: "let a = 1; let b = 2;",
+                    language: "rust",
+                });
+            });
+        });
+
+        suite(".navigateDownForce", function () {
+            test("navigates to parent end", async () => {
+                await testNavigateCommands({
+                    content: "fn main() { { let a = 1@; }#}",
+                    selectionCommands: ["codeBlocks.selectBlock"],
+                    navigateCommands: ["codeBlocks.navigateDownForce"],
+                    expectedSelectionContent: "let a = 1;",
+                    language: "rust",
+                });
+            });
+
+            test("multiple nodes selected", async () => {
+                await testNavigateCommands({
+                    content: "fn main() { { let a = 1@; let b = 2; }#}",
+                    selectionCommands: ["codeBlocks.selectNext"],
+                    navigateCommands: ["codeBlocks.navigateDownForce"],
+                    expectedSelectionContent: "let a = 1; let b = 2;",
+                    language: "rust",
+                });
+            });
+        });
+
+        suite("repeat navigates", function () {
+            test("navigate down/up returns to original", async () => {
+                await testNavigateCommands({
+                    content: "#fn main() {@}\nfn f() {}",
+                    selectionCommands: ["codeBlocks.selectParent"],
+                    navigateCommands: ["codeBlocks.navigateDown", "codeBlocks.navigateUp"],
+                    expectedSelectionContent: "fn main() {}",
+                    language: "rust",
+                });
+            });
+
+            test("navigating without awaiting is stable", async () => {
+                const activeEditor = await testSelectionCommands(
+                    "fn main() {@} fn f() {}",
+                    ["codeBlocks.selectParent"],
+                    "fn main() {}"
+                );
+
+                for (let i = 0; i < 100; i++) {
+                    await Promise.all([
+                        vscode.commands.executeCommand("codeBlocks.navigateDown"),
+                        vscode.commands.executeCommand("codeBlocks.navigateDown"),
+                        vscode.commands.executeCommand("codeBlocks.navigateUp"),
+                        vscode.commands.executeCommand("codeBlocks.navigateUp"),
+                    ]);
+                }
+
+                // which moves happen first is undefined, but result should
+                // be either of these
+                expect(activeEditor.document.offsetAt(activeEditor.selection.active)).to.be.oneOf([
+                    "#fn main() {} fn f() {}".indexOf("#"),
+                    "fn main() {} #fn f() {}".indexOf("#"),
+                ]);
             }).timeout(process.env.TEST_TIMEOUT ?? "1m");
         });
     });
