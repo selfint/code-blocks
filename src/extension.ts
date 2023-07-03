@@ -106,6 +106,46 @@ async function moveSelection(direction: MoveSelectionDirection): Promise<void> {
     }
 }
 
+function navigate(direction: "up" | "down" | "left" | "right"): void {
+    if (vscode.window.activeTextEditor?.document === undefined || activeFileTree === undefined) {
+        return;
+    }
+
+    const activeEditor = vscode.window.activeTextEditor;
+    const selection = activeFileTree.resolveVscodeSelection(activeEditor.selection);
+    const parent = selection?.ancestryChain.at(-1)?.parent ?? null;
+    const previous = selection?.selectedSiblings[0].previousNamedSibling ?? null;
+    const next = selection?.selectedSiblings.at(-1)?.nextNamedSibling ?? null;
+
+    let newPosition;
+    switch (direction) {
+        case "up":
+            if (parent) {
+                newPosition = pointToPosition(parent.startPosition);
+            }
+            break;
+        case "down":
+            if (parent) {
+                newPosition = pointToPosition(parent.endPosition);
+            }
+            break;
+        case "left":
+            if (previous) {
+                newPosition = pointToPosition(previous.startPosition);
+            }
+            break;
+        case "right":
+            if (next) {
+                newPosition = pointToPosition(next.startPosition);
+            }
+            break;
+    }
+
+    if (newPosition) {
+        activeEditor.selection = new vscode.Selection(newPosition, newPosition);
+    }
+}
+
 function updateTargetHighlights(editor: vscode.TextEditor, vscodeSelection: vscode.Selection): void {
     if (editor.document.uri !== activeFileTree?.document.uri) {
         return;
@@ -259,6 +299,10 @@ export function activate(context: vscode.ExtensionContext): void {
         cmd("codeBlocks.selectChild", () => updateSelection("child")),
         cmd("codeBlocks.selectNext", () => updateSelection("add-next")),
         cmd("codeBlocks.selectPrevious", () => updateSelection("add-previous")),
+        cmd("codeBlocks.navigateUpForce", () => navigate("up")),
+        cmd("codeBlocks.navigateDownForce", () => navigate("down")),
+        cmd("codeBlocks.navigateUp", () => navigate("left")),
+        cmd("codeBlocks.navigateDown", () => navigate("right")),
     ];
 
     context.subscriptions.push(...uiDisposables, ...eventListeners, ...commands);
