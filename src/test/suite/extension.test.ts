@@ -120,7 +120,7 @@ suite("codeBlocks commands", function () {
         expectedSelectionContent: string;
         language: SupportedTestLanguages;
     };
-    async function testnavigateCommands({
+    async function testNavigateCommands({
         content,
         selectionCommands,
         navigateCommands: moveCommands,
@@ -381,7 +381,7 @@ source_file [0:0 - 0:12]
     suite("Navigate commands", function () {
         suite(".navigateUp", function () {
             test("navigates to previous", async () => {
-                await testnavigateCommands({
+                await testNavigateCommands({
                     content: "#fn main() {} fn foo() { @}",
                     selectionCommands: ["codeBlocks.selectParent"],
                     navigateCommands: ["codeBlocks.navigateUp"],
@@ -391,7 +391,7 @@ source_file [0:0 - 0:12]
             });
 
             test("multiple nodes selected", async () => {
-                await testnavigateCommands({
+                await testNavigateCommands({
                     content: "fn main() { let a = [#1, 2, @3, 4, 5]; }",
                     selectionCommands: ["codeBlocks.selectPrevious"],
                     navigateCommands: ["codeBlocks.navigateUp"],
@@ -403,7 +403,7 @@ source_file [0:0 - 0:12]
 
         suite(".navigateDown", function () {
             test("navigates to next", async () => {
-                await testnavigateCommands({
+                await testNavigateCommands({
                     content: "fn main() {@} #fn foo() {}",
                     selectionCommands: ["codeBlocks.selectParent"],
                     navigateCommands: ["codeBlocks.navigateDown"],
@@ -413,14 +413,14 @@ source_file [0:0 - 0:12]
             });
 
             test("multiple nodes selected", async () => {
-                await testnavigateCommands({
+                await testNavigateCommands({
                     content: "fn main() { let a = [1, 2, @3, 4, #5]; }",
                     selectionCommands: ["codeBlocks.selectNext"],
                     navigateCommands: ["codeBlocks.navigateDown"],
                     expectedSelectionContent: "3, 4",
                     language: "rust",
                 });
-                await testnavigateCommands({
+                await testNavigateCommands({
                     content: "fn main() { let a = [1, @2, #3]; }",
                     selectionCommands: ["codeBlocks.selectPrevious"],
                     navigateCommands: ["codeBlocks.navigateDown"],
@@ -432,7 +432,7 @@ source_file [0:0 - 0:12]
 
         suite(".navigateUpForce", function () {
             test("navigates to parent start", async () => {
-                await testnavigateCommands({
+                await testNavigateCommands({
                     content: "fn main() { #{ let a = 1@; }}",
                     selectionCommands: ["codeBlocks.selectBlock"],
                     navigateCommands: ["codeBlocks.navigateUpForce"],
@@ -442,7 +442,7 @@ source_file [0:0 - 0:12]
             });
 
             test("multiple nodes selected", async () => {
-                await testnavigateCommands({
+                await testNavigateCommands({
                     content: "fn main() { #{ let a = 1@; let b = 2; }}",
                     selectionCommands: ["codeBlocks.selectNext"],
                     navigateCommands: ["codeBlocks.navigateUpForce"],
@@ -454,7 +454,7 @@ source_file [0:0 - 0:12]
 
         suite(".navigateDownForce", function () {
             test("navigates to parent end", async () => {
-                await testnavigateCommands({
+                await testNavigateCommands({
                     content: "fn main() { { let a = 1@; }#}",
                     selectionCommands: ["codeBlocks.selectBlock"],
                     navigateCommands: ["codeBlocks.navigateDownForce"],
@@ -464,7 +464,7 @@ source_file [0:0 - 0:12]
             });
 
             test("multiple nodes selected", async () => {
-                await testnavigateCommands({
+                await testNavigateCommands({
                     content: "fn main() { { let a = 1@; let b = 2; }#}",
                     selectionCommands: ["codeBlocks.selectNext"],
                     navigateCommands: ["codeBlocks.navigateDownForce"],
@@ -476,7 +476,7 @@ source_file [0:0 - 0:12]
 
         suite("repeat navigates", function () {
             test("navigate down/up returns to original", async () => {
-                await testnavigateCommands({
+                await testNavigateCommands({
                     content: "#fn main() {@}\nfn f() {}",
                     selectionCommands: ["codeBlocks.selectParent"],
                     navigateCommands: ["codeBlocks.navigateDown", "codeBlocks.navigateUp"],
