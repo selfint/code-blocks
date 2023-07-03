@@ -173,15 +173,7 @@ function updateTargetHighlights(editor: vscode.TextEditor, vscodeSelection: vsco
 }
 
 function toggleBlockMode(): void {
-    if (blockModeActive) {
-        blockModeActive = false;
-    } else {
-        blockModeActive = true;
-        if (!codeBlocks.active) {
-            codeBlocks.onDidChangeActive.fire(true);
-            codeBlocks.toggleActive();
-        }
-    }
+    blockModeActive = !blockModeActive;
 
     onDidChangeBlockModeActive.fire(blockModeActive);
 }
@@ -210,6 +202,9 @@ export function activate(): vscode.Disposable[] {
             }
         }),
         onDidChangeBlockModeActive.event(async (blockModeActive) => {
+            await vscode.commands.executeCommand("setContext", "codeBlocks.blockMode", blockModeActive);
+        }),
+        onDidChangeBlockModeActive.event((blockModeActive) => {
             if (blockModeActive) {
                 statusBar.show();
                 if (vscode.window.activeTextEditor !== undefined) {
@@ -222,8 +217,6 @@ export function activate(): vscode.Disposable[] {
                 resetDecorations();
                 statusBar.hide();
             }
-
-            await vscode.commands.executeCommand("setContext", "codeBlocks.blockMode", blockModeActive);
         }),
     ];
 
