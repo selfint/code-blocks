@@ -30,8 +30,6 @@ export class FileTree implements vscode.Disposable {
     public version: number;
 
     private queries: Query[] | undefined;
-    private lazyLoadQueries: () => Query[] | undefined;
-    private blockMode = false;
 
     private onUpdateEmitter: vscode.EventEmitter<void> = new vscode.EventEmitter();
     public onUpdate = this.onUpdateEmitter.event;
@@ -47,22 +45,8 @@ export class FileTree implements vscode.Disposable {
         const queryStrings = getLanguageConfig(document.languageId).queries;
         if (queryStrings !== undefined) {
             const language = parser.getLanguage();
-            this.lazyLoadQueries = (): Query[] => {
-                if (this.queries === undefined) {
-                    this.queries = queryStrings.map((q) => language.query(q));
-                }
-
-                return this.queries;
-            };
-        } else {
-            this.lazyLoadQueries = (): undefined => undefined;
-        }
-
-        if (this.blockMode) {
-            const queries = this.lazyLoadQueries();
-            if (queries !== undefined) {
-                this.blocks = getBlockTrees(this.tree, queries);
-            }
+            this.queries = queryStrings.map((q) => language.query(q));
+            this.blocks = getBlockTrees(this.tree, this.queries);
         }
 
         this.disposables = [this.onUpdateEmitter];
@@ -73,18 +57,6 @@ export class FileTree implements vscode.Disposable {
                 }
             })
         );
-    }
-
-    public toggleBlockMode(newBlockMode: boolean): void {
-        this.blockMode = newBlockMode;
-        if (!this.blockMode) {
-            this.blocks = undefined;
-        } else {
-            const queries = this.lazyLoadQueries();
-            if (queries !== undefined) {
-                this.blocks = getBlockTrees(this.tree, queries);
-            }
-        }
     }
 
     async dispose(): Promise<void> {
@@ -125,11 +97,8 @@ export class FileTree implements vscode.Disposable {
         }
 
         this.tree = this.parser.parse(event.document.getText(), this.tree);
-        if (this.blockMode) {
-            const queries = this.lazyLoadQueries();
-            if (queries !== undefined) {
-                this.blocks = getBlockTrees(this.tree, queries);
-            }
+        if (this.queries !== undefined) {
+            this.blocks = getBlockTrees(this.tree, this.queries);
         }
         this.version = event.document.version;
         this.onUpdateEmitter.fire();
