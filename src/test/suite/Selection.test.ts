@@ -49,6 +49,8 @@ function buildUpdateRunner(cursor: string, language: [string, Language]): Update
 }
 
 suite("Selection", function () {
+    this.timeout(process.env.TEST_TIMEOUT ?? "2s");
+    
     suite(".update", function () {
         suite("Rust", function () {
             const cursor = "@";
