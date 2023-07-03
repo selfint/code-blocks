@@ -67,6 +67,10 @@ export function toggleActive(): void {
 export function activate(context: vscode.ExtensionContext): void {
     const parsersDir = join(context.extensionPath, "parsers");
 
+    void getEditorFileTree(parsersDir, vscode.window.activeTextEditor).then((activeFileTree) =>
+        onActiveFileTreeChange.fire(activeFileTree)
+    );
+
     const uiDisposables = [
         vscode.window.registerCustomEditorProvider(
             CodeBlocksEditorProvider.viewType,
@@ -95,6 +99,17 @@ export function activate(context: vscode.ExtensionContext): void {
             }
         }),
         onActiveFileTreeChange.event((newFileTree) => TreeViewer.viewFileTree(newFileTree)),
+        BlockMode.onDidChangeBlockModeActive.event(async (blockModeActive) => {
+            if (
+                blockModeActive &&
+                active &&
+                activeFileTree === undefined &&
+                vscode.window.activeTextEditor !== undefined
+            ) {
+                activeFileTree = await getEditorFileTree(parsersDir, vscode.window.activeTextEditor);
+                onActiveFileTreeChange.fire(activeFileTree);
+            }
+        }),
     ];
 
     const cmd = (
