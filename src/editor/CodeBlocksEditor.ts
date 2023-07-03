@@ -55,7 +55,7 @@ export class CodeBlocksEditor {
     }
 
     private async moveBlock(message: MoveCommand): Promise<void> {
-        const { src, dst, force } = message.args;
+        const { src, dst } = message.args;
         const srcSelection = this.fileTree.resolveVscodeSelection(
             new vscode.Selection(
                 new vscode.Position(src.startRow, src.startCol),
@@ -74,15 +74,26 @@ export class CodeBlocksEditor {
         }
 
         const srcParent = srcSelection.ancestryChain.at(-1)?.parent ?? null;
-        const dstParent = srcSelection.ancestryChain.at(-1)?.parent ?? null;
+        const dstParent = dstSelection.ancestryChain.at(-1)?.parent ?? null;
 
         // ensure either parents are equal, or force is enabled
+        const userRequestsForce = async (): Promise<boolean> =>
+            (await vscode.window.showErrorMessage(
+                "Move is between scopes, try force moving?",
+                "Ok",
+                "No"
+            )) === "Ok";
+
         if (srcParent === null || dstParent === null) {
-            if (srcParent !== dstParent && !force) {
+            if (srcParent !== dstParent) {
+                if (!(await userRequestsForce())) {
+                    return;
+                }
+            }
+        } else if (!srcParent.equals(dstParent)) {
+            if (!(await userRequestsForce())) {
                 return;
             }
-        } else if (!srcParent.equals(dstParent) && !force) {
-            return;
         }
 
         const result = await this.fileTree.teleportSelection(srcSelection, dstSelection);
