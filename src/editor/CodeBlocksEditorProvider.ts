@@ -33,7 +33,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
 
         while (language === undefined) {
             const choice = await vscode.window.showErrorMessage("Parser installation failed", "Retry", "Ok");
-            if (choice === "Ok") {
+            if (choice !== "Retry") {
                 return;
             }
 
