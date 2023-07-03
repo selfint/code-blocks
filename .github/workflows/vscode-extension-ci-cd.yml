@@ -73,7 +73,7 @@ jobs:
             - name: Upload extension
               uses: actions/upload-artifact@v3
               with:
-                  name: ${{ github.ref_name }}-extension-preview
+                  name: code-blocks-${{ github.ref_name }}.vsix
                   path: |
                       code-blocks-*.vsix
 
