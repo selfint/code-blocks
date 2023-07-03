@@ -59,7 +59,11 @@
         "title": "Code Blocks: Open active file in Code Blocks editor to the side"
       },
       {
-        "command": "codeBlocks.toggle",
+        "command": "codeBlocks.toggleActive",
+        "title": "Code Blocks: Toggle extension"
+      },
+      {
+        "command": "codeBlocks.toggleBlockMode",
         "title": "Code Blocks: Toggle block mode"
       },
       {
