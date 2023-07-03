@@ -1,9 +1,9 @@
+import * as BlockMode from "./BlockMode";
 import * as vscode from "vscode";
-import { FileTree, MoveSelectionDirection } from "./FileTree";
 import { CodeBlocksEditorProvider } from "./editor/CodeBlocksEditorProvider";
+import { FileTree } from "./FileTree";
 import Parser from "web-tree-sitter";
 import { TreeViewer } from "./TreeViewer";
-import { UpdateSelectionDirection } from "./Selection";
 import { getLanguage } from "./Installer";
 import { join } from "path";
 
@@ -57,156 +57,10 @@ async function getEditorFileTree(
     }
 }
 
-function selectBlock(): void {
-    if (vscode.window.activeTextEditor?.document === undefined || activeFileTree === undefined) {
-        return;
-    }
-
-    const activeEditor = vscode.window.activeTextEditor;
-    const cursorIndex = activeEditor.document.offsetAt(activeEditor.selection.active);
-    const selection = activeFileTree.selectBlock(cursorIndex);
-    if (selection !== undefined) {
-        activeEditor.selection = selection.toVscodeSelection();
-    }
-}
-
-function updateSelection(direction: UpdateSelectionDirection): void {
-    if (vscode.window.activeTextEditor?.document === undefined || activeFileTree === undefined) {
-        return;
-    }
-
-    const activeEditor = vscode.window.activeTextEditor;
-    const selection = activeFileTree.resolveVscodeSelection(activeEditor.selection);
-    if (selection !== undefined) {
-        selection.update(direction);
-        activeEditor.selection = selection.toVscodeSelection();
-    }
-}
-
-async function moveSelection(direction: MoveSelectionDirection): Promise<void> {
-    if (activeFileTree === undefined || vscode.window.activeTextEditor === undefined) {
-        return;
-    }
-
-    const selection = activeFileTree.resolveVscodeSelection(vscode.window.activeTextEditor.selection);
-    if (selection === undefined) {
-        return;
-    }
-
-    const result = await activeFileTree.moveSelection(selection, direction);
-    switch (result.status) {
-        case "ok":
-            vscode.window.activeTextEditor.selection = result.result;
-            break;
-
-        case "err":
-            // TODO: add this as a text box above the cursor (can vscode do that?)
-            void vscode.window.showErrorMessage(result.result);
-            break;
-    }
-}
-
-function navigate(direction: "up" | "down" | "left" | "right"): void {
-    if (vscode.window.activeTextEditor?.document === undefined || activeFileTree === undefined) {
-        return;
-    }
-
-    const activeEditor = vscode.window.activeTextEditor;
-    const selection = activeFileTree.resolveVscodeSelection(activeEditor.selection);
-    const parent = selection?.ancestryChain.at(-1)?.parent ?? null;
-    const previous = selection?.selectedSiblings[0].previousNamedSibling ?? null;
-    const next = selection?.selectedSiblings.at(-1)?.nextNamedSibling ?? null;
-
-    let newPosition;
-    switch (direction) {
-        case "up":
-            if (parent) {
-                newPosition = pointToPosition(parent.startPosition);
-            }
-            break;
-        case "down":
-            if (parent) {
-                newPosition = pointToPosition(parent.endPosition);
-            }
-            break;
-        case "left":
-            if (previous) {
-                newPosition = pointToPosition(previous.startPosition);
-            }
-            break;
-        case "right":
-            if (next) {
-                newPosition = pointToPosition(next.startPosition);
-            }
-            break;
-    }
-
-    if (newPosition) {
-        activeEditor.selection = new vscode.Selection(newPosition, newPosition);
-    }
-}
-
-function updateTargetHighlights(editor: vscode.TextEditor, vscodeSelection: vscode.Selection): void {
-    if (editor.document.uri !== activeFileTree?.document.uri) {
-        return;
-    }
-
-    if (!blockModeEnabled) {
-        return;
-    }
-
-    const selection = activeFileTree.resolveVscodeSelection(vscodeSelection);
-    if (selection === undefined) {
-        editor.setDecorations(targetsDecoration, []);
-        editor.setDecorations(forceTargetsDecoration, []);
-        return;
-    }
-
-    let parent = selection.ancestryChain.at(-1)?.parent ?? null;
-    if (parent?.parent === null) {
-        // parent is the entire file, not a relevant selection ever
-        parent = null;
-    }
-    const previous = selection.selectedSiblings.at(0)?.previousNamedSibling ?? null;
-    const next = selection.selectedSiblings.at(-1)?.nextNamedSibling ?? null;
-
-    const targets = [];
-    const forceTargets = [];
-
-    if (previous !== null) {
-        targets.push(
-            new vscode.Range(pointToPosition(previous.startPosition), pointToPosition(previous.endPosition))
-        );
-    }
-
-    if (next !== null) {
-        targets.push(
-            new vscode.Range(pointToPosition(next.startPosition), pointToPosition(next.endPosition))
-        );
-    }
-
-    if ((next === null || previous === null) && parent !== null) {
-        forceTargets.push(
-            new vscode.Range(pointToPosition(parent.startPosition), pointToPosition(parent.endPosition))
-        );
-    }
-
-    editor.setDecorations(targetsDecoration, targets);
-    editor.setDecorations(forceTargetsDecoration, forceTargets);
-}
-
-export const onActiveFileTreeChange = new vscode.EventEmitter<FileTree | undefined>();
+export let active = false;
 export let activeFileTree: FileTree | undefined = undefined;
-// TODO: change block mode to mean the entire extension is enabled, not just query blocks
-let blockModeEnabled = false;
-const targetsDecorationColor = "var(--vscode-editor-selectionHighlightBackground)";
-const forceTargetsDecorationColor = "var(--vscode-editor-linkedEditingBackground)";
-let targetsDecoration = vscode.window.createTextEditorDecorationType({
-    backgroundColor: targetsDecorationColor,
-});
-let forceTargetsDecoration = vscode.window.createTextEditorDecorationType({
-    backgroundColor: forceTargetsDecorationColor,
-});
+export const onDidChangeActive = new vscode.EventEmitter<boolean>();
+export const onActiveFileTreeChange = new vscode.EventEmitter<FileTree | undefined>();
 
 export function activate(context: vscode.ExtensionContext): void {
     const parsersDir = join(context.extensionPath, "parsers");
@@ -215,23 +69,7 @@ export function activate(context: vscode.ExtensionContext): void {
         onActiveFileTreeChange.fire(activeFileTree)
     );
 
-    const onBlockModeChange = new vscode.EventEmitter<boolean>();
-    const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
-    statusBar.text = "-- BLOCK MODE --";
-
-    function resetDecorations(): void {
-        targetsDecoration.dispose();
-        forceTargetsDecoration.dispose();
-        targetsDecoration = vscode.window.createTextEditorDecorationType({
-            backgroundColor: targetsDecorationColor,
-        });
-        forceTargetsDecoration = vscode.window.createTextEditorDecorationType({
-            backgroundColor: forceTargetsDecorationColor,
-        });
-    }
-
     const uiDisposables = [
-        statusBar,
         vscode.window.registerCustomEditorProvider(
             CodeBlocksEditorProvider.viewType,
             new CodeBlocksEditorProvider(context)
@@ -241,43 +79,15 @@ export function activate(context: vscode.ExtensionContext): void {
 
     const eventListeners = [
         vscode.window.onDidChangeActiveTextEditor(async (editor) => {
-            resetDecorations();
-
             if (editor?.document.uri.toString() === TreeViewer.uri.toString()) {
                 return;
             }
 
             onActiveFileTreeChange.fire(await getEditorFileTree(parsersDir, editor));
         }),
-        vscode.window.onDidChangeTextEditorSelection((event) =>
-            updateTargetHighlights(event.textEditor, event.selections[0])
-        ),
+        onDidChangeActive.event((newActive) => (active = newActive)),
         onActiveFileTreeChange.event((newFileTree) => TreeViewer.viewFileTree(newFileTree)),
         onActiveFileTreeChange.event((newFileTree) => (activeFileTree = newFileTree)),
-        onActiveFileTreeChange.event((_) => {
-            const editor = vscode.window.activeTextEditor;
-            if (editor !== undefined) {
-                updateTargetHighlights(editor, editor.selection);
-            }
-        }),
-        onBlockModeChange.event(async (newBlockMode) => {
-            blockModeEnabled = newBlockMode;
-            await vscode.commands.executeCommand("setContext", "codeBlocks.blockMode", blockModeEnabled);
-            blockModeEnabled ? statusBar.show() : statusBar.hide();
-        }),
-        onBlockModeChange.event((newBlockMode) => activeFileTree?.toggleBlockMode(newBlockMode)),
-        onBlockModeChange.event((blockModeEnabled) => {
-            if (!blockModeEnabled) {
-                resetDecorations();
-            } else {
-                if (vscode.window.activeTextEditor !== undefined) {
-                    updateTargetHighlights(
-                        vscode.window.activeTextEditor,
-                        vscode.window.activeTextEditor.selection
-                    );
-                }
-            }
-        }),
     ];
 
     const cmd = (
@@ -288,22 +98,11 @@ export function activate(context: vscode.ExtensionContext): void {
     const commands = [
         cmd("codeBlocks.open", async () => await reopenWithCodeBocksEditor()),
         cmd("codeBlocks.openToTheSide", async () => await openCodeBlocksEditorToTheSide()),
-        cmd("codeBlocks.toggle", () => onBlockModeChange.fire(!blockModeEnabled)),
+        cmd("codeBlocks.toggleActive", () => onDidChangeActive.fire(!active)),
         cmd("codeBlocks.openTreeViewer", async () => await TreeViewer.open()),
-        cmd("codeBlocks.moveUp", async () => await moveSelection("swap-previous")),
-        cmd("codeBlocks.moveUpForce", async () => await moveSelection("before-parent")),
-        cmd("codeBlocks.moveDown", async () => await moveSelection("swap-next")),
-        cmd("codeBlocks.moveDownForce", async () => await moveSelection("after-parent")),
-        cmd("codeBlocks.selectBlock", selectBlock),
-        cmd("codeBlocks.selectParent", () => updateSelection("parent")),
-        cmd("codeBlocks.selectChild", () => updateSelection("child")),
-        cmd("codeBlocks.selectNext", () => updateSelection("add-next")),
-        cmd("codeBlocks.selectPrevious", () => updateSelection("add-previous")),
-        cmd("codeBlocks.navigateUpForce", () => navigate("up")),
-        cmd("codeBlocks.navigateDownForce", () => navigate("down")),
-        cmd("codeBlocks.navigateUp", () => navigate("left")),
-        cmd("codeBlocks.navigateDown", () => navigate("right")),
     ];
 
-    context.subscriptions.push(...uiDisposables, ...eventListeners, ...commands);
+    const blockMode = BlockMode.activate();
+
+    context.subscriptions.push(...uiDisposables, ...eventListeners, ...commands, ...blockMode);
 }
