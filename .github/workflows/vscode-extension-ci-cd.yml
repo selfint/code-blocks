@@ -69,11 +69,11 @@ jobs:
             - name: Build webview
               run: yarn run build:webview
             - name: Build extension
-              run: vsce package --yarn --baseImagesUrl https://raw.githubusercontent.com/selfint/code-blocks/${{ github.ref_name }}
+              run: vsce package --yarn --baseImagesUrl https://raw.githubusercontent.com/selfint/code-blocks/${{ startsWith(github.head_ref, '') && github.head_ref || github.ref_name  }}
             - name: Upload extension
               uses: actions/upload-artifact@v3
               with:
-                  name: code-blocks-${{ github.ref_name }}.vsix
+                  name: $${code-blocks-${{ startsWith(github.head_ref, '') && github.head_ref || github.ref_name }}.vsix
                   path: |
                       code-blocks-*.vsix
 
