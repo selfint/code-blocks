@@ -242,7 +242,15 @@
         ]
       },
       "[javascriptreact]": {
-        "codeBlocks.npmPackageName": "tree-sitter-javascript"
+        "codeBlocks.npmPackageName": "tree-sitter-javascript",
+        "codeBlocks.queries": [
+          "( (comment)* @header . (class_declaration) @item)",
+          "( (comment)* @header . (method_definition) @item)",
+          "( (comment)* @header . (function_declaration) @item)",
+          "( (comment)* @header . (export_statement) @item)",
+          "(jsx_element) @item",
+          "(jsx_self_closing_element) @item"
+        ]
       },
       "[svelte]": {
         "codeBlocks.queries": [

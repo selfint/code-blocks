@@ -221,6 +221,67 @@ source_file [0:0 - 0:9]
                 });
             });
         });
+
+        suite(".teleportSelection", function () {
+            async function testTeleport(
+                content: string,
+                expectedContent: string,
+                expectedSelectionContent: string,
+                expectedTargetContent: string
+            ): Promise<void> {
+                const cursorRegexp = /@/g;
+                const targetCursor = "#";
+                const targetStart = content.replace(cursorRegexp, "").indexOf(targetCursor);
+                content = content.replace(targetCursor, "");
+                const targetEnd = content.replace(cursorRegexp, "").indexOf(targetCursor);
+                content = content.replace(targetCursor, "");
+                const [selection, fileTree] = await testResolveVscodeSelection(
+                    content,
+                    expectedSelectionContent
+                );
+
+                const targetVscodeSelection = new vscode.Selection(
+                    fileTree.document.positionAt(targetStart),
+                    fileTree.document.positionAt(targetEnd)
+                );
+                const targetSelection = fileTree.resolveVscodeSelection(targetVscodeSelection);
+
+                assert.ok(targetSelection, "selection was undefined");
+                expect(targetSelection.getText(content.replace(cursorRegexp, ""))).to.equal(
+                    expectedTargetContent,
+                    `Initial target selection content: ${fileTree.document.getText(targetVscodeSelection)}`
+                );
+
+                const result = await fileTree.teleportSelection(selection, targetSelection);
+
+                expect(result.status).to.equal("ok");
+                expect(fileTree.document.getText()).to.equal(
+                    expectedContent,
+                    "teleport didn't create expected content"
+                );
+                // @ts-expect-error result is ok, checked 2 lines before
+                expect(fileTree.document.getText(result.result)).to.equal(
+                    expectedSelectionContent,
+                    "teleport didn't preserve selection"
+                );
+            }
+
+            test("moves block across tree", async () => {
+                await testTeleport(
+                    "fn main() { { @let a = [1, 2, 3];@ } } fn foo() { #{}# }",
+                    "fn main() { {  } } fn foo() { {}let a = [1, 2, 3]; }",
+                    "let a = [1, 2, 3];",
+                    "{}"
+                );
+
+                await testTeleport(
+                    "fn foo() { #{}# } fn main() { { @let a = [1, 2, 3];@ } }",
+                    "fn foo() { {}let a = [1, 2, 3]; } fn main() { {  } }",
+                    "let a = [1, 2, 3];",
+                    "{}"
+                );
+            });
+        });
     });
 
     suite("TSX", function () {
