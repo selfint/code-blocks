@@ -189,6 +189,8 @@ export function activate(): vscode.Disposable[] {
     const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
     statusBar.text = "-- BLOCK MODE --";
 
+    const uiDisposables = [statusBar];
+
     const eventListeners = [
         vscode.window.onDidChangeActiveTextEditor(resetDecorations),
         vscode.window.onDidChangeTextEditorSelection((event) =>
@@ -246,5 +248,5 @@ export function activate(): vscode.Disposable[] {
         cmd("codeBlocks.navigateDown", () => navigate("right")),
     ];
 
-    return [...eventListeners, ...commands];
+    return [...uiDisposables, ...eventListeners, ...commands];
 }
