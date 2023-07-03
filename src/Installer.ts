@@ -133,7 +133,7 @@ export async function getLanguage(parsersDir: string, languageId: string): Promi
 
     if (!existsSync(parserWasmBindings)) {
         const doInstall = await vscode.window.showInformationMessage(
-            `Parser missing for language '${languageId}, install it?`,
+            `Parser missing for language '${languageId}', install it?`,
             "Yes",
             "No"
         );
