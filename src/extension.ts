@@ -58,6 +58,12 @@ export let activeFileTree: FileTree | undefined = undefined;
 export const onDidChangeActive = new vscode.EventEmitter<boolean>();
 export const onActiveFileTreeChange = new vscode.EventEmitter<FileTree | undefined>();
 
+export function toggleActive(): void {
+    active = !active;
+
+    onDidChangeActive.fire(active);
+}
+
 export function activate(context: vscode.ExtensionContext): void {
     const parsersDir = join(context.extensionPath, "parsers");
 
@@ -82,6 +88,12 @@ export function activate(context: vscode.ExtensionContext): void {
             activeFileTree = await getEditorFileTree(parsersDir, editor);
             onActiveFileTreeChange.fire(activeFileTree);
         }),
+        onDidChangeActive.event(async (active) => {
+            if (active && vscode.window.activeTextEditor !== undefined) {
+                activeFileTree = await getEditorFileTree(parsersDir, vscode.window.activeTextEditor);
+                onActiveFileTreeChange.fire(activeFileTree);
+            }
+        }),
         onActiveFileTreeChange.event((newFileTree) => TreeViewer.viewFileTree(newFileTree)),
     ];
 
@@ -91,10 +103,7 @@ export function activate(context: vscode.ExtensionContext): void {
         thisArg?: unknown
     ): vscode.Disposable => vscode.commands.registerCommand(command, callback, thisArg);
     const commands = [
-        cmd("codeBlocks.toggleActive", () => {
-            active = !active;
-            return onDidChangeActive.fire(active);
-        }),
+        cmd("codeBlocks.toggleActive", () => toggleActive()),
         cmd("codeBlocks.open", async () => await reopenWithCodeBocksEditor()),
         cmd("codeBlocks.openToTheSide", async () => await openCodeBlocksEditorToTheSide()),
         cmd("codeBlocks.openTreeViewer", async () => await TreeViewer.open()),

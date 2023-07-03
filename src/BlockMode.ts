@@ -179,6 +179,7 @@ function toggleBlockMode(): void {
         blockModeActive = true;
         if (!codeBlocks.active) {
             codeBlocks.onDidChangeActive.fire(true);
+            codeBlocks.toggleActive();
         }
     }
 
