@@ -61,10 +61,6 @@ export const onActiveFileTreeChange = new vscode.EventEmitter<FileTree | undefin
 export function activate(context: vscode.ExtensionContext): void {
     const parsersDir = join(context.extensionPath, "parsers");
 
-    void getEditorFileTree(parsersDir, vscode.window.activeTextEditor).then((activeFileTree) =>
-        onActiveFileTreeChange.fire(activeFileTree)
-    );
-
     const uiDisposables = [
         vscode.window.registerCustomEditorProvider(
             CodeBlocksEditorProvider.viewType,
@@ -75,15 +71,18 @@ export function activate(context: vscode.ExtensionContext): void {
 
     const eventListeners = [
         vscode.window.onDidChangeActiveTextEditor(async (editor) => {
+            if (!active) {
+                return;
+            }
+
             if (editor?.document.uri.toString() === TreeViewer.uri.toString()) {
                 return;
             }
 
-            onActiveFileTreeChange.fire(await getEditorFileTree(parsersDir, editor));
+            activeFileTree = await getEditorFileTree(parsersDir, editor);
+            onActiveFileTreeChange.fire(activeFileTree);
         }),
-        onDidChangeActive.event((newActive) => (active = newActive)),
         onActiveFileTreeChange.event((newFileTree) => TreeViewer.viewFileTree(newFileTree)),
-        onActiveFileTreeChange.event((newFileTree) => (activeFileTree = newFileTree)),
     ];
 
     const cmd = (
@@ -92,9 +91,12 @@ export function activate(context: vscode.ExtensionContext): void {
         thisArg?: unknown
     ): vscode.Disposable => vscode.commands.registerCommand(command, callback, thisArg);
     const commands = [
+        cmd("codeBlocks.toggleActive", () => {
+            active = !active;
+            return onDidChangeActive.fire(active);
+        }),
         cmd("codeBlocks.open", async () => await reopenWithCodeBocksEditor()),
         cmd("codeBlocks.openToTheSide", async () => await openCodeBlocksEditorToTheSide()),
-        cmd("codeBlocks.toggleActive", () => onDidChangeActive.fire(!active)),
         cmd("codeBlocks.openTreeViewer", async () => await TreeViewer.open()),
     ];
 
