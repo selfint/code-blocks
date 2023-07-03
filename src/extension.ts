@@ -106,73 +106,70 @@ async function moveSelection(direction: MoveSelectionDirection): Promise<void> {
     }
 }
 
+function updateTargetHighlights(editor: vscode.TextEditor, vscodeSelection: vscode.Selection): void {
+    if (editor.document.uri !== activeFileTree?.document.uri) {
+        return;
+    }
+
+    if (!blockModeEnabled) {
+        return;
+    }
+
+    const selection = activeFileTree.resolveVscodeSelection(vscodeSelection);
+    if (selection === undefined) {
+        editor.setDecorations(targetsDecoration, []);
+        editor.setDecorations(forceTargetsDecoration, []);
+        return;
+    }
+
+    let parent = selection.ancestryChain.at(-1)?.parent ?? null;
+    if (parent?.parent === null) {
+        // parent is the entire file, not a relevant selection ever
+        parent = null;
+    }
+    const previous = selection.selectedSiblings.at(0)?.previousNamedSibling ?? null;
+    const next = selection.selectedSiblings.at(-1)?.nextNamedSibling ?? null;
+
+    const targets = [];
+    const forceTargets = [];
+
+    if (previous !== null) {
+        targets.push(
+            new vscode.Range(pointToPosition(previous.startPosition), pointToPosition(previous.endPosition))
+        );
+    }
+
+    if (next !== null) {
+        targets.push(
+            new vscode.Range(pointToPosition(next.startPosition), pointToPosition(next.endPosition))
+        );
+    }
+
+    if ((next === null || previous === null) && parent !== null) {
+        forceTargets.push(
+            new vscode.Range(pointToPosition(parent.startPosition), pointToPosition(parent.endPosition))
+        );
+    }
+
+    editor.setDecorations(targetsDecoration, targets);
+    editor.setDecorations(forceTargetsDecoration, forceTargets);
+}
+
 export const onActiveFileTreeChange = new vscode.EventEmitter<FileTree | undefined>();
 export let activeFileTree: FileTree | undefined = undefined;
 // TODO: change block mode to mean the entire extension is enabled, not just query blocks
 let blockModeEnabled = false;
+const targetsDecorationColor = "var(--vscode-editor-selectionHighlightBackground)";
+const forceTargetsDecorationColor = "var(--vscode-editor-linkedEditingBackground)";
+let targetsDecoration = vscode.window.createTextEditorDecorationType({
+    backgroundColor: targetsDecorationColor,
+});
+let forceTargetsDecoration = vscode.window.createTextEditorDecorationType({
+    backgroundColor: forceTargetsDecorationColor,
+});
+
 export function activate(context: vscode.ExtensionContext): void {
     const parsersDir = join(context.extensionPath, "parsers");
-    const targetsDecorationColor = "var(--vscode-editor-selectionHighlightBackground)";
-    const forceTargetsDecorationColor = "var(--vscode-editor-linkedEditingBackground)";
-
-    let targetsDecoration = vscode.window.createTextEditorDecorationType({
-        backgroundColor: targetsDecorationColor,
-    });
-    let forceTargetsDecoration = vscode.window.createTextEditorDecorationType({
-        backgroundColor: forceTargetsDecorationColor,
-    });
-
-    function updateTargetHighlights(editor: vscode.TextEditor, vscodeSelection: vscode.Selection): void {
-        if (editor.document.uri !== activeFileTree?.document.uri) {
-            return;
-        }
-
-        if (!blockModeEnabled) {
-            return;
-        }
-
-        const selection = activeFileTree.resolveVscodeSelection(vscodeSelection);
-        if (selection === undefined) {
-            editor.setDecorations(targetsDecoration, []);
-            editor.setDecorations(forceTargetsDecoration, []);
-            return;
-        }
-
-        let parent = selection.ancestryChain.at(-1)?.parent ?? null;
-        if (parent?.parent === null) {
-            // parent is the entire file, not a relevant selection ever
-            parent = null;
-        }
-        const previous = selection.selectedSiblings.at(0)?.previousNamedSibling ?? null;
-        const next = selection.selectedSiblings.at(-1)?.nextNamedSibling ?? null;
-
-        const targets = [];
-        const forceTargets = [];
-
-        if (previous !== null) {
-            targets.push(
-                new vscode.Range(
-                    pointToPosition(previous.startPosition),
-                    pointToPosition(previous.endPosition)
-                )
-            );
-        }
-
-        if (next !== null) {
-            targets.push(
-                new vscode.Range(pointToPosition(next.startPosition), pointToPosition(next.endPosition))
-            );
-        }
-
-        if ((next === null || previous === null) && parent !== null) {
-            forceTargets.push(
-                new vscode.Range(pointToPosition(parent.startPosition), pointToPosition(parent.endPosition))
-            );
-        }
-
-        editor.setDecorations(targetsDecoration, targets);
-        editor.setDecorations(forceTargetsDecoration, forceTargets);
-    }
 
     void getEditorFileTree(parsersDir, vscode.window.activeTextEditor).then((activeFileTree) =>
         onActiveFileTreeChange.fire(activeFileTree)
