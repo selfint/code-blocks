@@ -7,6 +7,10 @@ import { UpdateSelectionDirection } from "./Selection";
 import { getLanguage } from "./Installer";
 import { join } from "path";
 
+export function pointToPosition(point: Parser.Point): vscode.Position {
+    return new vscode.Position(point.row, point.column);
+}
+
 export const parserFinishedInit = new Promise<void>((resolve) => {
     void Parser.init().then(() => {
         resolve();
@@ -102,8 +106,68 @@ async function moveSelection(direction: MoveSelectionDirection): Promise<void> {
     }
 }
 
+function updateTargetHighlights(editor: vscode.TextEditor, vscodeSelection: vscode.Selection): void {
+    if (editor.document.uri !== activeFileTree?.document.uri) {
+        return;
+    }
+
+    if (!blockModeEnabled) {
+        return;
+    }
+
+    const selection = activeFileTree.resolveVscodeSelection(vscodeSelection);
+    if (selection === undefined) {
+        editor.setDecorations(targetsDecoration, []);
+        editor.setDecorations(forceTargetsDecoration, []);
+        return;
+    }
+
+    let parent = selection.ancestryChain.at(-1)?.parent ?? null;
+    if (parent?.parent === null) {
+        // parent is the entire file, not a relevant selection ever
+        parent = null;
+    }
+    const previous = selection.selectedSiblings.at(0)?.previousNamedSibling ?? null;
+    const next = selection.selectedSiblings.at(-1)?.nextNamedSibling ?? null;
+
+    const targets = [];
+    const forceTargets = [];
+
+    if (previous !== null) {
+        targets.push(
+            new vscode.Range(pointToPosition(previous.startPosition), pointToPosition(previous.endPosition))
+        );
+    }
+
+    if (next !== null) {
+        targets.push(
+            new vscode.Range(pointToPosition(next.startPosition), pointToPosition(next.endPosition))
+        );
+    }
+
+    if ((next === null || previous === null) && parent !== null) {
+        forceTargets.push(
+            new vscode.Range(pointToPosition(parent.startPosition), pointToPosition(parent.endPosition))
+        );
+    }
+
+    editor.setDecorations(targetsDecoration, targets);
+    editor.setDecorations(forceTargetsDecoration, forceTargets);
+}
+
 export const onActiveFileTreeChange = new vscode.EventEmitter<FileTree | undefined>();
 export let activeFileTree: FileTree | undefined = undefined;
+// TODO: change block mode to mean the entire extension is enabled, not just query blocks
+let blockModeEnabled = false;
+const targetsDecorationColor = "var(--vscode-editor-selectionHighlightBackground)";
+const forceTargetsDecorationColor = "var(--vscode-editor-linkedEditingBackground)";
+let targetsDecoration = vscode.window.createTextEditorDecorationType({
+    backgroundColor: targetsDecorationColor,
+});
+let forceTargetsDecoration = vscode.window.createTextEditorDecorationType({
+    backgroundColor: forceTargetsDecorationColor,
+});
+
 export function activate(context: vscode.ExtensionContext): void {
     const parsersDir = join(context.extensionPath, "parsers");
 
@@ -111,11 +175,20 @@ export function activate(context: vscode.ExtensionContext): void {
         onActiveFileTreeChange.fire(activeFileTree)
     );
 
-    // TODO: change block mode to mean the entire extension is enabled, not just query blocks
-    let blockModeEnabled = false;
     const onBlockModeChange = new vscode.EventEmitter<boolean>();
     const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
     statusBar.text = "-- BLOCK MODE --";
+
+    function resetDecorations(): void {
+        targetsDecoration.dispose();
+        forceTargetsDecoration.dispose();
+        targetsDecoration = vscode.window.createTextEditorDecorationType({
+            backgroundColor: targetsDecorationColor,
+        });
+        forceTargetsDecoration = vscode.window.createTextEditorDecorationType({
+            backgroundColor: forceTargetsDecorationColor,
+        });
+    }
 
     const uiDisposables = [
         statusBar,
@@ -127,19 +200,43 @@ export function activate(context: vscode.ExtensionContext): void {
     ];
 
     const eventListeners = [
+        vscode.window.onDidChangeActiveTextEditor(async (editor) => {
+            resetDecorations();
+
+            if (editor?.document.uri.toString() === TreeViewer.uri.toString()) {
+                return;
+            }
+
+            onActiveFileTreeChange.fire(await getEditorFileTree(parsersDir, editor));
+        }),
+        vscode.window.onDidChangeTextEditorSelection((event) =>
+            updateTargetHighlights(event.textEditor, event.selections[0])
+        ),
         onActiveFileTreeChange.event((newFileTree) => TreeViewer.viewFileTree(newFileTree)),
         onActiveFileTreeChange.event((newFileTree) => (activeFileTree = newFileTree)),
+        onActiveFileTreeChange.event((_) => {
+            const editor = vscode.window.activeTextEditor;
+            if (editor !== undefined) {
+                updateTargetHighlights(editor, editor.selection);
+            }
+        }),
         onBlockModeChange.event(async (newBlockMode) => {
             blockModeEnabled = newBlockMode;
             await vscode.commands.executeCommand("setContext", "codeBlocks.blockMode", blockModeEnabled);
             blockModeEnabled ? statusBar.show() : statusBar.hide();
         }),
         onBlockModeChange.event((newBlockMode) => activeFileTree?.toggleBlockMode(newBlockMode)),
-        vscode.window.onDidChangeActiveTextEditor(async (editor) => {
-            if (editor?.document.uri.toString() === TreeViewer.uri.toString()) {
-                return;
+        onBlockModeChange.event((blockModeEnabled) => {
+            if (!blockModeEnabled) {
+                resetDecorations();
+            } else {
+                if (vscode.window.activeTextEditor !== undefined) {
+                    updateTargetHighlights(
+                        vscode.window.activeTextEditor,
+                        vscode.window.activeTextEditor.selection
+                    );
+                }
             }
-            onActiveFileTreeChange.fire(await getEditorFileTree(parsersDir, editor));
         }),
     ];
 

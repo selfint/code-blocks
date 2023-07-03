@@ -51,6 +51,30 @@ jobs:
               with:
                   run: yarn test
 
+    package:
+        name: Package extension
+        runs-on: ubuntu-latest
+        needs: test
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+            - name: Install Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 16
+            - name: Install extension dependencies
+              run: yarn run install:all
+            - name: Build webview
+              run: yarn run build:webview
+            - name: Build extension
+              run: vsce package --yarn --baseImagesUrl https://raw.githubusercontent.com/selfint/code-blocks/${{ github.ref_name }}
+            - name: Upload extension
+              uses: actions/upload-artifact@v3
+              with:
+                  name: ${{ github.ref_name }}-extension-preview
+                  path: |
+                      code-blocks-*.vsix
+
     release:
         name: Release extension
         if: startsWith(github.ref, 'refs/tags/v')
