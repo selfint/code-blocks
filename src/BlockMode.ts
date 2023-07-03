@@ -78,7 +78,7 @@ async function moveSelection(direction: MoveSelectionDirection): Promise<void> {
 
         case "err":
             // TODO: add this as a text box above the cursor (can vscode do that?)
-            void vscode.window.showErrorMessage(result.result);
+            console.debug(result.result);
             break;
     }
 }

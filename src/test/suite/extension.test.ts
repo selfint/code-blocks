@@ -358,6 +358,11 @@ source_file [0:0 - 0:12]
                     "fn main() {}"
                 );
 
+                // this will produce a lot of pointless logs, so we silence them for a bit
+                const oldDebug = console.debug;
+                console.debug = (_message?: unknown, ..._optionalParams: unknown[]): void => {
+                    /** */
+                };
                 for (let i = 0; i < 100; i++) {
                     await Promise.all([
                         vscode.commands.executeCommand("codeBlocks.moveDown"),
@@ -366,6 +371,8 @@ source_file [0:0 - 0:12]
                         vscode.commands.executeCommand("codeBlocks.moveUp"),
                     ]);
                 }
+
+                console.debug = oldDebug;
 
                 // which moves happen first is undefined, but result should
                 // be either of these
@@ -492,6 +499,11 @@ source_file [0:0 - 0:12]
                     "fn main() {}"
                 );
 
+                // this will produce a lot of pointless logs, so we silence them for a bit
+                const oldDebug = console.debug;
+                console.debug = (_message?: unknown, ..._optionalParams: unknown[]): void => {
+                    /** */
+                };
                 for (let i = 0; i < 100; i++) {
                     await Promise.all([
                         vscode.commands.executeCommand("codeBlocks.navigateDown"),
@@ -500,6 +512,8 @@ source_file [0:0 - 0:12]
                         vscode.commands.executeCommand("codeBlocks.navigateUp"),
                     ]);
                 }
+
+                console.debug = oldDebug;
 
                 // which moves happen first is undefined, but result should
                 // be either of these
