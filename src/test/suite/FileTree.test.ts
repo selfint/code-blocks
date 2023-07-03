@@ -266,7 +266,7 @@ source_file [0:0 - 0:9]
                 );
             }
 
-            test.only("moves block across tree", async () => {
+            test("moves block across tree", async () => {
                 await testTeleport(
                     "fn main() { { @let a = [1, 2, 3];@ } } fn foo() { #{}# }",
                     "fn main() { {  } } fn foo() { {}let a = [1, 2, 3]; }",
