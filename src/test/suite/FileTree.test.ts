@@ -8,6 +8,8 @@ import { expect } from "chai";
 import { parsersDir } from "./parsersDir";
 
 suite("FileTree", function () {
+    this.timeout(process.env.TEST_TIMEOUT ?? "2s");
+
     suite("Rust", function () {
         // @ts-expect-error initialized in beforeAll
         let language: Language = undefined;
