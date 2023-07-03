@@ -44,7 +44,6 @@ suite("codeBlocks commands", function () {
         const cursorIndex = content.indexOf(cursor);
         content = content.replace(cursor, "");
         const activeEditor = await openDocument(content, language);
-        await vscode.commands.executeCommand("codeBlocks.toggle");
         await awaitFileTreeLoaded();
         activeEditor.selection = new vscode.Selection(
             activeEditor.document.positionAt(cursorIndex),

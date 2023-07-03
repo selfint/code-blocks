@@ -32,7 +32,9 @@
     "visualization"
   ],
   "preview": true,
-  "activationEvents": [],
+  "activationEvents": [
+    "onLanguage"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "customEditors": [
