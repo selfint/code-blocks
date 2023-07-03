@@ -1,7 +1,6 @@
 import * as codeBlocks from "./extension";
 import * as vscode from "vscode";
-import { MoveSelectionDirection } from "./FileTree";
-import Parser from "web-tree-sitter";
+import { MoveSelectionDirection, pointToPosition } from "./FileTree";
 import { UpdateSelectionDirection } from "./Selection";
 
 export let blockModeActive = false;
@@ -31,10 +30,6 @@ function resetDecorations(): void {
     forceTargetsDecoration = vscode.window.createTextEditorDecorationType({
         backgroundColor: forceTargetsDecorationColor,
     });
-}
-
-function pointToPosition(point: Parser.Point): vscode.Position {
-    return new vscode.Position(point.row, point.column);
 }
 
 function selectBlock(): void {

@@ -7,10 +7,6 @@ import { TreeViewer } from "./TreeViewer";
 import { getLanguage } from "./Installer";
 import { join } from "path";
 
-export function pointToPosition(point: Parser.Point): vscode.Position {
-    return new vscode.Position(point.row, point.column);
-}
-
 export const parserFinishedInit = new Promise<void>((resolve) => {
     void Parser.init().then(() => {
         resolve();
