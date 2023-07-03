@@ -53,7 +53,7 @@ async function getEditorFileTree(
     }
 }
 
-export let active = false;
+export let active = true;
 export let activeFileTree: FileTree | undefined = undefined;
 export const onDidChangeActive = new vscode.EventEmitter<boolean>();
 export const onActiveFileTreeChange = new vscode.EventEmitter<FileTree | undefined>();
