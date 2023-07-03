@@ -3,10 +3,10 @@
 */
 *
 
+!CHANGELOG.md
 !LICENSE
 !README.md
-!CHANGELOG.md
-!out/extension.js
 !assets/extension-logo.png
 !node_modules/web-tree-sitter
+!out/extension.js
 !webview-ui/public
