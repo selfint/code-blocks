@@ -205,17 +205,14 @@ export function activate(): vscode.Disposable[] {
             await vscode.commands.executeCommand("setContext", "codeBlocks.blockMode", blockModeActive);
         }),
         onDidChangeBlockModeActive.event((blockModeActive) => {
-            if (blockModeActive) {
-                statusBar.show();
-                if (vscode.window.activeTextEditor !== undefined) {
-                    updateTargetHighlights(
-                        vscode.window.activeTextEditor,
-                        vscode.window.activeTextEditor.selection
-                    );
-                }
-            } else {
-                resetDecorations();
-                statusBar.hide();
+            blockModeActive ? statusBar.show() : statusBar.hide();
+            resetDecorations();
+
+            if (vscode.window.activeTextEditor !== undefined) {
+                updateTargetHighlights(
+                    vscode.window.activeTextEditor,
+                    vscode.window.activeTextEditor.selection
+                );
             }
         }),
     ];
