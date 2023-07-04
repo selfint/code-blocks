@@ -51,14 +51,13 @@ jobs:
                   run: yarn test
             - name: Build extension
               if: matrix.os == 'ubuntu-latest'
-              run: vsce package --yarn --baseImagesUrl https://raw.githubusercontent.com/selfint/code-blocks/${{ startsWith(github.head_ref, '') && github.head_ref || github.ref_name  }}
+              run: npx vsce package --yarn --githubBranch ${{ startsWith(github.head_ref, '') && github.head_ref || github.ref_name  }}
             - name: Upload extension
               if: matrix.os == 'ubuntu-latest'
               uses: actions/upload-artifact@v3
               with:
                   name: code-blocks-${{ startsWith(github.head_ref, '') && github.head_ref || github.ref_name }}.vsix
-                  path: |
-                      code-blocks-*.vsix
+                  path: code-blocks-*.vsix
 
     release:
         name: Release extension
@@ -79,7 +78,7 @@ jobs:
             - name: Build webview
               run: yarn run build:webview
             - name: Build extension
-              run: vsce package --yarn --baseImagesUrl https://raw.githubusercontent.com/selfint/code-blocks/${{ github.ref_name }}
+              run: vsce package --yarn --githubBranch ${{ github.ref_name }}
             - name: Release
               uses: softprops/action-gh-release@v1
               with:
