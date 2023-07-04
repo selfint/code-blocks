@@ -4,7 +4,6 @@ on:
     push:
         branches:
             - main
-            - "v*.*.*"
         tags:
             - "v*.*.*"
     pull_request:
@@ -36,11 +35,11 @@ jobs:
             - name: Install extension dependencies
               run: yarn run install:all
             - name: Build webview
-              if: runner.os != 'macos'
+              if: matrix.os != 'macos-latest'
               run: yarn run build:webview
             # TODO: fix this command getting stuck on macos
             - name: Build webview
-              if: runner.os == 'macos'
+              if: matrix.os == 'macos-latest'
               uses: nick-fields/retry@v2
               with:
                   timeout_minutes: 1
@@ -51,10 +50,10 @@ jobs:
               with:
                   run: yarn test
             - name: Build extension
-              if: runner.os == 'ubuntu'
+              if: matrix.os == 'ubuntu-latest'
               run: vsce package --yarn --baseImagesUrl https://raw.githubusercontent.com/selfint/code-blocks/${{ startsWith(github.head_ref, '') && github.head_ref || github.ref_name  }}
             - name: Upload extension
-              if: runner.os == 'ubuntu'
+              if: matrix.os == 'ubuntu-latest'
               uses: actions/upload-artifact@v3
               with:
                   name: code-blocks-${{ startsWith(github.head_ref, '') && github.head_ref || github.ref_name }}.vsix
