@@ -16,10 +16,10 @@ suite("FileTree", function () {
         this.beforeAll(async () => {
             const lang = await Installer.loadParser(parsersDir, "tree-sitter-rust");
             assert.ok(
-                lang,
+                lang.status === "ok" && lang.result,
                 `failed to load ${Installer.getWasmBindingsPath(parsersDir, "tree-sitter-rust")}`
             );
-            language = lang;
+            language = lang.result;
         });
 
         async function buildFileTree(content: string): Promise<FileTree> {
@@ -292,14 +292,14 @@ source_file [0:0 - 0:9]
         this.beforeAll(async () => {
             const lang = await Installer.loadParser(parsersDir, "tree-sitter-typescript", "tree-sitter-tsx");
             assert.ok(
-                lang,
+                lang.status === "ok" && lang.result,
                 `failed to load ${Installer.getWasmBindingsPath(
                     parsersDir,
                     "tree-sitter-typescript",
                     "tree-sitter-tsx"
                 )}`
             );
-            language = lang;
+            language = lang.result;
         });
 
         async function buildFileTree(content: string): Promise<FileTree> {

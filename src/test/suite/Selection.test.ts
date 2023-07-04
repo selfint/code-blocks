@@ -59,8 +59,9 @@ suite("Selection", function () {
             let selectionAt: UpdateRunner = undefined;
             this.beforeAll(async () => {
                 const rust = await Installer.loadParser(parsersDir, "tree-sitter-rust");
+                assert.ok(rust.status === "ok");
                 assert.ok(rust);
-                selectionAt = buildUpdateRunner(cursor, ["rust", rust]);
+                selectionAt = buildUpdateRunner(cursor, ["rust", rust.result]);
             });
 
             test("Select source_file node is undefined", async () => {
@@ -101,8 +102,9 @@ suite("Selection", function () {
                     "tree-sitter-typescript",
                     "tree-sitter-tsx"
                 );
-                assert.ok(tsx);
-                selectionAt = buildUpdateRunner(cursor, ["typescriptreact", tsx]);
+                assert.ok(tsx.status === "ok");
+                assert.ok(tsx.result);
+                selectionAt = buildUpdateRunner(cursor, ["typescriptreact", tsx.result]);
             });
 
             test("Select source_file node is undefined", async () => {

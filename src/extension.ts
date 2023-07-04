@@ -42,14 +42,24 @@ async function getEditorFileTree(
 ): Promise<FileTree | undefined> {
     if (editor?.document === undefined) {
         return undefined;
-    } else {
-        const activeDocument = editor.document;
-        const language = await getLanguage(parsersDir, activeDocument.languageId);
-        if (language === undefined) {
+    }
+
+    const activeDocument = editor.document;
+    const language = await getLanguage(parsersDir, activeDocument.languageId);
+
+    switch (language.status) {
+        case "ok":
+            if (language.result !== undefined) {
+                return await FileTree.new(language.result, activeDocument);
+            } else {
+                return undefined;
+            }
+
+        case "err":
+            void vscode.window.showErrorMessage(
+                `Failed to load parser for ${activeDocument.languageId}: ${language.result}`
+            );
             return undefined;
-        } else {
-            return await FileTree.new(language, activeDocument);
-        }
     }
 }
 
