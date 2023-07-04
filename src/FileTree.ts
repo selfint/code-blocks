@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
-import { BlockTree, getBlockTrees } from "./BlockTree";
 import Parser, { Language, Query, SyntaxNode, Tree } from "web-tree-sitter";
 import { Result, err, ok } from "./result";
+import { BlockTree } from "./BlockTree";
 import { Selection } from "./Selection";
 import { getLanguageConfig } from "./configuration";
 import { parserFinishedInit } from "./extension";
@@ -46,7 +46,7 @@ export class FileTree implements vscode.Disposable {
         if (queryStrings !== undefined) {
             const language = parser.getLanguage();
             this.queries = queryStrings.map((q) => language.query(q));
-            this.blocks = getBlockTrees(this.tree, this.queries);
+            // this.blocks = getBlockTrees(this.tree, this.queries);
         }
 
         this.disposables = [this.onUpdateEmitter];
@@ -98,7 +98,7 @@ export class FileTree implements vscode.Disposable {
 
         this.tree = this.parser.parse(event.document.getText(), this.tree);
         if (this.queries !== undefined) {
-            this.blocks = getBlockTrees(this.tree, this.queries);
+            // this.blocks = getBlockTrees(this.tree, this.queries);
         }
         this.version = event.document.version;
         this.onUpdateEmitter.fire();
@@ -157,7 +157,7 @@ export class FileTree implements vscode.Disposable {
             startParents.some((startParent) => startParent.equals(endParent))
         );
 
-        let lowestCommonParent = undefined;
+        let lowestCommonParent: SyntaxNode;
         if (0 <= startParentInEndParents && startParentInEndParents <= endParentInStartParents) {
             lowestCommonParent = startParents[startParentInEndParents];
         } else if (0 <= endParentInStartParents) {
