@@ -337,6 +337,7 @@
     "@types/node": "20.3.3",
     "@types/tar": "^6.1.5",
     "@types/vscode": "^1.79.0",
+    "@types/which": "^3.0.0",
     "@typescript-eslint/eslint-plugin": "^5.49.0",
     "@typescript-eslint/parser": "^5.49.0",
     "@vscode/test-electron": "^2.2.2",
@@ -349,6 +350,7 @@
   },
   "dependencies": {
     "tar": "^6.1.15",
-    "web-tree-sitter": "^0.20.8"
+    "web-tree-sitter": "^0.20.8",
+    "which": "^3.0.1"
   }
 }

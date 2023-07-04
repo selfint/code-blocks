@@ -8,6 +8,12 @@ import { Language } from "web-tree-sitter";
 import { existsSync } from "fs";
 import { mkdir } from "fs/promises";
 import { parserFinishedInit } from "./extension";
+import which from "which";
+
+const NPM_INSTALL_URL = "https://nodejs.org/en/download";
+const TREE_SITTER_CLI_INSTALL_URL = "https://github.com/tree-sitter/tree-sitter/blob/master/cli/README.md";
+const EMCC_INSTALL_URL = "https://emscripten.org/docs/getting_started/downloads.html#download-and-install";
+const DOCKER_INSTALL_URL = "https://docs.docker.com/get-docker/";
 
 export function getAbsoluteParserDir(parsersDir: string, npmPackageName: string): string {
     return path.resolve(path.join(parsersDir, npmPackageName));
@@ -48,6 +54,37 @@ export async function downloadAndBuildParser(
     npm = "npm",
     treeSitterCli = "tree-sitter"
 ): Promise<Result<void, string>> {
+    // typescript-eslint is wrong, this can return null since we use 'nothrow'
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    const npmCommandOk = (await which(npm, { nothrow: true })) !== null;
+    if (!npmCommandOk) {
+        return err(`npm command: '${npm}' is not in PATH, try installing it from: ${NPM_INSTALL_URL}`);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    const treeSitterCliOk = (await which(treeSitterCli, { nothrow: true })) !== null;
+    // auto install tree-sitter cli to parsersDir if not present
+    if (!treeSitterCliOk) {
+        return err(
+            `tree-sitter cli command: '${treeSitterCli}' is not in PATH, try installing it from: ${TREE_SITTER_CLI_INSTALL_URL}`
+        );
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    const emccOk = (await which("emcc", { nothrow: true })) !== null;
+
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    const dockerOk = (await which("docker", { nothrow: true })) !== null;
+
+    if (dockerOk && !emccOk) {
+        void vscode.window.showInformationMessage(
+            `tree-sitter requirement emcc not found, but docker was found and will be used. Note that using emcc is much faster, try installing if from: ${EMCC_INSTALL_URL}`
+        );
+    } else if (!dockerOk && !emccOk) {
+        return err(
+            `tree-sitter requirement emcc/docker (either one) not found, try installing emcc (preferred) from: ${EMCC_INSTALL_URL} or installing docker from: ${DOCKER_INSTALL_URL}`
+        );
+    }
+
     const parserDir = getAbsoluteParserDir(parsersDir, parserNpmPackage);
     await mkdir(parserDir, { recursive: true });
 
@@ -84,26 +121,14 @@ export async function downloadAndBuildParser(
 
     const buildResult = await runCmd(buildCmd, { cwd: parserDir }, onData);
     switch (buildResult.status) {
-        case "err":
-            // TODO: check exit code for this error on windows is the same
-            if (buildResult.result[0].code === 127) {
-                onData?.(`Failed to build .wasm parser because 'tree-sitter' command not in PATH`);
-                return err(`Failed to build .wasm parser because 'tree-sitter' command not in PATH`);
-            } else if (
-                buildResult.result[1].join(" ").includes("emcc") ||
-                buildResult.result[1].join(" ").includes("docker")
-            ) {
-                const errMsg = `Failed to build .wasm parser because 'emcc' command not in PATH, or 'docker' command failed / not in PATH`;
-                onData?.(errMsg);
-                return err(errMsg);
-            } else {
-                const errMsg = `Failed to build .wasm parser > shell command '${buildCmd}' failed > error: ${JSON.stringify(
-                    buildResult.result[0]
-                )}, logs: ${buildResult.result[1].join(" | ")}`;
+        case "err": {
+            const errMsg = `Failed to build .wasm parser > shell command '${buildCmd}' failed > error: ${JSON.stringify(
+                buildResult.result[0]
+            )}, logs: ${buildResult.result[1].join(" | ")}`;
 
-                onData?.(errMsg);
-                return err(errMsg);
-            }
+            onData?.(errMsg);
+            return err(errMsg);
+        }
 
         case "ok":
             return ok(undefined);
