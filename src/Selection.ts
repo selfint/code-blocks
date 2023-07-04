@@ -13,19 +13,26 @@ export type UpdateSelectionDirection =
 export class Selection {
     public constructor(
         /**
-         * List of nodes representing selection node start -> parent -> grandparent -> ... -> current.
-         */
-        public ancestryChain: SyntaxNode[],
-
-        /**
          * List of nodes representing the currently selected nodes.
          */
-        public selectedSiblings: SyntaxNode[],
+        private selectedSiblings: SyntaxNode[],
         public version: number
     ) {}
 
     public static fromNode(node: SyntaxNode, version: number): Selection {
-        return new Selection([node], [node], version);
+        // some nodes contain a single node that is their entire range
+        // this is confusing when looking only at the text.
+        // to avoid confusion, we will always default to the highest
+        // node in the hierarchy that contains the same range
+        // as its children
+        while (
+            node.parent?.namedChildCount === 1 &&
+            node.parent.startIndex === node.startIndex &&
+            node.parent.endIndex === node.endIndex
+        ) {
+            node = node.parent;
+        }
+        return new Selection([node], version);
     }
 
     public getText(text: string): string {
@@ -35,56 +42,96 @@ export class Selection {
         return selectionText;
     }
 
+    public getPrevious(): SyntaxNode | undefined {
+        return this.selectedSiblings[0].previousNamedSibling ?? undefined;
+    }
+
+    public getNext(): SyntaxNode | undefined {
+        return this.selectedSiblings.at(-1)?.nextNamedSibling ?? undefined;
+    }
+
+    public getParent(): SyntaxNode | undefined {
+        const selectionRange = this.getRange();
+        let parent = this.selectedSiblings[0].parent;
+
+        // recurse out of parent until it has a different range than the current selection
+        while (
+            parent?.parent &&
+            parent.startIndex === selectionRange.startIndex &&
+            parent.endIndex === selectionRange.endIndex
+        ) {
+            parent = parent.parent;
+        }
+
+        return parent ?? undefined;
+    }
+
+    public getChild(): SyntaxNode | undefined {
+        const selectionRange = this.getRange();
+        let child = this.selectedSiblings[0].firstNamedChild;
+
+        // recurse into child until it has a different range than the current selection
+        while (
+            child?.firstNamedChild &&
+            child.startIndex === selectionRange.startIndex &&
+            child.endIndex === selectionRange.endIndex
+        ) {
+            child = child.firstNamedChild;
+        }
+
+        return child ?? undefined;
+    }
+
     public update(direction: UpdateSelectionDirection): void {
-        const prevSibling = this.selectedSiblings.at(0)?.previousNamedSibling ?? undefined;
-        const nextSibling = this.selectedSiblings.at(-1)?.nextNamedSibling ?? undefined;
-
-        const parent = this.ancestryChain.at(-1)?.parent ?? undefined;
-        const child = this.ancestryChain.at(-2) ?? undefined;
-
         // TODO: respect block mode
         // also, in block mode, maybe we can add 'ignored' nodes
         // which are always skipped and we go to their parent or something?
         switch (direction) {
             case "add-previous":
-                if (prevSibling !== undefined) {
-                    this.selectedSiblings.splice(0, 0, prevSibling);
+                {
+                    const prevSibling = this.getPrevious();
+                    if (prevSibling) {
+                        this.selectedSiblings.splice(0, 0, prevSibling);
+                    }
                 }
                 break;
 
             case "remove-previous":
-                if (this.selectedSiblings.length >= 2) {
+                if (this.selectedSiblings.length > 1) {
                     this.selectedSiblings.splice(0, 1);
                 }
                 break;
 
             case "add-next":
-                if (nextSibling !== undefined) {
-                    this.selectedSiblings.push(nextSibling);
+                {
+                    const nextSibling = this.getNext();
+                    if (nextSibling) {
+                        this.selectedSiblings.push(nextSibling);
+                    }
                 }
                 break;
 
             case "remove-next":
-                if (this.selectedSiblings.length >= 2) {
+                if (this.selectedSiblings.length > 1) {
                     this.selectedSiblings.pop();
                 }
                 break;
 
             case "parent":
-                if (parent !== undefined) {
-                    this.selectedSiblings = [parent];
-                    this.ancestryChain.push(parent);
+                {
+                    const parent = this.getParent();
+                    if (parent) {
+                        this.selectedSiblings = [parent];
+                    }
                 }
                 break;
 
             case "child":
-                if (child !== undefined) {
-                    this.selectedSiblings = [child];
-                    this.ancestryChain.pop();
-                } else if (this.selectedSiblings[0].firstNamedChild !== null) {
-                    // default to the first named child of the first selected sibling
-                    this.selectedSiblings = [this.selectedSiblings[0].firstNamedChild];
-                    this.ancestryChain = [this.selectedSiblings[0]];
+                {
+                    const child = this.getChild();
+                    if (child) {
+                        this.selectedSiblings = [child];
+                    }
                 }
                 break;
         }

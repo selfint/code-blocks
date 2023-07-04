@@ -70,7 +70,9 @@ suite("Selection", function () {
             test("Update selection parent/child", async () => {
                 expect(await selectionAt("fn main() { @ }")).to.equal("{  }");
                 expect(await selectionAt("fn main() { @ }", ["parent"])).to.equal("fn main() {  }");
-                expect(await selectionAt("fn main() { @ }", ["parent", "child"])).to.equal("{  }");
+                expect(await selectionAt("fn main() { @ }", ["parent", "child"])).to.equal("main");
+                expect(await selectionAt("if true { @ }", ["parent"])).to.equal("if true {  }");
+                expect(await selectionAt("if true { @ }", ["parent", "child"])).to.equal("true");
                 expect(
                     await selectionAt("fn main() { pub fn foo() { @ } }", ["parent", "parent", "parent"])
                 ).to.equal("fn main() { pub fn foo() {  } }");
@@ -111,7 +113,7 @@ suite("Selection", function () {
                 const text = "function main() { @ }";
                 expect(await selectionAt(text)).to.equal("{  }");
                 expect(await selectionAt(text, ["parent"])).to.equal("function main() {  }");
-                expect(await selectionAt(text, ["parent", "child"])).to.equal("{  }");
+                expect(await selectionAt(text, ["parent", "child"])).to.equal("main");
             });
 
             test("Update selection previous/next", async () => {

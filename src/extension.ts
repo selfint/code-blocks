@@ -53,22 +53,40 @@ async function getEditorFileTree(
     }
 }
 
-export let active = true;
-export let activeFileTree: FileTree | undefined = undefined;
-export const onDidChangeActive = new vscode.EventEmitter<boolean>();
-export const onActiveFileTreeChange = new vscode.EventEmitter<FileTree | undefined>();
+type State<T> = {
+    get: () => T;
+    set: (newValue: T) => void;
+    onDidChange: vscode.Event<T>;
+};
+
+export function state<T>(initial: T): State<T> {
+    let inner = initial;
+    const emitter = new vscode.EventEmitter<T>();
+
+    return {
+        get: (): T => inner,
+        set: (newValue: T): void => {
+            inner = newValue;
+            emitter.fire(newValue);
+        },
+        onDidChange: emitter.event,
+    };
+}
+
+export const active = state(true);
+export const activeFileTree = state<FileTree | undefined>(undefined);
 
 export function toggleActive(): void {
-    active = !active;
-
-    onDidChangeActive.fire(active);
+    active.set(!active.get());
 }
+
+export { BlockMode };
 
 export function activate(context: vscode.ExtensionContext): void {
     const parsersDir = join(context.extensionPath, "parsers");
 
-    void getEditorFileTree(parsersDir, vscode.window.activeTextEditor).then((activeFileTree) =>
-        onActiveFileTreeChange.fire(activeFileTree)
+    void getEditorFileTree(parsersDir, vscode.window.activeTextEditor).then((newActiveFileTree) =>
+        activeFileTree.set(newActiveFileTree)
     );
 
     const uiDisposables = [
@@ -81,7 +99,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
     const eventListeners = [
         vscode.window.onDidChangeActiveTextEditor(async (editor) => {
-            if (!active) {
+            if (!active.get()) {
                 return;
             }
 
@@ -89,25 +107,22 @@ export function activate(context: vscode.ExtensionContext): void {
                 return;
             }
 
-            activeFileTree = await getEditorFileTree(parsersDir, editor);
-            onActiveFileTreeChange.fire(activeFileTree);
+            activeFileTree.set(await getEditorFileTree(parsersDir, editor));
         }),
-        onDidChangeActive.event(async (active) => {
+        active.onDidChange(async (active) => {
             if (active && vscode.window.activeTextEditor !== undefined) {
-                activeFileTree = await getEditorFileTree(parsersDir, vscode.window.activeTextEditor);
-                onActiveFileTreeChange.fire(activeFileTree);
+                activeFileTree.set(await getEditorFileTree(parsersDir, vscode.window.activeTextEditor));
             }
         }),
-        onActiveFileTreeChange.event((newFileTree) => TreeViewer.viewFileTree(newFileTree)),
+        activeFileTree.onDidChange((newFileTree) => TreeViewer.viewFileTree(newFileTree)),
         BlockMode.onDidChangeBlockModeActive.event(async (blockModeActive) => {
             if (
                 blockModeActive &&
-                active &&
-                activeFileTree === undefined &&
+                active.get() &&
+                activeFileTree.get() === undefined &&
                 vscode.window.activeTextEditor !== undefined
             ) {
-                activeFileTree = await getEditorFileTree(parsersDir, vscode.window.activeTextEditor);
-                onActiveFileTreeChange.fire(activeFileTree);
+                activeFileTree.set(await getEditorFileTree(parsersDir, vscode.window.activeTextEditor));
             }
         }),
     ];

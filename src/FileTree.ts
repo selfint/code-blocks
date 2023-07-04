@@ -184,7 +184,7 @@ export class FileTree implements vscode.Disposable {
         // TODO: aren't the nodes already sorted? check if we can remove this
         selectedNodes.sort((a, b) => a.startIndex - b.startIndex);
 
-        return new Selection([startNode], selectedNodes, this.version);
+        return new Selection(selectedNodes, this.version);
     }
 
     private moveSelectionLock = false;
@@ -218,7 +218,7 @@ export class FileTree implements vscode.Disposable {
             switch (direction) {
                 case "swap-previous": {
                     // TODO: if block mode, resolve previous block
-                    const previousNode = selection.selectedSiblings[0].previousNamedSibling;
+                    const previousNode = selection.getPrevious();
                     if (!previousNode) {
                         return err(`Can't move to ${direction}, previous node of selection is null`);
                     }
@@ -253,7 +253,7 @@ export class FileTree implements vscode.Disposable {
                 }
                 case "swap-next": {
                     // TODO: if block mode, resolve previous block
-                    const nextNode = selection.selectedSiblings.at(-1)?.nextNamedSibling;
+                    const nextNode = selection.getNext();
                     if (!nextNode) {
                         return err(`Can't move to ${direction}, next node of selection is null`);
                     }
@@ -299,7 +299,7 @@ export class FileTree implements vscode.Disposable {
         const selectionText = selection.getText(this.document.getText());
         const selectionRange = selection.getRange();
 
-        const parent = selection.ancestryChain.at(-1)?.parent;
+        const parent = selection.getParent();
         if (!parent) {
             return err("Can't move to after-parent, parent node of selection is null");
         }
@@ -354,7 +354,7 @@ export class FileTree implements vscode.Disposable {
         const selectionText = selection.getText(this.document.getText());
         const selectionRange = selection.getRange();
 
-        const parent = selection.ancestryChain.at(-1)?.parent;
+        const parent = selection.getParent();
         if (!parent) {
             return err("Can't move to after-parent, parent node of selection is null");
         }
@@ -422,29 +422,30 @@ export class FileTree implements vscode.Disposable {
 
         const targetSelectionRange = targetSelection.getRange();
 
-        const nextNamedSibling = targetSelection.selectedSiblings.at(-1)?.nextNamedSibling ?? null;
-        const previousNamedSibling = targetSelection.selectedSiblings[0].previousNamedSibling;
+        const nextNamedSibling = targetSelection.getNext();
+        const previousNamedSibling = targetSelection.getPrevious();
 
         // try to fill in the spaces as best we can
-        // get the spacing between the target selection and its previous sibling
-        // if it doesn't have one, try its next sibling
-        // finally, default to ""
-        const newBeforeSpacing =
-            previousNamedSibling === null
-                ? nextNamedSibling === null
-                    ? ""
-                    : this.document.getText(
-                          new vscode.Selection(
-                              this.document.positionAt(targetSelectionRange.endIndex),
-                              this.document.positionAt(nextNamedSibling.startIndex)
-                          )
-                      )
-                : this.document.getText(
-                      new vscode.Selection(
-                          this.document.positionAt(previousNamedSibling.endIndex),
-                          this.document.positionAt(targetSelectionRange.startIndex)
-                      )
-                  );
+        // default to empty string
+        let newBeforeSpacing = "";
+        // first check for spacing between the previous sibling
+        if (previousNamedSibling) {
+            newBeforeSpacing = this.document.getText(
+                new vscode.Selection(
+                    this.document.positionAt(previousNamedSibling.endIndex),
+                    this.document.positionAt(targetSelectionRange.startIndex)
+                )
+            );
+        }
+        // then check for spacing between the next sibling
+        else if (nextNamedSibling) {
+            this.document.getText(
+                new vscode.Selection(
+                    this.document.positionAt(targetSelectionRange.endIndex),
+                    this.document.positionAt(nextNamedSibling.startIndex)
+                )
+            );
+        }
 
         const newText = newBeforeSpacing + selectionText;
 

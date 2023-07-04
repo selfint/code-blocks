@@ -73,8 +73,8 @@ export class CodeBlocksEditor {
             return;
         }
 
-        const srcParent = srcSelection.ancestryChain.at(-1)?.parent ?? null;
-        const dstParent = dstSelection.ancestryChain.at(-1)?.parent ?? null;
+        const srcParent = srcSelection.getParent();
+        const dstParent = dstSelection.getParent();
 
         // ensure either parents are equal, or force is enabled
         const userRequestsForce = async (): Promise<boolean> =>
@@ -84,7 +84,7 @@ export class CodeBlocksEditor {
                 "No"
             )) === "Ok";
 
-        if (srcParent === null || dstParent === null) {
+        if (!srcParent || !dstParent) {
             if (srcParent !== dstParent) {
                 if (!(await userRequestsForce())) {
                     return;

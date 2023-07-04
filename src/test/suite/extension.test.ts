@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { activeFileTree, onActiveFileTreeChange } from "../../extension";
+import { BlockMode, active, activeFileTree, toggleActive } from "../../extension";
 import { CodeBlocksEditorProvider } from "../../editor/CodeBlocksEditorProvider";
 import { TreeViewer } from "../../TreeViewer";
 import { expect } from "chai";
@@ -21,9 +21,25 @@ async function openDocument(content: string, language: string): Promise<vscode.T
 suite("codeBlocks commands", function () {
     this.timeout(process.env.TEST_TIMEOUT ?? "2s");
 
+    this.beforeEach(() => {
+        if (!active.get()) {
+            toggleActive();
+        }
+
+        if (!BlockMode.blockModeActive) {
+            BlockMode.toggleBlockMode();
+        }
+    });
+
     async function awaitFileTreeLoaded(): Promise<void> {
-        while (activeFileTree === undefined) {
-            await new Promise<void>((r) => onActiveFileTreeChange.event(() => r()));
+        if (activeFileTree.get() === undefined) {
+            await new Promise<void>((r) => {
+                activeFileTree.onDidChange((newFileTree) => {
+                    if (newFileTree !== undefined) {
+                        r();
+                    }
+                });
+            });
         }
     }
 
@@ -226,9 +242,14 @@ source_file [0:0 - 0:12]
         suite(".selectChild", function () {
             test("contracts to first named child", async () => {
                 await testSelectionCommands(
-                    "fn main() { pub fn foo() { @ } }",
+                    "pub fn foo() { @ }",
                     ["codeBlocks.selectParent", "codeBlocks.selectChild"],
                     "pub"
+                );
+                await testSelectionCommands(
+                    "if true { @ }",
+                    ["codeBlocks.selectParent", "codeBlocks.selectChild"],
+                    "true"
                 );
             });
         });

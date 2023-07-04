@@ -33,25 +33,27 @@ function resetDecorations(): void {
 }
 
 function selectBlock(): void {
-    if (vscode.window.activeTextEditor?.document === undefined || codeBlocks.activeFileTree === undefined) {
+    const fileTree = codeBlocks.activeFileTree.get();
+    if (vscode.window.activeTextEditor?.document === undefined || fileTree === undefined) {
         return;
     }
 
     const activeEditor = vscode.window.activeTextEditor;
     const cursorIndex = activeEditor.document.offsetAt(activeEditor.selection.active);
-    const selection = codeBlocks.activeFileTree.selectBlock(cursorIndex);
+    const selection = fileTree.selectBlock(cursorIndex);
     if (selection !== undefined) {
         activeEditor.selection = selection.toVscodeSelection();
     }
 }
 
 function updateSelection(direction: UpdateSelectionDirection): void {
-    if (vscode.window.activeTextEditor?.document === undefined || codeBlocks.activeFileTree === undefined) {
+    const fileTree = codeBlocks.activeFileTree.get();
+    if (vscode.window.activeTextEditor?.document === undefined || fileTree === undefined) {
         return;
     }
 
     const activeEditor = vscode.window.activeTextEditor;
-    const selection = codeBlocks.activeFileTree.resolveVscodeSelection(activeEditor.selection);
+    const selection = fileTree.resolveVscodeSelection(activeEditor.selection);
     if (selection !== undefined) {
         selection.update(direction);
         activeEditor.selection = selection.toVscodeSelection();
@@ -59,18 +61,17 @@ function updateSelection(direction: UpdateSelectionDirection): void {
 }
 
 async function moveSelection(direction: MoveSelectionDirection): Promise<void> {
-    if (codeBlocks.activeFileTree === undefined || vscode.window.activeTextEditor === undefined) {
+    const fileTree = codeBlocks.activeFileTree.get();
+    if (fileTree === undefined || vscode.window.activeTextEditor === undefined) {
         return;
     }
 
-    const selection = codeBlocks.activeFileTree.resolveVscodeSelection(
-        vscode.window.activeTextEditor.selection
-    );
+    const selection = fileTree.resolveVscodeSelection(vscode.window.activeTextEditor.selection);
     if (selection === undefined) {
         return;
     }
 
-    const result = await codeBlocks.activeFileTree.moveSelection(selection, direction);
+    const result = await fileTree.moveSelection(selection, direction);
     switch (result.status) {
         case "ok":
             vscode.window.activeTextEditor.selection = result.result;
@@ -84,15 +85,16 @@ async function moveSelection(direction: MoveSelectionDirection): Promise<void> {
 }
 
 function navigate(direction: "up" | "down" | "left" | "right"): void {
-    if (vscode.window.activeTextEditor?.document === undefined || codeBlocks.activeFileTree === undefined) {
+    const fileTree = codeBlocks.activeFileTree.get();
+    if (vscode.window.activeTextEditor?.document === undefined || fileTree === undefined) {
         return;
     }
 
     const activeEditor = vscode.window.activeTextEditor;
-    const selection = codeBlocks.activeFileTree.resolveVscodeSelection(activeEditor.selection);
-    const parent = selection?.ancestryChain.at(-1)?.parent ?? null;
-    const previous = selection?.selectedSiblings[0].previousNamedSibling ?? null;
-    const next = selection?.selectedSiblings.at(-1)?.nextNamedSibling ?? null;
+    const selection = fileTree.resolveVscodeSelection(activeEditor.selection);
+    const parent = selection?.getParent();
+    const previous = selection?.getPrevious();
+    const next = selection?.getNext();
 
     let newPosition;
     switch (direction) {
@@ -128,41 +130,42 @@ function updateTargetHighlights(editor: vscode.TextEditor, vscodeSelection: vsco
         return;
     }
 
-    if (editor.document.uri !== codeBlocks.activeFileTree?.document.uri) {
+    const fileTree = codeBlocks.activeFileTree.get();
+    if (editor.document.uri !== fileTree?.document.uri) {
         return;
     }
 
-    const selection = codeBlocks.activeFileTree.resolveVscodeSelection(vscodeSelection);
+    const selection = fileTree.resolveVscodeSelection(vscodeSelection);
     if (selection === undefined) {
         editor.setDecorations(targetsDecoration, []);
         editor.setDecorations(forceTargetsDecoration, []);
         return;
     }
 
-    let parent = selection.ancestryChain.at(-1)?.parent ?? null;
+    let parent = selection.getParent();
     if (parent?.parent === null) {
         // parent is the entire file, not a relevant selection ever
-        parent = null;
+        parent = undefined;
     }
-    const previous = selection.selectedSiblings.at(0)?.previousNamedSibling ?? null;
-    const next = selection.selectedSiblings.at(-1)?.nextNamedSibling ?? null;
+    const previous = selection.getPrevious();
+    const next = selection.getNext();
 
     const targets = [];
     const forceTargets = [];
 
-    if (previous !== null) {
+    if (previous) {
         targets.push(
             new vscode.Range(pointToPosition(previous.startPosition), pointToPosition(previous.endPosition))
         );
     }
 
-    if (next !== null) {
+    if (next) {
         targets.push(
             new vscode.Range(pointToPosition(next.startPosition), pointToPosition(next.endPosition))
         );
     }
 
-    if ((next === null || previous === null) && parent !== null) {
+    if ((!next || !previous) && parent) {
         forceTargets.push(
             new vscode.Range(pointToPosition(parent.startPosition), pointToPosition(parent.endPosition))
         );
@@ -172,7 +175,7 @@ function updateTargetHighlights(editor: vscode.TextEditor, vscodeSelection: vsco
     editor.setDecorations(forceTargetsDecoration, forceTargets);
 }
 
-function toggleBlockMode(): void {
+export function toggleBlockMode(): void {
     blockModeActive = !blockModeActive;
 
     onDidChangeBlockModeActive.fire(blockModeActive);
@@ -189,13 +192,13 @@ export function activate(): vscode.Disposable[] {
         vscode.window.onDidChangeTextEditorSelection((event) =>
             updateTargetHighlights(event.textEditor, event.selections[0])
         ),
-        codeBlocks.onDidChangeActive.event((newActive) => {
+        codeBlocks.active.onDidChange((newActive) => {
             if (!newActive && blockModeActive) {
                 blockModeActive = false;
                 onDidChangeBlockModeActive.fire(blockModeActive);
             }
         }),
-        codeBlocks.onActiveFileTreeChange.event((_) => {
+        codeBlocks.activeFileTree.onDidChange((_) => {
             const editor = vscode.window.activeTextEditor;
             if (editor !== undefined) {
                 updateTargetHighlights(editor, editor.selection);
