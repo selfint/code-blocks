@@ -31,8 +31,12 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
 
         let language = await Installer.getLanguage(this.extensionParsersDirPath, document.languageId);
 
-        while (language === undefined) {
-            const choice = await vscode.window.showErrorMessage("Parser installation failed", "Retry", "Ok");
+        while (language.status !== "ok") {
+            const choice = await vscode.window.showErrorMessage(
+                `Parser installation failed: ${language.result}`,
+                "Retry",
+                "Ok"
+            );
             if (choice !== "Retry") {
                 return;
             }
@@ -40,11 +44,15 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
             language = await Installer.getLanguage(this.extensionParsersDirPath, document.languageId);
         }
 
+        if (language.result === undefined) {
+            return;
+        }
+
         const queries = [];
         for (const query of languageQueries) {
-            queries.push(language.query(query));
+            queries.push(language.result.query(query));
         }
-        const fileTree = await FileTree.new(language, document);
+        const fileTree = await FileTree.new(language.result, document);
 
         new CodeBlocksEditor(this.context, document, webviewPanel, queries, fileTree);
     }

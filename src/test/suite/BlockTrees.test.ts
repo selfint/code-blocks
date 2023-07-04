@@ -62,14 +62,14 @@ suite("BlockTrees", function () {
 
         test("resolves sequential blocks", async function () {
             const rust = await Installer.loadParser(parsersDir, "tree-sitter-rust");
-            assert.ok(rust);
+            assert.ok(rust.status === "ok" && rust.result);
 
             const text = "fn foo() {}\nfn bar() {}";
             const fileTree = await FileTree.new(
-                rust,
+                rust.result,
                 await vscode.workspace.openTextDocument({ language: "rust", content: text })
             );
-            const queries = [rust.query("(function_item) @item")];
+            const queries = [rust.result.query("(function_item) @item")];
             const blocksTrees = getBlockTrees(fileTree.tree, queries);
 
             expect("\n" + blockTreesToString(text, blocksTrees)).to.equal(`
@@ -85,7 +85,7 @@ suite("BlockTrees", function () {
 
         test("resolves nested blocks", async function () {
             const rust = await Installer.loadParser(parsersDir, "tree-sitter-rust");
-            assert.ok(rust);
+            assert.ok(rust.status === "ok" && rust.result);
 
             const text = `
 fn grandpa() {
@@ -106,10 +106,10 @@ fn grandma() {
 }
 `;
             const fileTree = await FileTree.new(
-                rust,
+                rust.result,
                 await vscode.workspace.openTextDocument({ language: "rust", content: text })
             );
-            const queries = [rust.query("(function_item) @item")];
+            const queries = [rust.result.query("(function_item) @item")];
             const blocksTrees = getBlockTrees(fileTree.tree, queries);
 
             expect("\n" + blockTreesToString(text, blocksTrees)).to.equal(`
