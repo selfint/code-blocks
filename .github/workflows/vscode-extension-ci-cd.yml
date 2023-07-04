@@ -49,11 +49,25 @@ jobs:
               uses: coactions/setup-xvfb@v1
               with:
                   run: yarn test
-            - name: Build extension
-              if: matrix.os == 'ubuntu-latest'
-              run: npx vsce package --yarn --githubBranch ${{ startsWith(github.head_ref, '') && github.head_ref || github.ref_name  }}
+
+    package:
+        name: Package extension
+        needs: test
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+            - name: Install Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 16
+            - name: Install extension dependencies
+              run: yarn run install:all
+            - name: Build webview
+              run: yarn run build:webview
+            - name: Package extension
+              run: npx @vscode/vsce package --yarn --githubBranch ${{ startsWith(github.head_ref, '') && github.head_ref || github.ref_name  }}
             - name: Upload extension
-              if: matrix.os == 'ubuntu-latest'
               uses: actions/upload-artifact@v3
               with:
                   name: code-blocks-${{ startsWith(github.head_ref, '') && github.head_ref || github.ref_name }}.vsix
