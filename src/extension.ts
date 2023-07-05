@@ -6,6 +6,7 @@ import Parser from "web-tree-sitter";
 import { TreeViewer } from "./TreeViewer";
 import { getLanguage } from "./Installer";
 import { join } from "path";
+import { state } from "./state";
 
 export const parserFinishedInit = new Promise<void>((resolve) => {
     void Parser.init().then(() => {
@@ -63,26 +64,6 @@ async function getEditorFileTree(
     }
 }
 
-type State<T> = {
-    get: () => T;
-    set: (newValue: T) => void;
-    onDidChange: vscode.Event<T>;
-};
-
-export function state<T>(initial: T): State<T> {
-    let inner = initial;
-    const emitter = new vscode.EventEmitter<T>();
-
-    return {
-        get: (): T => inner,
-        set: (newValue: T): void => {
-            inner = newValue;
-            emitter.fire(newValue);
-        },
-        onDidChange: emitter.event,
-    };
-}
-
 export const active = state(true);
 export const activeFileTree = state<FileTree | undefined>(undefined);
 
@@ -125,7 +106,7 @@ export function activate(context: vscode.ExtensionContext): void {
             }
         }),
         activeFileTree.onDidChange((newFileTree) => TreeViewer.viewFileTree(newFileTree)),
-        BlockMode.onDidChangeBlockModeActive.event(async (blockModeActive) => {
+        BlockMode.blockModeActive.onDidChange(async (blockModeActive) => {
             if (
                 blockModeActive &&
                 active.get() &&

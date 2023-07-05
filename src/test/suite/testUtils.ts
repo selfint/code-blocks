@@ -14,7 +14,7 @@ export async function openDocument(
         active.set(true);
     }
 
-    if (!BlockMode.blockModeActive) {
+    if (!BlockMode.blockModeActive.get()) {
         BlockMode.toggleBlockMode();
     }
 
