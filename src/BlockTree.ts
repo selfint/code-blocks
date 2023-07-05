@@ -7,13 +7,12 @@ export type BlockTree = {
 };
 
 export function getBlockTrees(tree: Tree, queries: Query[]): BlockTree[] {
-    const blocks = getQueryBlocks(tree, queries);
+    const blocks = getQueryBlocks(tree.rootNode, queries);
 
     return buildBlockTrees(blocks, tree.walk());
 }
 
-function getQueryBlocks(tree: Tree, queries: Query[]): Block[] {
-    const root = tree.rootNode;
+export function getQueryBlocks(root: SyntaxNode, queries: Query[]): Block[] {
     const blocks = [];
 
     for (const query of queries) {

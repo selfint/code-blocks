@@ -27,6 +27,9 @@ function blockTreeToBlockLocationTree(blockTree: BlockTree): BlockLocationTree {
 }
 
 export class CodeBlocksEditor {
+    private blocks: Block[] = [];
+    private blockTrees: BlockTree[] = [];
+
     constructor(
         private readonly context: vscode.ExtensionContext,
         private readonly document: vscode.TextDocument,
@@ -73,8 +76,8 @@ export class CodeBlocksEditor {
             return;
         }
 
-        const srcParent = srcSelection.getParent();
-        const dstParent = dstSelection.getParent();
+        const srcParent = srcSelection.firstNode().parent;
+        const dstParent = dstSelection.firstNode().parent;
 
         // ensure either parents are equal, or force is enabled
         const userRequestsForce = async (): Promise<boolean> =>
@@ -96,7 +99,7 @@ export class CodeBlocksEditor {
             }
         }
 
-        const result = await this.fileTree.teleportSelection(srcSelection, dstSelection);
+        const result = await this.fileTree.teleportSelection(srcSelection, dstSelection, []);
         if (result.status === "err") {
             void vscode.window.showErrorMessage(`Failed to move block: ${result.result}`);
         }

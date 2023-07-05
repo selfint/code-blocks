@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { Range, SyntaxNode } from "web-tree-sitter";
+import { Block } from "./BlockTree";
 import { pointToPosition } from "./FileTree";
 
 export type UpdateSelectionDirection =
@@ -26,13 +27,17 @@ export class Selection {
         // node in the hierarchy that contains the same range
         // as its children
         while (
-            node.parent?.namedChildCount === 1 &&
+            node.parent &&
             node.parent.startIndex === node.startIndex &&
             node.parent.endIndex === node.endIndex
         ) {
             node = node.parent;
         }
         return new Selection([node], version);
+    }
+
+    public firstNode(): SyntaxNode {
+        return this.selectedSiblings[0];
     }
 
     public getText(text: string): string {
@@ -42,15 +47,74 @@ export class Selection {
         return selectionText;
     }
 
-    public getPrevious(): SyntaxNode | undefined {
-        return this.selectedSiblings[0].previousNamedSibling ?? undefined;
+    public getLength(): number {
+        return (
+            this.selectedSiblings[this.selectedSiblings.length - 1].endIndex -
+            this.selectedSiblings[0].startIndex
+        );
     }
 
-    public getNext(): SyntaxNode | undefined {
-        return this.selectedSiblings.at(-1)?.nextNamedSibling ?? undefined;
+    expandToBlock(blocks: Block[] | undefined): this {
+        if (blocks === undefined || blocks.length === 0) {
+            return this;
+        }
+
+        const parent = this.firstNode().parent;
+        const range = this.getRange();
+
+        let smallestBlockIndex: number | undefined = undefined;
+        let smallestBlockLength: number | undefined = undefined;
+        for (let i = 0; i < blocks.length; i++) {
+            const block = blocks[i];
+
+            const blockRange = {
+                startIndex: block[0].startIndex,
+                endIndex: block[block.length - 1].endIndex,
+            };
+
+            // check if block contains selection
+            if (blockRange.startIndex <= range.startIndex && range.endIndex <= blockRange.endIndex) {
+                // check if block is at the same hierarchy level as the selection
+                if (
+                    (parent === null && block[0].parent === null) ||
+                    (block[0].parent !== null && parent?.equals(block[0].parent))
+                ) {
+                    const length = blockRange.endIndex - blockRange.startIndex;
+                    if (length <= (smallestBlockLength ?? length)) {
+                        smallestBlockIndex = i;
+                        smallestBlockLength = length;
+                    }
+                }
+            }
+        }
+
+        if (smallestBlockIndex !== undefined) {
+            const smallestBlock = blocks[smallestBlockIndex];
+            this.selectedSiblings = smallestBlock;
+        }
+
+        return this;
     }
 
-    public getParent(): SyntaxNode | undefined {
+    public getPrevious(blocks: Block[] | undefined): Selection | undefined {
+        const previousNode = this.selectedSiblings[0].previousNamedSibling;
+        if (previousNode) {
+            return new Selection([previousNode], this.version).expandToBlock(blocks);
+        } else {
+            return undefined;
+        }
+    }
+
+    public getNext(blocks: Block[] | undefined): Selection | undefined {
+        const nextNode = this.selectedSiblings.at(-1)?.nextNamedSibling;
+        if (nextNode) {
+            return new Selection([nextNode], this.version).expandToBlock(blocks);
+        } else {
+            return undefined;
+        }
+    }
+
+    public getParent(blocks: Block[] | undefined): Selection | undefined {
         const selectionRange = this.getRange();
         let parent = this.selectedSiblings[0].parent;
 
@@ -63,10 +127,14 @@ export class Selection {
             parent = parent.parent;
         }
 
-        return parent ?? undefined;
+        if (parent) {
+            return new Selection([parent], this.version).expandToBlock(blocks);
+        } else {
+            return undefined;
+        }
     }
 
-    public getChild(): SyntaxNode | undefined {
+    public getChild(blocks: Block[] | undefined): Selection | undefined {
         const selectionRange = this.getRange();
         let child = this.selectedSiblings[0].firstNamedChild;
 
@@ -79,61 +147,76 @@ export class Selection {
             child = child.firstNamedChild;
         }
 
-        return child ?? undefined;
+        if (child) {
+            return new Selection([child], this.version).expandToBlock(blocks);
+        } else {
+            return undefined;
+        }
     }
 
-    public update(direction: UpdateSelectionDirection): void {
-        // TODO: respect block mode
-        // also, in block mode, maybe we can add 'ignored' nodes
-        // which are always skipped and we go to their parent or something?
+    with(selection: Selection): this {
+        const range = this.getRange();
+        let didUpdate = false;
+        for (const selectedSibling of selection.selectedSiblings) {
+            if (
+                range.startIndex <= selectedSibling.startIndex &&
+                selectedSibling.endIndex <= range.endIndex
+            ) {
+                continue;
+            }
+
+            didUpdate = true;
+            this.selectedSiblings.push(selectedSibling);
+        }
+
+        if (didUpdate) {
+            this.selectedSiblings.sort((a, b) => a.startIndex - b.startIndex);
+        }
+
+        return this;
+    }
+
+    public update(direction: UpdateSelectionDirection, blocks: Block[] | undefined): this {
         switch (direction) {
-            case "add-previous":
-                {
-                    const prevSibling = this.getPrevious();
-                    if (prevSibling) {
-                        this.selectedSiblings.splice(0, 0, prevSibling);
-                    }
-                }
-                break;
+            case "add-previous": {
+                const prevSibling = this.getPrevious(blocks);
+                return prevSibling ? this.with(prevSibling) : this;
+            }
 
             case "remove-previous":
                 if (this.selectedSiblings.length > 1) {
                     this.selectedSiblings.splice(0, 1);
                 }
-                break;
+                return this;
 
-            case "add-next":
-                {
-                    const nextSibling = this.getNext();
-                    if (nextSibling) {
-                        this.selectedSiblings.push(nextSibling);
-                    }
-                }
-                break;
+            case "add-next": {
+                const nextSibling = this.getNext(blocks);
+                return nextSibling ? this.with(nextSibling) : this;
+            }
 
             case "remove-next":
                 if (this.selectedSiblings.length > 1) {
                     this.selectedSiblings.pop();
                 }
-                break;
+                return this;
 
             case "parent":
                 {
-                    const parent = this.getParent();
+                    const parent = this.getParent(blocks);
                     if (parent) {
-                        this.selectedSiblings = [parent];
+                        this.selectedSiblings = parent.selectedSiblings;
                     }
                 }
-                break;
+                return this;
 
             case "child":
                 {
-                    const child = this.getChild();
+                    const child = this.getChild(blocks);
                     if (child) {
-                        this.selectedSiblings = [child];
+                        this.selectedSiblings = child.selectedSiblings;
                     }
                 }
-                break;
+                return this;
         }
     }
 

@@ -1,6 +1,6 @@
 import * as codeBlocks from "./extension";
 import * as vscode from "vscode";
-import { MoveSelectionDirection, pointToPosition } from "./FileTree";
+import { MoveSelectionDirection } from "./FileTree";
 import { UpdateSelectionDirection } from "./Selection";
 
 export let blockModeActive = false;
@@ -55,7 +55,7 @@ function updateSelection(direction: UpdateSelectionDirection): void {
     const activeEditor = vscode.window.activeTextEditor;
     const selection = fileTree.resolveVscodeSelection(activeEditor.selection);
     if (selection !== undefined) {
-        selection.update(direction);
+        selection.update(direction, fileTree.blocks);
         activeEditor.selection = selection.toVscodeSelection();
     }
 }
@@ -92,30 +92,31 @@ function navigate(direction: "up" | "down" | "left" | "right"): void {
 
     const activeEditor = vscode.window.activeTextEditor;
     const selection = fileTree.resolveVscodeSelection(activeEditor.selection);
-    const parent = selection?.getParent();
-    const previous = selection?.getPrevious();
-    const next = selection?.getNext();
+    const blocks = fileTree.blocks;
+    const parent = selection?.getParent(blocks);
+    const previous = selection?.getPrevious(blocks);
+    const next = selection?.getNext(blocks);
 
     let newPosition;
     switch (direction) {
         case "up":
             if (parent) {
-                newPosition = pointToPosition(parent.startPosition);
+                newPosition = parent.toVscodeSelection().start;
             }
             break;
         case "down":
             if (parent) {
-                newPosition = pointToPosition(parent.endPosition);
+                newPosition = parent.toVscodeSelection().end;
             }
             break;
         case "left":
             if (previous) {
-                newPosition = pointToPosition(previous.startPosition);
+                newPosition = previous.toVscodeSelection().start;
             }
             break;
         case "right":
             if (next) {
-                newPosition = pointToPosition(next.startPosition);
+                newPosition = next.toVscodeSelection().start;
             }
             break;
     }
@@ -142,33 +143,28 @@ function updateTargetHighlights(editor: vscode.TextEditor, vscodeSelection: vsco
         return;
     }
 
-    let parent = selection.getParent();
-    if (parent?.parent === null) {
+    const blocks = fileTree.blocks;
+    let parent = selection.getParent(blocks);
+    if (parent?.firstNode().parent === null) {
         // parent is the entire file, not a relevant selection ever
         parent = undefined;
     }
-    const previous = selection.getPrevious();
-    const next = selection.getNext();
+    const previous = selection.getPrevious(blocks);
+    const next = selection.getNext(blocks);
 
     const targets = [];
     const forceTargets = [];
 
     if (previous) {
-        targets.push(
-            new vscode.Range(pointToPosition(previous.startPosition), pointToPosition(previous.endPosition))
-        );
+        targets.push(previous.toVscodeSelection());
     }
 
     if (next) {
-        targets.push(
-            new vscode.Range(pointToPosition(next.startPosition), pointToPosition(next.endPosition))
-        );
+        targets.push(next.toVscodeSelection());
     }
 
     if ((!next || !previous) && parent) {
-        forceTargets.push(
-            new vscode.Range(pointToPosition(parent.startPosition), pointToPosition(parent.endPosition))
-        );
+        forceTargets.push(parent.toVscodeSelection());
     }
 
     editor.setDecorations(targetsDecoration, targets);

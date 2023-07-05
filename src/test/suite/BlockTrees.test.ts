@@ -1,10 +1,7 @@
-import * as Installer from "../../Installer";
-import * as assert from "assert";
 import * as vscode from "vscode";
 import { BlockTree, getBlockTrees } from "../../BlockTree";
-import { FileTree } from "../../FileTree";
 import { expect } from "chai";
-import { parsersDir } from "./parsersDir";
+import { openDocument } from "./testUtils";
 
 function box(text: string, indent: number): string {
     const lines = text.split(/\n/);
@@ -61,15 +58,10 @@ suite("BlockTrees", function () {
         });
 
         test("resolves sequential blocks", async function () {
-            const rust = await Installer.loadParser(parsersDir, "tree-sitter-rust");
-            assert.ok(rust.status === "ok" && rust.result);
-
             const text = "fn foo() {}\nfn bar() {}";
-            const fileTree = await FileTree.new(
-                rust.result,
-                await vscode.workspace.openTextDocument({ language: "rust", content: text })
-            );
-            const queries = [rust.result.query("(function_item) @item")];
+            const { fileTree } = await openDocument(text, "rust");
+            const lang = fileTree.tree.getLanguage();
+            const queries = [lang.query("(function_item) @item")];
             const blocksTrees = getBlockTrees(fileTree.tree, queries);
 
             expect("\n" + blockTreesToString(text, blocksTrees)).to.equal(`
@@ -84,9 +76,6 @@ suite("BlockTrees", function () {
         });
 
         test("resolves nested blocks", async function () {
-            const rust = await Installer.loadParser(parsersDir, "tree-sitter-rust");
-            assert.ok(rust.status === "ok" && rust.result);
-
             const text = `
 fn grandpa() {
     fn father() {
@@ -105,11 +94,9 @@ fn grandma() {
     }
 }
 `;
-            const fileTree = await FileTree.new(
-                rust.result,
-                await vscode.workspace.openTextDocument({ language: "rust", content: text })
-            );
-            const queries = [rust.result.query("(function_item) @item")];
+            const { fileTree } = await openDocument(text, "rust");
+            const lang = fileTree.tree.getLanguage();
+            const queries = [lang.query("(function_item) @item")];
             const blocksTrees = getBlockTrees(fileTree.tree, queries);
 
             expect("\n" + blockTreesToString(text, blocksTrees)).to.equal(`
