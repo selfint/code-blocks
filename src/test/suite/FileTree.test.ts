@@ -193,6 +193,12 @@ program [0:0 - 0:10]
                 content: "fn main() { @let a = 1;@ let b = 2; }",
                 expectedSelectionText: "let a = 1;",
             });
+
+            await testResolveVscodeSelection({
+                language: "typescriptreact",
+                content: "function main() { return (<> <p>@a@</p> <p>b</p> </>); }",
+                expectedSelectionText: "a",
+            });
         });
 
         test("expands to node when range within node range", async () => {
@@ -200,6 +206,12 @@ program [0:0 - 0:10]
                 language: "rust",
                 content: "fn main() { let a @= @1; let b = 2; }",
                 expectedSelectionText: "let a = 1;",
+            });
+
+            await testResolveVscodeSelection({
+                language: "typescriptreact",
+                content: "function main() { return (<> @<p@>a</p> <p>b</p> </>); }",
+                expectedSelectionText: "<p>",
             });
         });
 
@@ -209,6 +221,12 @@ program [0:0 - 0:10]
                 content: "fn main() { @let a = 1; let b = 2;@ }",
                 expectedSelectionText: "let a = 1; let b = 2;",
             });
+
+            await testResolveVscodeSelection({
+                language: "typescriptreact",
+                content: "function main() { return (<> @<p>a</p>@ <p>b</p> </>); }",
+                expectedSelectionText: "<p>a</p>",
+            });
         });
 
         test("is multiple nodes when range within multiple nodes ranges", async () => {
@@ -217,6 +235,12 @@ program [0:0 - 0:10]
                 content: "fn main() { let @a = 1; let@ b = 2; }",
                 expectedSelectionText: "let a = 1; let b = 2;",
             });
+
+            await testResolveVscodeSelection({
+                language: "typescriptreact",
+                content: "function main() { return (<> <p@>a</p@> <p>b</p> </>); }",
+                expectedSelectionText: "<p>a</p>",
+            });
         });
 
         test("expands scope when selection crosses node parent range", async () => {
@@ -224,6 +248,12 @@ program [0:0 - 0:10]
                 language: "rust",
                 content: "fn main() { fn foo() { let a@ = 1; } let @b = 2; }",
                 expectedSelectionText: "fn foo() { let a = 1; } let b = 2;",
+            });
+
+            await testResolveVscodeSelection({
+                language: "typescriptreact",
+                content: "function main() { return (<> <p>a@</p> <p>b@</p> </>); }",
+                expectedSelectionText: "<p>a</p> <p>b</p>",
             });
         });
     });
@@ -334,50 +364,6 @@ program [0:0 - 0:10]
                 expectedContent: "fn foo() { {}let a = [1, 2, 3]; } fn main() { {  } }",
                 expectedSelectionContent: "let a = [1, 2, 3];",
                 expectedTargetContent: "{}",
-            });
-        });
-    });
-
-    suite("TSX", function () {
-        suite(".resolveVscodeSelection", () => {
-            test("is node when selection is node range", async () => {
-                await testResolveVscodeSelection({
-                    language: "typescriptreact",
-                    content: "function main() { return (<> <p>@a@</p> <p>b</p> </>); }",
-                    expectedSelectionText: "a",
-                });
-            });
-
-            test("expands to node when range within node range", async () => {
-                await testResolveVscodeSelection({
-                    language: "typescriptreact",
-                    content: "function main() { return (<> @<p@>a</p> <p>b</p> </>); }",
-                    expectedSelectionText: "<p>",
-                });
-            });
-
-            test("is multiple nodes when range is multiple nodes range", async () => {
-                await testResolveVscodeSelection({
-                    language: "typescriptreact",
-                    content: "function main() { return (<> @<p>a</p>@ <p>b</p> </>); }",
-                    expectedSelectionText: "<p>a</p>",
-                });
-            });
-
-            test("is multiple nodes when range within multiple nodes ranges", async () => {
-                await testResolveVscodeSelection({
-                    language: "typescriptreact",
-                    content: "function main() { return (<> <p@>a</p@> <p>b</p> </>); }",
-                    expectedSelectionText: "<p>a</p>",
-                });
-            });
-
-            test("expands scope when selection crosses node parent range", async () => {
-                await testResolveVscodeSelection({
-                    language: "typescriptreact",
-                    content: "function main() { return (<> <p>a@</p> <p>b@</p> </>); }",
-                    expectedSelectionText: "<p>a</p> <p>b</p>",
-                });
             });
         });
     });
