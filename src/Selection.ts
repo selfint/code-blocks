@@ -27,7 +27,7 @@ export class Selection {
         // node in the hierarchy that contains the same range
         // as its children
         while (
-            node.parent?.namedChildCount === 1 &&
+            node.parent &&
             node.parent.startIndex === node.startIndex &&
             node.parent.endIndex === node.endIndex
         ) {
@@ -88,7 +88,7 @@ export class Selection {
             }
         }
 
-        if (smallestBlockIndex) {
+        if (smallestBlockIndex !== undefined) {
             const smallestBlock = blocks[smallestBlockIndex];
             this.selectedSiblings = smallestBlock;
         }
