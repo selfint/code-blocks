@@ -112,7 +112,7 @@ export class FileTree implements vscode.Disposable {
             return undefined;
         }
 
-        return Selection.fromNode(nodeAtCursor, this.version);
+        return Selection.fromNode(nodeAtCursor, this.version).expandToBlock(this.blocks);
     }
 
     public resolveVscodeSelection(vscodeSelection: vscode.Selection): Selection | undefined {
