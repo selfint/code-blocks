@@ -1,399 +1,383 @@
-import * as Installer from "../../Installer";
 import * as vscode from "vscode";
 import { FileTree, MoveSelectionDirection } from "../../FileTree";
-import { Language } from "web-tree-sitter";
+import { SupportedTestLanguages, openDocument } from "./testUtils";
 import { Selection } from "../../Selection";
 import assert from "assert";
 import { expect } from "chai";
-import { parsersDir } from "./parsersDir";
 
 suite("FileTree", function () {
     this.timeout(process.env.TEST_TIMEOUT ?? "2s");
 
-    suite("Rust", function () {
-        // @ts-expect-error initialized in beforeAll
-        let language: Language = undefined;
-        this.beforeAll(async () => {
-            const lang = await Installer.loadParser(parsersDir, "tree-sitter-rust");
-            assert.ok(
-                lang.status === "ok" && lang.result,
-                `failed to load ${Installer.getWasmBindingsPath(parsersDir, "tree-sitter-rust")}`
-            );
-            language = lang.result;
+    async function testResolveVscodeSelection({
+        language,
+        content,
+        expectedSelectionText,
+    }: {
+        language: SupportedTestLanguages;
+        content: string;
+        expectedSelectionText: string | undefined;
+    }): Promise<[Selection, FileTree]> {
+        const cursor = "@";
+        const selectionStart = content.indexOf(cursor);
+        content = content.replace(cursor, "");
+        const selectionEnd = content.indexOf(cursor);
+        content = content.replace(cursor, "");
+
+        const { fileTree } = await openDocument(content, language);
+        const vscodeSelection = new vscode.Selection(
+            fileTree.document.positionAt(selectionStart),
+            fileTree.document.positionAt(selectionEnd)
+        );
+        const selection = fileTree.resolveVscodeSelection(vscodeSelection);
+
+        assert.ok(selection, "selection was undefined");
+        expect(selection.getText(content)).to.equal(
+            expectedSelectionText,
+            `Initial selection content: ${(await vscode.workspace.openTextDocument({ content })).getText(
+                vscodeSelection
+            )}`
+        );
+
+        return [selection, fileTree];
+    }
+
+    async function testMoveSelection({
+        language,
+        content,
+        direction,
+        expectedContent,
+        expectedSelectionContent,
+    }: {
+        language: SupportedTestLanguages;
+        content: string;
+        direction: MoveSelectionDirection;
+        expectedContent: string;
+        expectedSelectionContent: string;
+    }): Promise<void> {
+        const [selection, fileTree] = await testResolveVscodeSelection({
+            language,
+            content,
+            expectedSelectionText: expectedSelectionContent,
         });
 
-        async function buildFileTree(content: string): Promise<FileTree> {
-            const document = await vscode.workspace.openTextDocument({
-                language: "rust",
-                content,
-            });
-            const fileTree = await FileTree.new(language, document);
-            return fileTree;
-        }
+        const result = await fileTree.moveSelection(selection, direction);
 
-        suite(".update", function () {
-            test("updates tree after edit", async () => {
-                const content = "fn main() {}";
-                const fileTree = await buildFileTree(content);
-                expect("\n" + fileTree.toString()).to.equal(`
+        expect(result.status).to.equal("ok");
+        expect(fileTree.document.getText()).to.equal(expectedContent, "move didn't create expected content");
+        // @ts-expect-error result is ok, checked 2 lines before
+        expect(fileTree.document.getText(result.result)).to.equal(
+            expectedSelectionContent,
+            "move didn't preserve selection"
+        );
+    }
+
+    async function testTeleport({
+        language,
+        content,
+        expectedContent,
+        expectedSelectionContent,
+        expectedTargetContent,
+    }: {
+        language: SupportedTestLanguages;
+        content: string;
+        expectedContent: string;
+        expectedSelectionContent: string;
+        expectedTargetContent: string;
+    }): Promise<void> {
+        const cursorRegexp = /@/g;
+        const targetCursor = "#";
+        const targetStart = content.replace(cursorRegexp, "").indexOf(targetCursor);
+        content = content.replace(targetCursor, "");
+        const targetEnd = content.replace(cursorRegexp, "").indexOf(targetCursor);
+        content = content.replace(targetCursor, "");
+        const [selection, fileTree] = await testResolveVscodeSelection({
+            language,
+            content,
+            expectedSelectionText: expectedSelectionContent,
+        });
+
+        const targetVscodeSelection = new vscode.Selection(
+            fileTree.document.positionAt(targetStart),
+            fileTree.document.positionAt(targetEnd)
+        );
+        const targetSelection = fileTree.resolveVscodeSelection(targetVscodeSelection);
+
+        assert.ok(targetSelection, "selection was undefined");
+        expect(targetSelection.getText(content.replace(cursorRegexp, ""))).to.equal(
+            expectedTargetContent,
+            `Initial target selection content: ${fileTree.document.getText(targetVscodeSelection)}`
+        );
+
+        const result = await fileTree.teleportSelection(selection, targetSelection);
+
+        expect(result.status).to.equal("ok");
+        expect(fileTree.document.getText()).to.equal(
+            expectedContent,
+            "teleport didn't create expected content"
+        );
+        // @ts-expect-error result is ok, checked 2 lines before
+        expect(fileTree.document.getText(result.result)).to.equal(
+            expectedSelectionContent,
+            "teleport didn't preserve selection"
+        );
+    }
+
+    async function testTreeUpdatesAfterEdit({
+        language,
+        initialContent,
+        expectedInitialTree,
+        finalContent,
+        expectedFinalTree,
+    }: {
+        language: SupportedTestLanguages;
+        initialContent: string;
+        expectedInitialTree: string;
+        finalContent: string;
+        expectedFinalTree: string;
+    }): Promise<void> {
+        const { fileTree } = await openDocument(initialContent, language);
+        expect("\n" + fileTree.toString()).to.equal(expectedInitialTree, "initial tree didn't match");
+
+        const edit = new vscode.WorkspaceEdit();
+        edit.replace(
+            fileTree.document.uri,
+            new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, initialContent.length)),
+            finalContent
+        );
+        await vscode.workspace.applyEdit(edit);
+
+        expect("\n" + fileTree.toString()).to.equal(expectedFinalTree, "expected final tree didn't match");
+    }
+
+    suite(".update", function () {
+        test("updates tree after edit", async () => {
+            await testTreeUpdatesAfterEdit({
+                language: "rust",
+                initialContent: "fn main() {}",
+                finalContent: "struct A;",
+                expectedInitialTree: `
 source_file [0:0 - 0:12]
   function_item [0:0 - 0:12]
     identifier [0:3 - 0:7]
     parameters [0:7 - 0:9]
-    block [0:10 - 0:12]`);
-
-                const edit = new vscode.WorkspaceEdit();
-                edit.replace(
-                    fileTree.document.uri,
-                    new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, content.length)),
-                    "struct A;"
-                );
-
-                await vscode.workspace.applyEdit(edit);
-
-                expect("\n" + fileTree.toString()).to.equal(`
+    block [0:10 - 0:12]`,
+                expectedFinalTree: `
 source_file [0:0 - 0:9]
   struct_item [0:0 - 0:9]
-    type_identifier [0:7 - 0:8]`);
+    type_identifier [0:7 - 0:8]`,
+            });
+
+            await testTreeUpdatesAfterEdit({
+                language: "typescriptreact",
+                initialContent: "function main() {}",
+                finalContent: "class A {}",
+                expectedInitialTree: `
+program [0:0 - 0:18]
+  function_declaration [0:0 - 0:18]
+    identifier [0:9 - 0:13]
+    formal_parameters [0:13 - 0:15]
+    statement_block [0:16 - 0:18]`,
+                expectedFinalTree: `
+program [0:0 - 0:10]
+  class_declaration [0:0 - 0:10]
+    type_identifier [0:6 - 0:7]
+    class_body [0:8 - 0:10]`,
+            });
+        });
+    });
+
+    suite(".resolveVscodeSelection", () => {
+        test("is node when selection is node range", async () => {
+            await testResolveVscodeSelection({
+                language: "rust",
+                content: "fn main() { @let a = 1;@ let b = 2; }",
+                expectedSelectionText: "let a = 1;",
             });
         });
 
-        async function testResolveVscodeSelection(
-            content: string,
-            expectedSelectionText: string | undefined
-        ): Promise<[Selection, FileTree]> {
-            const cursor = "@";
-            const selectionStart = content.indexOf(cursor);
-            content = content.replace(cursor, "");
-            const selectionEnd = content.indexOf(cursor);
-            content = content.replace(cursor, "");
-
-            const fileTree = await buildFileTree(content);
-            const vscodeSelection = new vscode.Selection(
-                fileTree.document.positionAt(selectionStart),
-                fileTree.document.positionAt(selectionEnd)
-            );
-            const selection = fileTree.resolveVscodeSelection(vscodeSelection);
-
-            assert.ok(selection, "selection was undefined");
-            expect(selection.getText(content)).to.equal(
-                expectedSelectionText,
-                `Initial selection content: ${(await vscode.workspace.openTextDocument({ content })).getText(
-                    vscodeSelection
-                )}`
-            );
-
-            return [selection, fileTree];
-        }
-
-        suite(".resolveVscodeSelection", () => {
-            test("is node when selection is node range", async () => {
-                await testResolveVscodeSelection("fn main() { @let a = 1;@ let b = 2; }", "let a = 1;");
-            });
-
-            test("expands to node when range within node range", async () => {
-                await testResolveVscodeSelection("fn main() { let a @= @1; let b = 2; }", "let a = 1;");
-            });
-
-            test("is multiple nodes when range is multiple nodes range", async () => {
-                await testResolveVscodeSelection(
-                    "fn main() { @let a = 1; let b = 2;@ }",
-                    "let a = 1; let b = 2;"
-                );
-            });
-
-            test("is multiple nodes when range within multiple nodes ranges", async () => {
-                await testResolveVscodeSelection(
-                    "fn main() { let @a = 1; let@ b = 2; }",
-                    "let a = 1; let b = 2;"
-                );
-            });
-
-            test("expands scope when selection crosses node parent range", async () => {
-                await testResolveVscodeSelection(
-                    "fn main() { fn foo() { let a@ = 1; } let @b = 2; }",
-                    "fn foo() { let a = 1; } let b = 2;"
-                );
+        test("expands to node when range within node range", async () => {
+            await testResolveVscodeSelection({
+                language: "rust",
+                content: "fn main() { let a @= @1; let b = 2; }",
+                expectedSelectionText: "let a = 1;",
             });
         });
 
-        suite(".moveSelection", function () {
-            async function testMoveSelection(
-                content: string,
-                direction: MoveSelectionDirection,
-                expectedContent: string,
-                expectedSelectionContent: string
-            ): Promise<void> {
-                const [selection, fileTree] = await testResolveVscodeSelection(
-                    content,
-                    expectedSelectionContent
-                );
+        test("is multiple nodes when range is multiple nodes range", async () => {
+            await testResolveVscodeSelection({
+                language: "rust",
+                content: "fn main() { @let a = 1; let b = 2;@ }",
+                expectedSelectionText: "let a = 1; let b = 2;",
+            });
+        });
 
-                const result = await fileTree.moveSelection(selection, direction);
+        test("is multiple nodes when range within multiple nodes ranges", async () => {
+            await testResolveVscodeSelection({
+                language: "rust",
+                content: "fn main() { let @a = 1; let@ b = 2; }",
+                expectedSelectionText: "let a = 1; let b = 2;",
+            });
+        });
 
-                expect(result.status).to.equal("ok");
-                expect(fileTree.document.getText()).to.equal(
-                    expectedContent,
-                    "move didn't create expected content"
-                );
-                // @ts-expect-error result is ok, checked 2 lines before
-                expect(fileTree.document.getText(result.result)).to.equal(
-                    expectedSelectionContent,
-                    "move didn't preserve selection"
-                );
-            }
+        test("expands scope when selection crosses node parent range", async () => {
+            await testResolveVscodeSelection({
+                language: "rust",
+                content: "fn main() { fn foo() { let a@ = 1; } let @b = 2; }",
+                expectedSelectionText: "fn foo() { let a = 1; } let b = 2;",
+            });
+        });
+    });
 
-            suite("swap-previous", function () {
-                test("single node selection", async () => {
-                    await testMoveSelection(
-                        "fn main() { let a = [1, @2@, 3]; }",
-                        "swap-previous",
-                        "fn main() { let a = [2, 1, 3]; }",
-                        "2"
-                    );
-                });
-
-                test("multiple node selection", async () => {
-                    await testMoveSelection(
-                        "fn main() { let a = [1, @2, 3@]; }",
-                        "swap-previous",
-                        "fn main() { let a = [2, 3, 1]; }",
-                        "2, 3"
-                    );
+    suite(".moveSelection", function () {
+        suite("swap-previous", function () {
+            test("single node selection", async () => {
+                await testMoveSelection({
+                    language: "rust",
+                    content: "fn main() { let a = [1, @2@, 3]; }",
+                    direction: "swap-previous",
+                    expectedContent: "fn main() { let a = [2, 1, 3]; }",
+                    expectedSelectionContent: "2",
                 });
             });
 
-            suite("swap-next", function () {
-                test("single node selection", async () => {
-                    await testMoveSelection(
-                        "fn main() { let a = [1, @2@, 3]; }",
-                        "swap-next",
-                        "fn main() { let a = [1, 3, 2]; }",
-                        "2"
-                    );
-                });
-
-                test("multiple node selection", async () => {
-                    await testMoveSelection(
-                        "fn main() { let a = [@1, 2@, 3]; }",
-                        "swap-next",
-                        "fn main() { let a = [3, 1, 2]; }",
-                        "1, 2"
-                    );
-                });
-            });
-
-            suite("after-parent", function () {
-                test("single node selection", async () => {
-                    await testMoveSelection(
-                        "fn main() { if true { @let a = [1, 2, 3];@ } }",
-                        "after-parent",
-                        "fn main() { if true {  }let a = [1, 2, 3]; }",
-                        "let a = [1, 2, 3];"
-                    );
-                });
-
-                test("multiple node selection", async () => {
-                    await testMoveSelection(
-                        "fn main() {\n    @let a = [1, 2, 3];\n    let b = 123;@  }",
-                        "after-parent",
-                        "fn main() {\n      }let a = [1, 2, 3];\n    let b = 123;",
-                        "let a = [1, 2, 3];\n    let b = 123;"
-                    );
-                });
-            });
-
-            suite("before-parent", function () {
-                test("single node selection", async () => {
-                    await testMoveSelection(
-                        "fn main() { { @let a = [1, 2, 3];@ } }",
-                        "before-parent",
-                        "fn main() { let a = [1, 2, 3];{  } }",
-                        "let a = [1, 2, 3];"
-                    );
-                });
-
-                test("multiple node selection", async () => {
-                    await testMoveSelection(
-                        "fn main() { { @let a = [1, 2, 3]; let b = 123;@ } }",
-                        "before-parent",
-                        "fn main() { let a = [1, 2, 3]; let b = 123;{  } }",
-                        "let a = [1, 2, 3]; let b = 123;"
-                    );
+            test("multiple node selection", async () => {
+                await testMoveSelection({
+                    language: "rust",
+                    content: "fn main() { let a = [1, @2, 3@]; }",
+                    direction: "swap-previous",
+                    expectedContent: "fn main() { let a = [2, 3, 1]; }",
+                    expectedSelectionContent: "2, 3",
                 });
             });
         });
 
-        suite(".teleportSelection", function () {
-            async function testTeleport(
-                content: string,
-                expectedContent: string,
-                expectedSelectionContent: string,
-                expectedTargetContent: string
-            ): Promise<void> {
-                const cursorRegexp = /@/g;
-                const targetCursor = "#";
-                const targetStart = content.replace(cursorRegexp, "").indexOf(targetCursor);
-                content = content.replace(targetCursor, "");
-                const targetEnd = content.replace(cursorRegexp, "").indexOf(targetCursor);
-                content = content.replace(targetCursor, "");
-                const [selection, fileTree] = await testResolveVscodeSelection(
-                    content,
-                    expectedSelectionContent
-                );
+        suite("swap-next", function () {
+            test("single node selection", async () => {
+                await testMoveSelection({
+                    language: "rust",
+                    content: "fn main() { let a = [1, @2@, 3]; }",
+                    direction: "swap-next",
+                    expectedContent: "fn main() { let a = [1, 3, 2]; }",
+                    expectedSelectionContent: "2",
+                });
+            });
 
-                const targetVscodeSelection = new vscode.Selection(
-                    fileTree.document.positionAt(targetStart),
-                    fileTree.document.positionAt(targetEnd)
-                );
-                const targetSelection = fileTree.resolveVscodeSelection(targetVscodeSelection);
+            test("multiple node selection", async () => {
+                await testMoveSelection({
+                    language: "rust",
+                    content: "fn main() { let a = [@1, 2@, 3]; }",
+                    direction: "swap-next",
+                    expectedContent: "fn main() { let a = [3, 1, 2]; }",
+                    expectedSelectionContent: "1, 2",
+                });
+            });
+        });
 
-                assert.ok(targetSelection, "selection was undefined");
-                expect(targetSelection.getText(content.replace(cursorRegexp, ""))).to.equal(
-                    expectedTargetContent,
-                    `Initial target selection content: ${fileTree.document.getText(targetVscodeSelection)}`
-                );
+        suite("after-parent", function () {
+            test("single node selection", async () => {
+                await testMoveSelection({
+                    language: "rust",
+                    content: "fn main() { if true { @let a = [1, 2, 3];@ } }",
+                    direction: "after-parent",
+                    expectedContent: "fn main() { if true {  }let a = [1, 2, 3]; }",
+                    expectedSelectionContent: "let a = [1, 2, 3];",
+                });
+            });
 
-                const result = await fileTree.teleportSelection(selection, targetSelection);
+            test("multiple node selection", async () => {
+                await testMoveSelection({
+                    language: "rust",
+                    content: "fn main() {\n    @let a = [1, 2, 3];\n    let b = 123;@  }",
+                    direction: "after-parent",
+                    expectedContent: "fn main() {\n      }let a = [1, 2, 3];\n    let b = 123;",
+                    expectedSelectionContent: "let a = [1, 2, 3];\n    let b = 123;",
+                });
+            });
+        });
 
-                expect(result.status).to.equal("ok");
-                expect(fileTree.document.getText()).to.equal(
-                    expectedContent,
-                    "teleport didn't create expected content"
-                );
-                // @ts-expect-error result is ok, checked 2 lines before
-                expect(fileTree.document.getText(result.result)).to.equal(
-                    expectedSelectionContent,
-                    "teleport didn't preserve selection"
-                );
-            }
+        suite("before-parent", function () {
+            test("single node selection", async () => {
+                await testMoveSelection({
+                    language: "rust",
+                    content: "fn main() { { @let a = [1, 2, 3];@ } }",
+                    direction: "before-parent",
+                    expectedContent: "fn main() { let a = [1, 2, 3];{  } }",
+                    expectedSelectionContent: "let a = [1, 2, 3];",
+                });
+            });
 
-            test("moves block across tree", async () => {
-                await testTeleport(
-                    "fn main() { { @let a = [1, 2, 3];@ } } fn foo() { #{}# }",
-                    "fn main() { {  } } fn foo() { {}let a = [1, 2, 3]; }",
-                    "let a = [1, 2, 3];",
-                    "{}"
-                );
+            test("multiple node selection", async () => {
+                await testMoveSelection({
+                    language: "rust",
+                    content: "fn main() { { @let a = [1, 2, 3]; let b = 123;@ } }",
+                    direction: "before-parent",
+                    expectedContent: "fn main() { let a = [1, 2, 3]; let b = 123;{  } }",
+                    expectedSelectionContent: "let a = [1, 2, 3]; let b = 123;",
+                });
+            });
+        });
+    });
 
-                await testTeleport(
-                    "fn foo() { #{}# } fn main() { { @let a = [1, 2, 3];@ } }",
-                    "fn foo() { {}let a = [1, 2, 3]; } fn main() { {  } }",
-                    "let a = [1, 2, 3];",
-                    "{}"
-                );
+    suite(".teleportSelection", function () {
+        test("moves block across tree", async () => {
+            await testTeleport({
+                language: "rust",
+                content: "fn main() { { @let a = [1, 2, 3];@ } } fn foo() { #{}# }",
+                expectedContent: "fn main() { {  } } fn foo() { {}let a = [1, 2, 3]; }",
+                expectedSelectionContent: "let a = [1, 2, 3];",
+                expectedTargetContent: "{}",
+            });
+
+            await testTeleport({
+                language: "rust",
+                content: "fn foo() { #{}# } fn main() { { @let a = [1, 2, 3];@ } }",
+                expectedContent: "fn foo() { {}let a = [1, 2, 3]; } fn main() { {  } }",
+                expectedSelectionContent: "let a = [1, 2, 3];",
+                expectedTargetContent: "{}",
             });
         });
     });
 
     suite("TSX", function () {
-        // @ts-expect-error initialized in beforeAll
-        let language: Language = undefined;
-        this.beforeAll(async () => {
-            const lang = await Installer.loadParser(parsersDir, "tree-sitter-typescript", "tree-sitter-tsx");
-            assert.ok(
-                lang.status === "ok" && lang.result,
-                `failed to load ${Installer.getWasmBindingsPath(
-                    parsersDir,
-                    "tree-sitter-typescript",
-                    "tree-sitter-tsx"
-                )}`
-            );
-            language = lang.result;
-        });
-
-        async function buildFileTree(content: string): Promise<FileTree> {
-            const document = await vscode.workspace.openTextDocument({
-                language: "typescriptreact",
-                content,
-            });
-            const fileTree = await FileTree.new(language, document);
-            return fileTree;
-        }
-
-        suite(".update", function () {
-            test("updates tree after edit", async () => {
-                const content = "function main() {}";
-                const fileTree = await buildFileTree(content);
-                expect("\n" + fileTree.toString()).to.equal(`
-program [0:0 - 0:18]
-  function_declaration [0:0 - 0:18]
-    identifier [0:9 - 0:13]
-    formal_parameters [0:13 - 0:15]
-    statement_block [0:16 - 0:18]`);
-
-                const edit = new vscode.WorkspaceEdit();
-                edit.replace(
-                    fileTree.document.uri,
-                    new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, content.length)),
-                    "class A {}"
-                );
-
-                await vscode.workspace.applyEdit(edit);
-
-                expect("\n" + fileTree.toString()).to.equal(`
-program [0:0 - 0:10]
-  class_declaration [0:0 - 0:10]
-    type_identifier [0:6 - 0:7]
-    class_body [0:8 - 0:10]`);
-            });
-        });
-
         suite(".resolveVscodeSelection", () => {
-            async function testResolveVscodeSelection(
-                content: string,
-                selectionRange: [number, number, number, number],
-                expectedSelectionText: string | undefined
-            ): Promise<void> {
-                const fileTree = await buildFileTree(content);
-                const selection = fileTree.resolveVscodeSelection(
-                    new vscode.Selection(
-                        new vscode.Position(selectionRange[0], selectionRange[1]),
-                        new vscode.Position(selectionRange[2], selectionRange[3])
-                    )
-                );
-
-                expect(selection?.getText(content)).to.equal(expectedSelectionText);
-            }
-
             test("is node when selection is node range", async () => {
-                await testResolveVscodeSelection(
-                    "function main() { return (<> <p>a</p> <p>b</p> </>); }",
-                    [0, 32, 0, 33],
-                    "a"
-                );
+                await testResolveVscodeSelection({
+                    language: "typescriptreact",
+                    content: "function main() { return (<> <p>@a@</p> <p>b</p> </>); }",
+                    expectedSelectionText: "a",
+                });
             });
 
             test("expands to node when range within node range", async () => {
-                await testResolveVscodeSelection(
-                    "function main() { return (<> <p>a</p> <p>b</p> </>); }",
-                    [0, 29, 0, 31],
-                    "<p>"
-                );
+                await testResolveVscodeSelection({
+                    language: "typescriptreact",
+                    content: "function main() { return (<> @<p@>a</p> <p>b</p> </>); }",
+                    expectedSelectionText: "<p>",
+                });
             });
 
             test("is multiple nodes when range is multiple nodes range", async () => {
-                await testResolveVscodeSelection(
-                    "function main() { return (<> <p>a</p> <p>b</p> </>); }",
-                    [0, 29, 0, 37],
-                    "<p>a</p>"
-                );
+                await testResolveVscodeSelection({
+                    language: "typescriptreact",
+                    content: "function main() { return (<> @<p>a</p>@ <p>b</p> </>); }",
+                    expectedSelectionText: "<p>a</p>",
+                });
             });
 
             test("is multiple nodes when range within multiple nodes ranges", async () => {
-                await testResolveVscodeSelection(
-                    "function main() { return (<> <p>a</p> <p>b</p> </>); }",
-                    [0, 31, 0, 35],
-                    "<p>a</p>"
-                );
+                await testResolveVscodeSelection({
+                    language: "typescriptreact",
+                    content: "function main() { return (<> <p@>a</p@> <p>b</p> </>); }",
+                    expectedSelectionText: "<p>a</p>",
+                });
             });
 
             test("expands scope when selection crosses node parent range", async () => {
-                await testResolveVscodeSelection(
-                    "function main() { return (<> <p>a</p> <p>b</p> </>); }",
-                    [0, 33, 0, 42],
-                    "<p>a</p> <p>b</p>"
-                );
+                await testResolveVscodeSelection({
+                    language: "typescriptreact",
+                    content: "function main() { return (<> <p>a@</p> <p>b@</p> </>); }",
+                    expectedSelectionText: "<p>a</p> <p>b</p>",
+                });
             });
         });
     });

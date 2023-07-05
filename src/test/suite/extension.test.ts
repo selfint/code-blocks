@@ -1,22 +1,9 @@
 import * as vscode from "vscode";
-import { BlockMode, active, activeFileTree, toggleActive } from "../../extension";
+import { BlockMode, active, toggleActive } from "../../extension";
+import { SupportedTestLanguages, openDocument } from "./testUtils";
 import { CodeBlocksEditorProvider } from "../../editor/CodeBlocksEditorProvider";
 import { TreeViewer } from "../../TreeViewer";
 import { expect } from "chai";
-
-/**
- * Languages with .wasm parsers tracked by git
- */
-type SupportedTestLanguages = "rust" | "typescriptreact";
-
-async function openDocument(content: string, language: string): Promise<vscode.TextEditor> {
-    return await vscode.window.showTextDocument(
-        await vscode.workspace.openTextDocument({
-            language,
-            content,
-        })
-    );
-}
 
 suite("codeBlocks commands", function () {
     this.timeout(process.env.TEST_TIMEOUT ?? "2s");
@@ -31,18 +18,6 @@ suite("codeBlocks commands", function () {
         }
     });
 
-    async function awaitFileTreeLoaded(): Promise<void> {
-        if (activeFileTree.get() === undefined) {
-            await new Promise<void>((r) => {
-                activeFileTree.onDidChange((newFileTree) => {
-                    if (newFileTree !== undefined) {
-                        r();
-                    }
-                });
-            });
-        }
-    }
-
     type SelectionCommand =
         | "codeBlocks.selectBlock"
         | "codeBlocks.selectPrevious"
@@ -50,17 +25,21 @@ suite("codeBlocks commands", function () {
         | "codeBlocks.selectParent"
         | "codeBlocks.selectChild";
 
-    async function testSelectionCommands(
-        content: string,
-        selectionCommands: SelectionCommand[],
-        expectedSelectionContent: string,
-        language: SupportedTestLanguages = "rust"
-    ): Promise<vscode.TextEditor> {
+    async function testSelectionCommands({
+        content,
+        selectionCommands,
+        expectedSelectionContent,
+        language = "rust",
+    }: {
+        content: string;
+        selectionCommands: SelectionCommand[];
+        expectedSelectionContent: string;
+        language?: SupportedTestLanguages;
+    }): Promise<vscode.TextEditor> {
         const cursor = "@";
         const cursorIndex = content.indexOf(cursor);
         content = content.replace(cursor, "");
-        const activeEditor = await openDocument(content, language);
-        await awaitFileTreeLoaded();
+        const { activeEditor } = await openDocument(content, language);
         activeEditor.selection = new vscode.Selection(
             activeEditor.document.positionAt(cursorIndex),
             activeEditor.document.positionAt(cursorIndex)
@@ -101,12 +80,12 @@ suite("codeBlocks commands", function () {
         expectedSelectionContent,
         language,
     }: TestMoveCommandsParams): Promise<void> {
-        const activeEditor = await testSelectionCommands(
+        const activeEditor = await testSelectionCommands({
             content,
             selectionCommands,
             expectedSelectionContent,
-            language
-        );
+            language,
+        });
 
         for (const command of moveCommands) {
             await vscode.commands.executeCommand(command);
@@ -146,12 +125,12 @@ suite("codeBlocks commands", function () {
         const expectedNavigationDestinationIndex = content.replace(/@/g, "").indexOf(targetCursor);
         content = content.replace(targetCursor, "");
 
-        const activeEditor = await testSelectionCommands(
+        const activeEditor = await testSelectionCommands({
             content,
             selectionCommands,
             expectedSelectionContent,
-            language
-        );
+            language,
+        });
 
         for (const command of moveCommands) {
             await vscode.commands.executeCommand(command);
@@ -192,7 +171,6 @@ suite("codeBlocks commands", function () {
         test("shows file tree", async () => {
             await openDocument("fn main() {}", "rust");
             await vscode.commands.executeCommand("codeBlocks.openTreeViewer");
-            await awaitFileTreeLoaded();
             const treeViewerDocument = await vscode.workspace.openTextDocument(TreeViewer.uri);
             while (treeViewerDocument.getText() === TreeViewer.placeholder) {
                 await new Promise<void>((r) => TreeViewer.treeViewer.onDidChange(() => r()));
@@ -210,47 +188,51 @@ source_file [0:0 - 0:12]
     suite("Select commands", function () {
         suite(".selectBlock", function () {
             test("expands to current node", async () => {
-                await testSelectionCommands(
-                    "fn main() { let a = [1, 2@22, 3]; }",
-                    ["codeBlocks.selectBlock"],
-                    "222"
-                );
+                await testSelectionCommands({
+                    content: "fn main() { let a = [1, 2@22, 3]; }",
+                    selectionCommands: ["codeBlocks.selectBlock"],
+                    expectedSelectionContent: "222",
+                });
             });
         });
 
         suite(".selectParent", function () {
             test("selects parent", async () => {
-                await testSelectionCommands(
-                    "fn main() { pub fn foo() { @ } }",
-                    ["codeBlocks.selectParent", "codeBlocks.selectParent", "codeBlocks.selectParent"],
-                    "fn main() { pub fn foo() {  } }"
-                );
+                await testSelectionCommands({
+                    content: "fn main() { pub fn foo() { @ } }",
+                    selectionCommands: [
+                        "codeBlocks.selectParent",
+                        "codeBlocks.selectParent",
+                        "codeBlocks.selectParent",
+                    ],
+                    expectedSelectionContent: "fn main() { pub fn foo() {  } }",
+                });
             });
         });
 
         suite(".selectPrevious", function () {
             test("selects previous", async () => {
-                await testSelectionCommands(
-                    "<> <p>@a</p> </>",
-                    ["codeBlocks.selectPrevious"],
-                    "<p>a",
-                    "typescriptreact"
-                );
+                await testSelectionCommands({
+                    content: "<> <p>@a</p> </>",
+                    selectionCommands: ["codeBlocks.selectPrevious"],
+                    expectedSelectionContent: "<p>a",
+                    language: "typescriptreact",
+                });
             });
         });
 
         suite(".selectChild", function () {
             test("contracts to first named child", async () => {
-                await testSelectionCommands(
-                    "pub fn foo() { @ }",
-                    ["codeBlocks.selectParent", "codeBlocks.selectChild"],
-                    "pub"
-                );
-                await testSelectionCommands(
-                    "if true { @ }",
-                    ["codeBlocks.selectParent", "codeBlocks.selectChild"],
-                    "true"
-                );
+                await testSelectionCommands({
+                    content: "pub fn foo() { @ }",
+                    selectionCommands: ["codeBlocks.selectParent", "codeBlocks.selectChild"],
+                    expectedSelectionContent: "pub",
+                });
+                await testSelectionCommands({
+                    content: "if true { @ }",
+                    selectionCommands: ["codeBlocks.selectParent", "codeBlocks.selectChild"],
+                    expectedSelectionContent: "true",
+                });
             });
         });
     });
@@ -373,11 +355,11 @@ source_file [0:0 - 0:12]
             });
 
             test("moving without awaiting is stable", async () => {
-                const activeEditor = await testSelectionCommands(
-                    "fn main() {@} fn f() {}",
-                    ["codeBlocks.selectParent"],
-                    "fn main() {}"
-                );
+                const activeEditor = await testSelectionCommands({
+                    content: "fn main() {@} fn f() {}",
+                    selectionCommands: ["codeBlocks.selectParent"],
+                    expectedSelectionContent: "fn main() {}",
+                });
 
                 // this will produce a lot of pointless logs, so we silence them for a bit
                 const oldDebug = console.debug;
@@ -514,11 +496,11 @@ source_file [0:0 - 0:12]
             });
 
             test("navigating without awaiting is stable", async () => {
-                const activeEditor = await testSelectionCommands(
-                    "fn main() {@} fn f() {}",
-                    ["codeBlocks.selectParent"],
-                    "fn main() {}"
-                );
+                const activeEditor = await testSelectionCommands({
+                    content: "fn main() {@} fn f() {}",
+                    selectionCommands: ["codeBlocks.selectParent"],
+                    expectedSelectionContent: "fn main() {}",
+                });
 
                 // this will produce a lot of pointless logs, so we silence them for a bit
                 const oldDebug = console.debug;
