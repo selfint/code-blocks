@@ -228,13 +228,32 @@ source_file [0:0 - 0:12]
 
     suite("Move commands", function () {
         suite(".moveUp", function () {
-            test("moves selection up and updates selection", async () => {
+            test.only("moves selection up and updates selection", async () => {
                 await testMoveCommands({
                     content: "fn main() {} fn foo() { @}",
                     selectionCommands: ["codeBlocks.selectParent"],
                     moveCommands: ["codeBlocks.moveUp"],
                     expectedContent: "fn foo() { } fn main() {}",
                     expectedSelectionContent: "fn foo() { }",
+                    language: "rust",
+                });
+                await testMoveCommands({
+                    content: "function main() {\nlet a = 1;\nlet b = 2;\nlet c = @3;}",
+                    selectionCommands: ["codeBlocks.selectParent", "codeBlocks.selectParent"],
+                    moveCommands: ["codeBlocks.moveUp"],
+                    expectedContent: "function main() {\nlet a = 1;\nlet c = 3;\nlet b = 2;}",
+                    expectedSelectionContent: "let c = 3;",
+                    language: "typescriptreact",
+                });
+            });
+
+            test("moves block up and updates selection", async () => {
+                await testMoveCommands({
+                    content: "fn main() {}\n// doc comment\nfn foo() { @}",
+                    selectionCommands: ["codeBlocks.selectParent"],
+                    moveCommands: ["codeBlocks.moveUp"],
+                    expectedContent: "// doc comment\nfn foo() { }\nfn main() {}",
+                    expectedSelectionContent: "// doc comment\nfn foo() { }",
                     language: "rust",
                 });
             });

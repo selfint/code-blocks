@@ -1,6 +1,7 @@
 import * as codeBlocks from "./extension";
 import * as vscode from "vscode";
-import { MoveSelectionDirection, pointToPosition } from "./FileTree";
+import { Block } from "./BlockTree";
+import { MoveSelectionDirection } from "./FileTree";
 import { UpdateSelectionDirection } from "./Selection";
 
 export let blockModeActive = false;
@@ -46,7 +47,7 @@ function selectBlock(): void {
     }
 }
 
-function updateSelection(direction: UpdateSelectionDirection): void {
+function updateSelection(direction: UpdateSelectionDirection, blocks: Block[] | undefined): void {
     const fileTree = codeBlocks.activeFileTree.get();
     if (vscode.window.activeTextEditor?.document === undefined || fileTree === undefined) {
         return;
@@ -55,7 +56,7 @@ function updateSelection(direction: UpdateSelectionDirection): void {
     const activeEditor = vscode.window.activeTextEditor;
     const selection = fileTree.resolveVscodeSelection(activeEditor.selection);
     if (selection !== undefined) {
-        selection.update(direction);
+        selection.update(direction, blocks);
         activeEditor.selection = selection.toVscodeSelection();
     }
 }
@@ -84,7 +85,7 @@ async function moveSelection(direction: MoveSelectionDirection): Promise<void> {
     }
 }
 
-function navigate(direction: "up" | "down" | "left" | "right"): void {
+function navigate(direction: "up" | "down" | "left" | "right", blocks: Block[] | undefined): void {
     const fileTree = codeBlocks.activeFileTree.get();
     if (vscode.window.activeTextEditor?.document === undefined || fileTree === undefined) {
         return;
@@ -92,30 +93,30 @@ function navigate(direction: "up" | "down" | "left" | "right"): void {
 
     const activeEditor = vscode.window.activeTextEditor;
     const selection = fileTree.resolveVscodeSelection(activeEditor.selection);
-    const parent = selection?.getParent();
-    const previous = selection?.getPrevious();
-    const next = selection?.getNext();
+    const parent = selection?.getParent(blocks);
+    const previous = selection?.getPrevious(blocks);
+    const next = selection?.getNext(blocks);
 
     let newPosition;
     switch (direction) {
         case "up":
             if (parent) {
-                newPosition = pointToPosition(parent.startPosition);
+                newPosition = parent.toVscodeSelection().start;
             }
             break;
         case "down":
             if (parent) {
-                newPosition = pointToPosition(parent.endPosition);
+                newPosition = parent.toVscodeSelection().end;
             }
             break;
         case "left":
             if (previous) {
-                newPosition = pointToPosition(previous.startPosition);
+                newPosition = previous.toVscodeSelection().start;
             }
             break;
         case "right":
             if (next) {
-                newPosition = pointToPosition(next.startPosition);
+                newPosition = next.toVscodeSelection().start;
             }
             break;
     }
@@ -125,7 +126,11 @@ function navigate(direction: "up" | "down" | "left" | "right"): void {
     }
 }
 
-function updateTargetHighlights(editor: vscode.TextEditor, vscodeSelection: vscode.Selection): void {
+function updateTargetHighlights(
+    editor: vscode.TextEditor,
+    vscodeSelection: vscode.Selection,
+    blocks: Block[] | undefined
+): void {
     if (!blockModeActive) {
         return;
     }
@@ -142,33 +147,27 @@ function updateTargetHighlights(editor: vscode.TextEditor, vscodeSelection: vsco
         return;
     }
 
-    let parent = selection.getParent();
-    if (parent?.parent === null) {
+    let parent = selection.getParent(blocks);
+    if (parent?.firstNode().parent === null) {
         // parent is the entire file, not a relevant selection ever
         parent = undefined;
     }
-    const previous = selection.getPrevious();
-    const next = selection.getNext();
+    const previous = selection.getPrevious(blocks);
+    const next = selection.getNext(blocks);
 
     const targets = [];
     const forceTargets = [];
 
     if (previous) {
-        targets.push(
-            new vscode.Range(pointToPosition(previous.startPosition), pointToPosition(previous.endPosition))
-        );
+        targets.push(previous.toVscodeSelection());
     }
 
     if (next) {
-        targets.push(
-            new vscode.Range(pointToPosition(next.startPosition), pointToPosition(next.endPosition))
-        );
+        targets.push(next.toVscodeSelection());
     }
 
     if ((!next || !previous) && parent) {
-        forceTargets.push(
-            new vscode.Range(pointToPosition(parent.startPosition), pointToPosition(parent.endPosition))
-        );
+        forceTargets.push(parent.toVscodeSelection());
     }
 
     editor.setDecorations(targetsDecoration, targets);
@@ -190,7 +189,11 @@ export function activate(): vscode.Disposable[] {
     const eventListeners = [
         vscode.window.onDidChangeActiveTextEditor(resetDecorations),
         vscode.window.onDidChangeTextEditorSelection((event) =>
-            updateTargetHighlights(event.textEditor, event.selections[0])
+            updateTargetHighlights(
+                event.textEditor,
+                event.selections[0],
+                codeBlocks.activeFileTree.get()?.blocks ?? ([] as Block[])
+            )
         ),
         codeBlocks.active.onDidChange((newActive) => {
             if (!newActive && blockModeActive) {
@@ -201,7 +204,11 @@ export function activate(): vscode.Disposable[] {
         codeBlocks.activeFileTree.onDidChange((_) => {
             const editor = vscode.window.activeTextEditor;
             if (editor !== undefined) {
-                updateTargetHighlights(editor, editor.selection);
+                updateTargetHighlights(
+                    editor,
+                    editor.selection,
+                    codeBlocks.activeFileTree.get()?.blocks ?? ([] as Block[])
+                );
             }
         }),
         onDidChangeBlockModeActive.event(async (blockModeActive) => {
@@ -214,7 +221,8 @@ export function activate(): vscode.Disposable[] {
             if (vscode.window.activeTextEditor !== undefined) {
                 updateTargetHighlights(
                     vscode.window.activeTextEditor,
-                    vscode.window.activeTextEditor.selection
+                    vscode.window.activeTextEditor.selection,
+                    codeBlocks.activeFileTree.get()?.blocks ?? ([] as Block[])
                 );
             }
         }),
@@ -225,6 +233,7 @@ export function activate(): vscode.Disposable[] {
         callback: (...args: unknown[]) => unknown,
         thisArg?: unknown
     ): vscode.Disposable => vscode.commands.registerCommand(command, callback, thisArg);
+    const activeBlocks = (): Block[] | undefined => codeBlocks.activeFileTree.get()?.blocks;
     const commands = [
         cmd("codeBlocks.toggleBlockMode", () => toggleBlockMode()),
         cmd("codeBlocks.moveUp", async () => await moveSelection("swap-previous")),
@@ -232,14 +241,14 @@ export function activate(): vscode.Disposable[] {
         cmd("codeBlocks.moveDown", async () => await moveSelection("swap-next")),
         cmd("codeBlocks.moveDownForce", async () => await moveSelection("after-parent")),
         cmd("codeBlocks.selectBlock", selectBlock),
-        cmd("codeBlocks.selectParent", () => updateSelection("parent")),
-        cmd("codeBlocks.selectChild", () => updateSelection("child")),
-        cmd("codeBlocks.selectNext", () => updateSelection("add-next")),
-        cmd("codeBlocks.selectPrevious", () => updateSelection("add-previous")),
-        cmd("codeBlocks.navigateUpForce", () => navigate("up")),
-        cmd("codeBlocks.navigateDownForce", () => navigate("down")),
-        cmd("codeBlocks.navigateUp", () => navigate("left")),
-        cmd("codeBlocks.navigateDown", () => navigate("right")),
+        cmd("codeBlocks.selectParent", () => updateSelection("parent", activeBlocks())),
+        cmd("codeBlocks.selectChild", () => updateSelection("child", activeBlocks())),
+        cmd("codeBlocks.selectNext", () => updateSelection("add-next", activeBlocks())),
+        cmd("codeBlocks.selectPrevious", () => updateSelection("add-previous", activeBlocks())),
+        cmd("codeBlocks.navigateUpForce", () => navigate("up", activeBlocks())),
+        cmd("codeBlocks.navigateDownForce", () => navigate("down", activeBlocks())),
+        cmd("codeBlocks.navigateUp", () => navigate("left", activeBlocks())),
+        cmd("codeBlocks.navigateDown", () => navigate("right", activeBlocks())),
     ];
 
     return [...uiDisposables, ...eventListeners, ...commands];

@@ -22,7 +22,7 @@ suite("Selection", function () {
         }
 
         for (const update of updates) {
-            selection.update(update);
+            selection.update(update, []);
         }
 
         const selectionText = selection.getText(content);

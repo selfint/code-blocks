@@ -108,7 +108,7 @@ suite("FileTree", function () {
             `Initial target selection content: ${fileTree.document.getText(targetVscodeSelection)}`
         );
 
-        const result = await fileTree.teleportSelection(selection, targetSelection);
+        const result = await fileTree.teleportSelection(selection, targetSelection, []);
 
         expect(result.status).to.equal("ok");
         expect(fileTree.document.getText()).to.equal(

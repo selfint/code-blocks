@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
+import { Block, getQueryBlocks } from "./BlockTree";
 import Parser, { Language, Query, SyntaxNode, Tree } from "web-tree-sitter";
 import { Result, err, ok } from "./result";
-import { BlockTree } from "./BlockTree";
 import { Selection } from "./Selection";
 import { getLanguageConfig } from "./configuration";
 import { parserFinishedInit } from "./extension";
@@ -25,7 +25,7 @@ export type MoveSelectionDirection = "swap-previous" | "swap-next" | "after-pare
 export class FileTree implements vscode.Disposable {
     public parser: Parser;
     public tree: Tree;
-    public blocks: BlockTree[] | undefined;
+    public blocks: Block[] | undefined = undefined;
     public document: vscode.TextDocument;
     public version: number;
 
@@ -46,7 +46,7 @@ export class FileTree implements vscode.Disposable {
         if (queryStrings !== undefined) {
             const language = parser.getLanguage();
             this.queries = queryStrings.map((q) => language.query(q));
-            // this.blocks = getBlockTrees(this.tree, this.queries);
+            this.blocks = getQueryBlocks(this.tree.rootNode, this.queries);
         }
 
         this.disposables = [this.onUpdateEmitter];
@@ -98,7 +98,7 @@ export class FileTree implements vscode.Disposable {
 
         this.tree = this.parser.parse(event.document.getText(), this.tree);
         if (this.queries !== undefined) {
-            // this.blocks = getBlockTrees(this.tree, this.queries);
+            this.blocks = getQueryBlocks(this.tree.rootNode, this.queries);
         }
         this.version = event.document.version;
         this.onUpdateEmitter.fire();
@@ -187,6 +187,10 @@ export class FileTree implements vscode.Disposable {
         return new Selection(selectedNodes, this.version);
     }
 
+    public getSelectionText(selection: Selection): string {
+        return this.document.getText(selection.toVscodeSelection());
+    }
+
     private moveSelectionLock = false;
     public async moveSelection(
         selection: Selection,
@@ -211,37 +215,40 @@ export class FileTree implements vscode.Disposable {
             }
 
             const edit = new vscode.WorkspaceEdit();
-            const selectionText = selection.getText(this.document.getText());
             const selectionRange = selection.getRange();
+            const vscodeSelection = selection.toVscodeSelection();
+            const selectionText = this.document.getText(vscodeSelection);
             let newSelection: vscode.Selection;
+
+            // const selectionNode = selection.firstNode();
+            // const queriesRoot = selectionNode.parent?.parent ?? selectionNode.parent;
+            const blocks = this.blocks;
+            // if (blocks === undefined) {
+            //     blocks = this.queries && queriesRoot ? getQueryBlocks(queriesRoot, this.queries) : [];
+            // }
 
             switch (direction) {
                 case "swap-previous": {
-                    // TODO: if block mode, resolve previous block
-                    const previousNode = selection.getPrevious();
-                    if (!previousNode) {
-                        return err(`Can't move to ${direction}, previous node of selection is null`);
+                    const previousSelection = selection.getPrevious(blocks);
+                    if (!previousSelection) {
+                        return err(`Can't move to ${direction}, previous node of selection is undefined`);
                     }
+
+                    const previousRange = previousSelection.getRange();
+                    const previousVscodeSelection = previousSelection.toVscodeSelection();
 
                     // swap previous node text and selection text
                     edit.replace(
                         this.document.uri,
-                        parserRangeToVscodeRange(selectionRange),
-                        previousNode.text
+                        vscodeSelection,
+                        this.document.getText(previousSelection.toVscodeSelection())
                     );
-                    edit.replace(
-                        this.document.uri,
-                        new vscode.Range(
-                            pointToPosition(previousNode.startPosition),
-                            pointToPosition(previousNode.endPosition)
-                        ),
-                        selectionText
-                    );
+                    edit.replace(this.document.uri, previousVscodeSelection, selectionText);
 
                     // cache previous node start index before edit
                     // since the tree will catch the edit, and the next node's
                     // start/end indices will change
-                    const previousNodeStartIndex = previousNode.startIndex;
+                    const previousNodeStartIndex = previousRange.startIndex;
                     await vscode.workspace.applyEdit(edit);
                     newSelection = new vscode.Selection(
                         this.document.positionAt(previousNodeStartIndex),
@@ -253,26 +260,26 @@ export class FileTree implements vscode.Disposable {
                 }
                 case "swap-next": {
                     // TODO: if block mode, resolve previous block
-                    const nextNode = selection.getNext();
-                    if (!nextNode) {
+                    const nextSelection = selection.getNext(blocks);
+                    if (!nextSelection) {
                         return err(`Can't move to ${direction}, next node of selection is null`);
                     }
 
+                    const nextRange = nextSelection.getRange();
+                    const nextVscodeSelection = nextSelection.toVscodeSelection();
+
                     // swap next node text and selection text
+                    edit.replace(this.document.uri, nextVscodeSelection, selectionText);
                     edit.replace(
                         this.document.uri,
-                        new vscode.Range(
-                            pointToPosition(nextNode.startPosition),
-                            pointToPosition(nextNode.endPosition)
-                        ),
-                        selectionText
+                        vscodeSelection,
+                        this.document.getText(nextVscodeSelection)
                     );
-                    edit.replace(this.document.uri, parserRangeToVscodeRange(selectionRange), nextNode.text);
 
                     // calculate forward index shift before applying edit
                     // since the tree will catch the edit, and the next node's
                     // start/end indices will change
-                    const forwardShift = nextNode.endIndex - selectionRange.endIndex;
+                    const forwardShift = nextRange.endIndex - selectionRange.endIndex;
                     await vscode.workspace.applyEdit(edit);
 
                     // end index is exclusive, so selection *really* ends at endIndex - 1
@@ -283,9 +290,9 @@ export class FileTree implements vscode.Disposable {
                     break;
                 }
                 case "after-parent":
-                    return this.afterParent(selection);
+                    return this.afterParent(selection, blocks);
                 case "before-parent":
-                    return this.beforeParent(selection);
+                    return this.beforeParent(selection, blocks);
             }
 
             return ok(newSelection);
@@ -294,36 +301,42 @@ export class FileTree implements vscode.Disposable {
         }
     }
 
-    private async beforeParent(selection: Selection): Promise<Result<vscode.Selection, string>> {
+    private async beforeParent(
+        selection: Selection,
+        blocks: Block[] | undefined
+    ): Promise<Result<vscode.Selection, string>> {
         const edit = new vscode.WorkspaceEdit();
-        const selectionText = selection.getText(this.document.getText());
+        const vscodeSelection = selection.toVscodeSelection();
+        const selectionText = this.document.getText(vscodeSelection);
         const selectionRange = selection.getRange();
 
-        const parent = selection.getParent();
+        const parent = selection.getParent(blocks);
         if (!parent) {
             return err("Can't move to after-parent, parent node of selection is null");
         }
 
-        const nextNamedSibling = parent.nextNamedSibling;
-        const previousNamedSibling = parent.previousNamedSibling;
+        const parentRange = parent.getRange();
+
+        const nextNamedSibling = parent.getNext(blocks);
+        const previousNamedSibling = parent.getPrevious(blocks);
 
         let newBeforeSpacing =
-            previousNamedSibling === null
+            previousNamedSibling === undefined
                 ? undefined
                 : this.document.getText(
                       new vscode.Selection(
-                          this.document.positionAt(previousNamedSibling.endIndex + 1),
-                          this.document.positionAt(parent.startIndex)
+                          this.document.positionAt(previousNamedSibling.getRange().endIndex + 1),
+                          this.document.positionAt(parentRange.startIndex)
                       )
                   );
 
         let newAfterSpacing =
-            nextNamedSibling === null
+            nextNamedSibling === undefined
                 ? undefined
                 : this.document.getText(
                       new vscode.Selection(
-                          this.document.positionAt(parent.endIndex + 1),
-                          this.document.positionAt(nextNamedSibling.startIndex)
+                          this.document.positionAt(parentRange.endIndex + 1),
+                          this.document.positionAt(nextNamedSibling.getRange().startIndex)
                       )
                   );
 
@@ -335,10 +348,10 @@ export class FileTree implements vscode.Disposable {
         // remove old selection
         edit.replace(this.document.uri, parserRangeToVscodeRange(selectionRange), "");
         // insert new selection
-        edit.insert(this.document.uri, pointToPosition(parent.startPosition), newText);
+        edit.insert(this.document.uri, pointToPosition(parentRange.startPosition), newText);
 
         const selectionLength = selectionRange.endIndex - selectionRange.startIndex;
-        const newStartIndex = parent.startIndex;
+        const newStartIndex = parentRange.startIndex;
         await vscode.workspace.applyEdit(edit);
 
         const newSelection = new vscode.Selection(
@@ -349,36 +362,42 @@ export class FileTree implements vscode.Disposable {
         return ok(newSelection);
     }
 
-    private async afterParent(selection: Selection): Promise<Result<vscode.Selection, string>> {
+    private async afterParent(
+        selection: Selection,
+        blocks: Block[] | undefined
+    ): Promise<Result<vscode.Selection, string>> {
         const edit = new vscode.WorkspaceEdit();
-        const selectionText = selection.getText(this.document.getText());
+        const vscodeSelection = selection.toVscodeSelection();
+        const selectionText = this.document.getText(vscodeSelection);
         const selectionRange = selection.getRange();
 
-        const parent = selection.getParent();
+        const parent = selection.getParent(blocks);
         if (!parent) {
             return err("Can't move to after-parent, parent node of selection is null");
         }
 
-        const nextNamedSibling = parent.nextNamedSibling;
-        const previousNamedSibling = parent.previousNamedSibling;
+        const parentRange = parent.getRange();
+
+        const nextNamedSibling = parent.getNext(blocks);
+        const previousNamedSibling = parent.getPrevious(blocks);
 
         let newBeforeSpacing =
-            previousNamedSibling === null
+            previousNamedSibling === undefined
                 ? undefined
                 : this.document.getText(
                       new vscode.Selection(
-                          this.document.positionAt(previousNamedSibling.endIndex + 1),
-                          this.document.positionAt(parent.startIndex)
+                          this.document.positionAt(previousNamedSibling.getRange().endIndex + 1),
+                          this.document.positionAt(parentRange.startIndex)
                       )
                   );
 
         let newAfterSpacing =
-            nextNamedSibling === null
+            nextNamedSibling === undefined
                 ? undefined
                 : this.document.getText(
                       new vscode.Selection(
-                          this.document.positionAt(parent.endIndex + 1),
-                          this.document.positionAt(nextNamedSibling.startIndex)
+                          this.document.positionAt(parentRange.endIndex + 1),
+                          this.document.positionAt(nextNamedSibling.getRange().startIndex)
                       )
                   );
 
@@ -388,12 +407,12 @@ export class FileTree implements vscode.Disposable {
 
         const newText = newBeforeSpacing + selectionText + newAfterSpacing;
         // insert new selection
-        edit.insert(this.document.uri, pointToPosition(parent.endPosition), newText);
+        edit.insert(this.document.uri, pointToPosition(parentRange.endPosition), newText);
         // remove old selection
         edit.replace(this.document.uri, parserRangeToVscodeRange(selectionRange), "");
 
         const selectionLength = selectionRange.endIndex - selectionRange.startIndex;
-        const newStartIndex = parent.endIndex - selectionLength + newBeforeSpacing.length;
+        const newStartIndex = parentRange.endIndex - selectionLength + newBeforeSpacing.length;
         await vscode.workspace.applyEdit(edit);
 
         const newSelection = new vscode.Selection(
@@ -406,7 +425,8 @@ export class FileTree implements vscode.Disposable {
 
     public async teleportSelection(
         selection: Selection,
-        targetSelection: Selection
+        targetSelection: Selection,
+        blocks: Block[]
     ): Promise<Result<vscode.Selection, string>> {
         if (this.version !== this.document.version) {
             return err("Can't teleport selection since tree version != document version");
@@ -422,8 +442,8 @@ export class FileTree implements vscode.Disposable {
 
         const targetSelectionRange = targetSelection.getRange();
 
-        const nextNamedSibling = targetSelection.getNext();
-        const previousNamedSibling = targetSelection.getPrevious();
+        const nextNamedSibling = targetSelection.getNext(blocks);
+        const previousNamedSibling = targetSelection.getPrevious(blocks);
 
         // try to fill in the spaces as best we can
         // default to empty string
@@ -432,7 +452,7 @@ export class FileTree implements vscode.Disposable {
         if (previousNamedSibling) {
             newBeforeSpacing = this.document.getText(
                 new vscode.Selection(
-                    this.document.positionAt(previousNamedSibling.endIndex),
+                    this.document.positionAt(previousNamedSibling.getRange().endIndex),
                     this.document.positionAt(targetSelectionRange.startIndex)
                 )
             );
@@ -442,7 +462,7 @@ export class FileTree implements vscode.Disposable {
             this.document.getText(
                 new vscode.Selection(
                     this.document.positionAt(targetSelectionRange.endIndex),
-                    this.document.positionAt(nextNamedSibling.startIndex)
+                    this.document.positionAt(nextNamedSibling.getRange().startIndex)
                 )
             );
         }
