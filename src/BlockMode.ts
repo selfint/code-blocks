@@ -1,6 +1,5 @@
 import * as codeBlocks from "./extension";
 import * as vscode from "vscode";
-import { Block } from "./BlockTree";
 import { MoveSelectionDirection } from "./FileTree";
 import { UpdateSelectionDirection } from "./Selection";
 
@@ -127,11 +126,7 @@ function navigate(direction: "up" | "down" | "left" | "right"): void {
     }
 }
 
-function updateTargetHighlights(
-    editor: vscode.TextEditor,
-    vscodeSelection: vscode.Selection,
-    blocks: Block[] | undefined
-): void {
+function updateTargetHighlights(editor: vscode.TextEditor, vscodeSelection: vscode.Selection): void {
     if (!blockModeActive) {
         return;
     }
@@ -148,6 +143,7 @@ function updateTargetHighlights(
         return;
     }
 
+    const blocks = fileTree.blocks;
     let parent = selection.getParent(blocks);
     if (parent?.firstNode().parent === null) {
         // parent is the entire file, not a relevant selection ever
@@ -190,11 +186,7 @@ export function activate(): vscode.Disposable[] {
     const eventListeners = [
         vscode.window.onDidChangeActiveTextEditor(resetDecorations),
         vscode.window.onDidChangeTextEditorSelection((event) =>
-            updateTargetHighlights(
-                event.textEditor,
-                event.selections[0],
-                codeBlocks.activeFileTree.get()?.blocks ?? ([] as Block[])
-            )
+            updateTargetHighlights(event.textEditor, event.selections[0])
         ),
         codeBlocks.active.onDidChange((newActive) => {
             if (!newActive && blockModeActive) {
@@ -205,11 +197,7 @@ export function activate(): vscode.Disposable[] {
         codeBlocks.activeFileTree.onDidChange((_) => {
             const editor = vscode.window.activeTextEditor;
             if (editor !== undefined) {
-                updateTargetHighlights(
-                    editor,
-                    editor.selection,
-                    codeBlocks.activeFileTree.get()?.blocks ?? ([] as Block[])
-                );
+                updateTargetHighlights(editor, editor.selection);
             }
         }),
         onDidChangeBlockModeActive.event(async (blockModeActive) => {
@@ -222,8 +210,7 @@ export function activate(): vscode.Disposable[] {
             if (vscode.window.activeTextEditor !== undefined) {
                 updateTargetHighlights(
                     vscode.window.activeTextEditor,
-                    vscode.window.activeTextEditor.selection,
-                    codeBlocks.activeFileTree.get()?.blocks ?? ([] as Block[])
+                    vscode.window.activeTextEditor.selection
                 );
             }
         }),
