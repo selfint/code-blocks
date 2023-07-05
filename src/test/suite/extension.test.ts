@@ -228,7 +228,7 @@ source_file [0:0 - 0:12]
 
     suite("Move commands", function () {
         suite(".moveUp", function () {
-            test.only("moves selection up and updates selection", async () => {
+            test("moves selection up and updates selection", async () => {
                 await testMoveCommands({
                     content: "fn main() {} fn foo() { @}",
                     selectionCommands: ["codeBlocks.selectParent"],
