@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
+import { BlockMode, active, activeFileTree } from "../../extension";
 import { FileTree } from "../../FileTree";
-import { activeFileTree } from "../../extension";
 
 /**
  * Languages with .wasm parsers tracked by git
@@ -10,6 +10,14 @@ export async function openDocument(
     content: string,
     language: SupportedTestLanguages
 ): Promise<{ activeEditor: vscode.TextEditor; fileTree: FileTree }> {
+    if (!active.get()) {
+        active.set(true);
+    }
+
+    if (!BlockMode.blockModeActive) {
+        BlockMode.toggleBlockMode();
+    }
+
     const activeEditor = await vscode.window.showTextDocument(
         await vscode.workspace.openTextDocument({
             language,

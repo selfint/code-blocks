@@ -1,5 +1,4 @@
 import * as vscode from "vscode";
-import { BlockMode, active, toggleActive } from "../../extension";
 import { SupportedTestLanguages, openDocument } from "./testUtils";
 import { CodeBlocksEditorProvider } from "../../editor/CodeBlocksEditorProvider";
 import { TreeViewer } from "../../TreeViewer";
@@ -7,16 +6,6 @@ import { expect } from "chai";
 
 suite("codeBlocks commands", function () {
     this.timeout(process.env.TEST_TIMEOUT ?? "2s");
-
-    this.beforeEach(() => {
-        if (!active.get()) {
-            toggleActive();
-        }
-
-        if (!BlockMode.blockModeActive) {
-            BlockMode.toggleBlockMode();
-        }
-    });
 
     type SelectionCommand =
         | "codeBlocks.selectBlock"
