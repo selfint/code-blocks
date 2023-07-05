@@ -106,12 +106,16 @@ suite("codeBlocks commands", function () {
     async function testNavigateCommands({
         content,
         selectionCommands,
-        navigateCommands: moveCommands,
+        navigateCommands,
         expectedSelectionContent,
         language,
     }: TestNavigationCommandsParams): Promise<void> {
         const targetCursor = "#";
         const expectedNavigationDestinationIndex = content.replace(/@/g, "").indexOf(targetCursor);
+        expect(expectedNavigationDestinationIndex).not.to.equal(
+            -1,
+            `target cursor '${targetCursor}' missing from input:\n${content}\n\n`
+        );
         content = content.replace(targetCursor, "");
 
         const activeEditor = await testSelectionCommands({
@@ -121,7 +125,7 @@ suite("codeBlocks commands", function () {
             language,
         });
 
-        for (const command of moveCommands) {
+        for (const command of navigateCommands) {
             await vscode.commands.executeCommand(command);
         }
 
@@ -132,11 +136,13 @@ suite("codeBlocks commands", function () {
             expectedNavigationDestinationIndex,
             "navigation commands didn't arrive to expected destination" +
                 `\n\tactual: ${
-                    cleanContent.substring(0, newCursorIndex) + "#" + cleanContent.substring(newCursorIndex)
+                    cleanContent.substring(0, newCursorIndex) +
+                    targetCursor +
+                    cleanContent.substring(newCursorIndex)
                 }` +
                 `\n\texpect: ${
                     cleanContent.substring(0, expectedNavigationDestinationIndex) +
-                    "#" +
+                    targetCursor +
                     cleanContent.substring(expectedNavigationDestinationIndex)
                 }\n`
         );
@@ -181,6 +187,14 @@ source_file [0:0 - 0:12]
                     content: "fn main() { let a = [1, 2@22, 3]; }",
                     selectionCommands: ["codeBlocks.selectBlock"],
                     expectedSelectionContent: "222",
+                });
+            });
+
+            test("expands to current block", async () => {
+                await testSelectionCommands({
+                    content: "#[attr]\nstruct A { @ }",
+                    selectionCommands: ["codeBlocks.selectParent"],
+                    expectedSelectionContent: "#[attr]\nstruct A {  }",
                 });
             });
         });
@@ -426,6 +440,16 @@ source_file [0:0 - 0:12]
                     selectionCommands: ["codeBlocks.selectParent"],
                     navigateCommands: ["codeBlocks.navigateDown"],
                     expectedSelectionContent: "fn main() {}",
+                    language: "rust",
+                });
+            });
+
+            test("navigates to next block", async () => {
+                await testNavigateCommands({
+                    content: "struct A;\n// b\nstruct @B;\n#// c\nstruct C;",
+                    selectionCommands: ["codeBlocks.selectParent"],
+                    navigateCommands: ["codeBlocks.navigateDown"],
+                    expectedSelectionContent: "// b\nstruct B;",
                     language: "rust",
                 });
             });
