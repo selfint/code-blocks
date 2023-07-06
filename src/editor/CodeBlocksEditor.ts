@@ -1,28 +1,28 @@
 import * as vscode from "vscode";
-import { Block, BlockTree, getBlockTrees } from "../BlockTree";
+import { Block, BlockTree, SelectionTree, buildSelectionTrees, getQueryBlocks } from "../BlockTree";
 import { BlockLocation, BlockLocationTree, MoveCommand, UpdateMessage } from "./messages";
 import { FileTree } from "../FileTree";
 import { Query } from "web-tree-sitter";
+import { Selection } from "../Selection";
 import { getNonce } from "../utilities/getNonce";
 import { getUri } from "../utilities/getUri";
 
-function blockToBlockLocation(block: Block): BlockLocation {
-    const head = block[0];
-    const tail = block[block.length - 1];
+function selectionToBlockLocation(selection: Selection): BlockLocation {
+    const range = selection.getRange();
 
     return {
-        startByte: head.startIndex,
-        endByte: tail.endIndex,
-        startRow: head.startPosition.row,
-        startCol: head.startPosition.column,
-        endRow: tail.endPosition.row,
-        endCol: tail.endPosition.column,
+        startByte: range.startIndex,
+        endByte: range.endIndex,
+        startRow: range.startPosition.row,
+        startCol: range.startPosition.column,
+        endRow: range.endPosition.row,
+        endCol: range.endPosition.column,
     };
 }
 
-function blockTreeToBlockLocationTree(blockTree: BlockTree): BlockLocationTree {
-    const block = blockToBlockLocation(blockTree.block);
-    const children = blockTree.children.map(blockTreeToBlockLocationTree);
+function selectionTreeToBlockLocationTree(selectionTree: SelectionTree): BlockLocationTree {
+    const block = selectionToBlockLocation(selectionTree.selection);
+    const children = selectionTree.children.map(selectionTreeToBlockLocationTree);
     return { block, children };
 }
 
@@ -47,8 +47,9 @@ export class CodeBlocksEditor {
     }
 
     private async drawBlocks(): Promise<void> {
-        const blockTrees = getBlockTrees(this.fileTree.tree, this.queries);
-        const blockLocationTrees = blockTrees.map(blockTreeToBlockLocationTree);
+        const blocks = getQueryBlocks(this.fileTree.tree.rootNode, this.queries);
+        const blockTrees = buildSelectionTrees(this.fileTree, blocks, this.fileTree.tree.walk());
+        const blockLocationTrees = blockTrees.map(selectionTreeToBlockLocationTree);
 
         await this.webviewPanel.webview.postMessage({
             type: "update",

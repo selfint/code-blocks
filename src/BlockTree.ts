@@ -1,4 +1,6 @@
 import { Query, SyntaxNode, Tree, TreeCursor } from "web-tree-sitter";
+import { FileTree } from "./FileTree";
+import { Selection } from "./Selection";
 
 export type Block = SyntaxNode[];
 export type BlockTree = {
@@ -52,6 +54,33 @@ function buildBlockTrees(blocks: Block[], cursor: TreeCursor): BlockTree[] {
 
     if (cursor.gotoNextSibling()) {
         trees = trees.concat(buildBlockTrees(blocks, cursor));
+    }
+
+    return trees;
+}
+
+export type SelectionTree = {
+    selection: Selection;
+    children: SelectionTree[];
+};
+export function buildSelectionTrees(
+    fileTree: FileTree,
+    blocks: Block[],
+    cursor: TreeCursor
+): SelectionTree[] {
+    const selection = Selection.fromNode(cursor.currentNode(), fileTree.version).expandToBlock(blocks);
+    let trees: SelectionTree[] = [];
+
+    if (cursor.gotoFirstChild()) {
+        const children = buildSelectionTrees(fileTree, blocks, cursor);
+        trees.push({ selection, children });
+        cursor.gotoParent();
+    } else {
+        trees.push({ selection, children: [] });
+    }
+
+    if (cursor.gotoNextSibling()) {
+        trees = trees.concat(buildSelectionTrees(fileTree, blocks, cursor));
     }
 
     return trees;
