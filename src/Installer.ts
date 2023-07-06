@@ -180,8 +180,28 @@ export async function getLanguage(
         const doInstall = await vscode.window.showInformationMessage(
             `Parser missing for language '${languageId}', install it?`,
             "Yes",
-            "No"
+            "No",
+            "Never"
         );
+        if (doInstall === "Never") {
+            const result = await configuration.addIgnoredLanguageId(languageId);
+            if (result.status === "ok") {
+                void vscode.window.showInformationMessage(
+                    `Language '${languageId}' added to the ignore list. To remove it, edit your 'codeBlocks.ignoredLanguageIds' config inside the ${path.join(
+                        ".",
+                        ".vscode",
+                        "settings.json"
+                    )} file.`
+                );
+                return ok(undefined);
+            } else {
+                void vscode.window.showInformationMessage(
+                    `Failed to add language '${languageId}' to the ignore list > ${result.result}`
+                );
+                return ok(undefined);
+            }
+        }
+
         if (doInstall !== "Yes") {
             return ok(undefined);
         }

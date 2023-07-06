@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { Result, err, ok } from "./result";
 
 export type LanguageConfig = {
     npmPackageName: string;
@@ -24,6 +25,23 @@ export function getLanguageConfig(languageId: string): LanguageConfig {
 export function getIgnoredLanguageIds(): string[] {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return vscode.workspace.getConfiguration("codeBlocks").ignoredLanguageIds ?? [];
+}
+
+export async function addIgnoredLanguageId(languageId: string): Promise<Result<void, string>> {
+    const config = vscode.workspace.getConfiguration("codeBlocks");
+    const section = "ignoredLanguageIds";
+    let ignoredLanguageIds = config.get<string[]>(section);
+    if (ignoredLanguageIds?.includes(languageId)) {
+        return ok(undefined);
+    }
+
+    ignoredLanguageIds = [languageId, ...(ignoredLanguageIds ?? [])];
+    try {
+        await config.update(section, ignoredLanguageIds);
+        return ok(undefined);
+    } catch (error: unknown) {
+        return err(JSON.stringify(error));
+    }
 }
 
 export type ColorConfig = { enabled: boolean; siblingColor: string; parentColor: string };
