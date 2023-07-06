@@ -121,6 +121,10 @@
       {
         "command": "codeBlocks.selectPrevious",
         "title": "Code Blocks: Scope selection - previous"
+      },
+      {
+        "command": "codeBlocks.toggleBlockModeColors",
+        "title": "Code Blocks: Toggle block mode colors"
       }
     ],
     "keybindings": [

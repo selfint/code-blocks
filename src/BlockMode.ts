@@ -6,8 +6,8 @@ import { UpdateSelectionDirection } from "./Selection";
 import { state } from "./state";
 
 export const blockModeActive = state(false);
-
 const colorConfig = state(configuration.getColorConfig());
+
 const decorations = {
     sibling: vscode.window.createTextEditorDecorationType({
         backgroundColor: colorConfig.get().siblingColor,
@@ -22,7 +22,7 @@ function resetDecorations(): void {
     decorations.sibling.dispose();
     decorations.parent.dispose();
 
-    if (!blockModeActive.get()) {
+    if (!blockModeActive.get() || !colorConfig.get().enabled) {
         return;
     }
 
@@ -247,6 +247,11 @@ export function activate(): vscode.Disposable[] {
         cmd("codeBlocks.navigateDownForce", () => navigate("down")),
         cmd("codeBlocks.navigateUp", () => navigate("left")),
         cmd("codeBlocks.navigateDown", () => navigate("right")),
+        cmd("codeBlocks.toggleBlockModeColors", () => {
+            const newConfig = colorConfig.get();
+            newConfig.enabled = !newConfig.enabled;
+            return colorConfig.set(newConfig);
+        }),
     ];
 
     return [...uiDisposables, ...eventListeners, ...commands];
