@@ -25,3 +25,16 @@ export function getIgnoredLanguageIds(): string[] {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return vscode.workspace.getConfiguration("codeBlocks").ignoredLanguageIds ?? [];
 }
+
+export type ColorConfig = { enabled: boolean; siblingColor: string; parentColor: string };
+export function getColorConfig(): ColorConfig {
+    const defaultSiblingColor = "var(--vscode-editor-selectionHighlightBackground)";
+    const defaultParentColor = "var(--vscode-editor-linkedEditingBackground)";
+    const colorConfig = vscode.workspace.getConfiguration("codeBlocks").get<ColorConfig>("colors");
+
+    return {
+        enabled: colorConfig?.enabled ?? true,
+        siblingColor: colorConfig?.siblingColor ?? defaultSiblingColor,
+        parentColor: colorConfig?.parentColor ?? defaultParentColor,
+    };
+}

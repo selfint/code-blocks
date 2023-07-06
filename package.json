@@ -196,18 +196,24 @@
     "configuration": {
       "title": "CodeBlocks",
       "properties": {
-        "codeBlocks.colors": {
-          "type": "object",
-          "description": "Colors to use for block mode",
-          "default": {
-            "selected": "var(--vscode-inputOption-activeBackground)",
-            "target": "var(--vscode-editor-selectionHighlightBackground)",
-            "forceTarget": "var(--vscode-editor-linkedEditingBackground)"
-          }
+        "codeBlocks.colors.enabled": {
+          "type": "boolean",
+          "description": "Whether block mode colors are enabled",
+          "default": true
+        },
+        "codeBlocks.colors.sibling": {
+          "type": "string",
+          "description": "Background color of current block's siblings. Can be any valid css string.",
+          "default": "var(--vscode-editor-selectionHighlightBackground)"
+        },
+        "codeBlocks.colors.parent": {
+          "type": "string",
+          "description": "Background color of current block's parent (only visible if there's no previous or next sibling). Can be any valid css string.",
+          "default": "var(--vscode-editor-linkedEditingBackground)"
         },
         "codeBlocks.ignoredLanguageIds": {
           "type": "array",
-          "description": "List of language IDs to not load parsers for",
+          "description": "List of language IDs not to load parsers for",
           "default": [
             "plaintext"
           ]

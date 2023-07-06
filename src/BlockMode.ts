@@ -1,4 +1,5 @@
 import * as codeBlocks from "./extension";
+import * as configuration from "./configuration";
 import * as vscode from "vscode";
 import { MoveSelectionDirection } from "./FileTree";
 import { UpdateSelectionDirection } from "./Selection";
@@ -6,29 +7,30 @@ import { state } from "./state";
 
 export const blockModeActive = state(false);
 
-const targetsDecorationColor = "var(--vscode-editor-selectionHighlightBackground)";
-const forceTargetsDecorationColor = "var(--vscode-editor-linkedEditingBackground)";
-let targetsDecoration = vscode.window.createTextEditorDecorationType({
-    backgroundColor: targetsDecorationColor,
-});
-let forceTargetsDecoration = vscode.window.createTextEditorDecorationType({
-    backgroundColor: forceTargetsDecorationColor,
-});
+const colorConfig = state(configuration.getColorConfig());
+const decorations = {
+    sibling: vscode.window.createTextEditorDecorationType({
+        backgroundColor: colorConfig.get().siblingColor,
+    }),
+    parent: vscode.window.createTextEditorDecorationType({
+        backgroundColor: colorConfig.get().parentColor,
+    }),
+};
 
 function resetDecorations(): void {
     // even if block mode isn't active, disposing these can't hurt
-    targetsDecoration.dispose();
-    forceTargetsDecoration.dispose();
+    decorations.sibling.dispose();
+    decorations.parent.dispose();
 
     if (!blockModeActive.get()) {
         return;
     }
 
-    targetsDecoration = vscode.window.createTextEditorDecorationType({
-        backgroundColor: targetsDecorationColor,
+    decorations.sibling = vscode.window.createTextEditorDecorationType({
+        backgroundColor: colorConfig.get().siblingColor,
     });
-    forceTargetsDecoration = vscode.window.createTextEditorDecorationType({
-        backgroundColor: forceTargetsDecorationColor,
+    decorations.parent = vscode.window.createTextEditorDecorationType({
+        backgroundColor: colorConfig.get().parentColor,
     });
 }
 
@@ -138,8 +140,8 @@ function updateTargetHighlights(editor: vscode.TextEditor, vscodeSelection: vsco
 
     const selection = fileTree.resolveVscodeSelection(vscodeSelection);
     if (selection === undefined) {
-        editor.setDecorations(targetsDecoration, []);
-        editor.setDecorations(forceTargetsDecoration, []);
+        editor.setDecorations(decorations.sibling, []);
+        editor.setDecorations(decorations.parent, []);
         return;
     }
 
@@ -167,8 +169,8 @@ function updateTargetHighlights(editor: vscode.TextEditor, vscodeSelection: vsco
         forceTargets.push(parent.toVscodeSelection());
     }
 
-    editor.setDecorations(targetsDecoration, targets);
-    editor.setDecorations(forceTargetsDecoration, forceTargets);
+    editor.setDecorations(decorations.sibling, targets);
+    editor.setDecorations(decorations.parent, forceTargets);
 }
 
 export function toggleBlockMode(): void {
@@ -186,6 +188,18 @@ export function activate(): vscode.Disposable[] {
         vscode.window.onDidChangeTextEditorSelection((event) =>
             updateTargetHighlights(event.textEditor, event.selections[0])
         ),
+        vscode.workspace.onDidChangeConfiguration((event) => {
+            if (event.affectsConfiguration("colors")) {
+                colorConfig.set(configuration.getColorConfig());
+            }
+        }),
+        colorConfig.onDidChange((_) => {
+            resetDecorations();
+            const editor = vscode.window.activeTextEditor;
+            if (editor !== undefined) {
+                updateTargetHighlights(editor, editor.selection);
+            }
+        }),
         codeBlocks.active.onDidChange((newActive) => {
             if (!newActive && blockModeActive.get()) {
                 blockModeActive.set(true);
@@ -197,11 +211,11 @@ export function activate(): vscode.Disposable[] {
                 updateTargetHighlights(editor, editor.selection);
             }
         }),
-        blockModeActive.onDidChange(async (blockModeActive) => {
-            await vscode.commands.executeCommand("setContext", "codeBlocks.blockMode", blockModeActive);
+        blockModeActive.onDidChange(async (active) => {
+            await vscode.commands.executeCommand("setContext", "codeBlocks.blockMode", active);
         }),
-        blockModeActive.onDidChange((blockModeActive) => {
-            blockModeActive ? statusBar.show() : statusBar.hide();
+        blockModeActive.onDidChange((active) => {
+            active ? statusBar.show() : statusBar.hide();
             resetDecorations();
 
             if (vscode.window.activeTextEditor !== undefined) {
