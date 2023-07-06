@@ -203,7 +203,7 @@
         "codeBlocks.colors.enabled": {
           "type": "boolean",
           "description": "Whether block mode colors are enabled",
-          "default": true
+          "default": false
         },
         "codeBlocks.colors.sibling": {
           "type": "string",
@@ -217,7 +217,7 @@
         },
         "codeBlocks.ignoredLanguageIds": {
           "type": "array",
-          "description": "List of language IDs not to load parsers for",
+          "markdownDescription": "Array of VScode [languageId](https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers)s not to install/load parsers for.",
           "default": [
             "plaintext"
           ]
