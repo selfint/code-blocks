@@ -123,7 +123,7 @@ Language ID: `typescriptreact`
 
 NPM package name: [tree-sitter-typescript](https://www.npmjs.com/package/tree-sitter-typescript)
 
-Parser name: `tree-sitter-tsx`
+WASM parser name: `tree-sitter-ts.wasm`
 
 Desired blocks: JSX blocks. Documentation comments should be merged with documentees.
 
