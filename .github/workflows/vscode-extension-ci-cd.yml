@@ -50,6 +50,37 @@ jobs:
               with:
                   run: yarn test
 
+    generate-assets:
+        timeout-minutes: 15
+        name: Generate assets
+        needs: test
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+            - name: Install Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 16
+            - name: Install extension dependencies
+              run: yarn run install:all
+            - name: Build webview
+              run: yarn run build:webview
+            - name: Install asset generation dependencies
+              run: |
+                  apt install -y ffmpeg libnss3 xvfb
+                  xvfb-run -s ":99 -auth /tmp/xvfb.auth -ac -screen 0 1920x1080x24" yarn test &
+                  sleep 10
+                  ffmpeg -y -f x11grab -video_size 1920x1080 -i :99 -codec:v libx264 -r 30 assets.mp4
+                  ffmpeg -ss 1 -t 30 -i assets.mp4 -vf "fps=10,scale=320:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse" -loop 0 assets.gif
+            - name: Upload assets
+              uses: actions/upload-artifact@v3
+              with:
+                  name: assets
+                  path: |
+                      assets.mp4
+                      assets.gif
+
     package:
         name: Package extension
         needs: test
