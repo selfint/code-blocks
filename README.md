@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/extension-logo.png" />
+  <img src="./assets/extension-logo.png" />
   <h1><p align="center">Code blocks</p></h1>
 </p>
 
@@ -15,8 +15,8 @@ Syntactically aware code selection (e.g. select scope), navigation (e.g. goto ne
 and manipulation (e.g. re-order function parameters), right inside your editor.
 
 <p align="center">
-<img width="49%" src="assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20rust%201.gif" />
-<img width="49%" src="assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20svelte%201.gif" />
+<img width="49%" src="./assets/block-mode/Code Blocks Demo - Block Mode - rust 1.gif" />
+<img width="49%" src="./assets/block-mode/Code Blocks Demo - Block Mode - svelte 1.gif" />
 </p>
 
 ### Code Blocks Editor
