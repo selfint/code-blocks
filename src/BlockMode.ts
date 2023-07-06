@@ -36,39 +36,50 @@ function resetDecorations(): void {
 
 function selectBlock(): void {
     const fileTree = codeBlocks.activeFileTree.get();
-    if (vscode.window.activeTextEditor?.document === undefined || fileTree === undefined) {
+    const activeEditor = vscode.window.activeTextEditor;
+
+    if (activeEditor?.document === undefined || fileTree === undefined) {
         return;
     }
 
-    const activeEditor = vscode.window.activeTextEditor;
     const cursorIndex = activeEditor.document.offsetAt(activeEditor.selection.active);
     const selection = fileTree.selectBlock(cursorIndex);
     if (selection !== undefined) {
         activeEditor.selection = selection.toVscodeSelection();
+        activeEditor.revealRange(
+            activeEditor.selection,
+            vscode.TextEditorRevealType.InCenterIfOutsideViewport
+        );
     }
 }
 
 function updateSelection(direction: UpdateSelectionDirection): void {
     const fileTree = codeBlocks.activeFileTree.get();
-    if (vscode.window.activeTextEditor?.document === undefined || fileTree === undefined) {
+    const activeEditor = vscode.window.activeTextEditor;
+
+    if (activeEditor?.document === undefined || fileTree === undefined) {
         return;
     }
 
-    const activeEditor = vscode.window.activeTextEditor;
     const selection = fileTree.resolveVscodeSelection(activeEditor.selection);
     if (selection !== undefined) {
         selection.update(direction, fileTree.blocks);
         activeEditor.selection = selection.toVscodeSelection();
+        activeEditor.revealRange(
+            activeEditor.selection,
+            vscode.TextEditorRevealType.InCenterIfOutsideViewport
+        );
     }
 }
 
 async function moveSelection(direction: MoveSelectionDirection): Promise<void> {
     const fileTree = codeBlocks.activeFileTree.get();
-    if (fileTree === undefined || vscode.window.activeTextEditor === undefined) {
+    const activeEditor = vscode.window.activeTextEditor;
+    if (fileTree === undefined || activeEditor === undefined) {
         return;
     }
 
-    const selection = fileTree.resolveVscodeSelection(vscode.window.activeTextEditor.selection);
+    const selection = fileTree.resolveVscodeSelection(activeEditor.selection);
     if (selection === undefined) {
         return;
     }
@@ -76,7 +87,8 @@ async function moveSelection(direction: MoveSelectionDirection): Promise<void> {
     const result = await fileTree.moveSelection(selection, direction);
     switch (result.status) {
         case "ok":
-            vscode.window.activeTextEditor.selection = result.result;
+            activeEditor.selection = result.result;
+            activeEditor.revealRange(result.result, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
             break;
 
         case "err":
@@ -88,11 +100,12 @@ async function moveSelection(direction: MoveSelectionDirection): Promise<void> {
 
 function navigate(direction: "up" | "down" | "left" | "right"): void {
     const fileTree = codeBlocks.activeFileTree.get();
-    if (vscode.window.activeTextEditor?.document === undefined || fileTree === undefined) {
+    const activeEditor = vscode.window.activeTextEditor;
+
+    if (activeEditor?.document === undefined || fileTree === undefined) {
         return;
     }
 
-    const activeEditor = vscode.window.activeTextEditor;
     const selection = fileTree.resolveVscodeSelection(activeEditor.selection);
     const blocks = fileTree.blocks;
     const parent = selection?.getParent(blocks);
@@ -125,6 +138,10 @@ function navigate(direction: "up" | "down" | "left" | "right"): void {
 
     if (newPosition) {
         activeEditor.selection = new vscode.Selection(newPosition, newPosition);
+        activeEditor.revealRange(
+            activeEditor.selection,
+            vscode.TextEditorRevealType.InCenterIfOutsideViewport
+        );
     }
 }
 
