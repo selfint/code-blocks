@@ -1,9 +1,24 @@
 <p align="center">
-  <img src="./assets/extension-logo.png" />
-  <h1><p align="center">Code blocks</p></h1>
+<a href="https://github.com/selfint/code-blocks">
+<img src="./assets/extension-logo.png"alt="logo" width='128'/>
+</a>
 </p>
 
-[![vscode-extension CI/CD](https://github.com/selfint/code-blocks/actions/workflows/vscode-extension-ci-cd.yml/badge.svg)](https://github.com/selfint/code-blocks/actions/workflows/vscode-extension-ci-cd.yml)
+<p align="center">
+<a href="https://marketplace.visualstudio.com/items?itemName=selfint.code-blocks" target="__blank"><img src="https://img.shields.io/visual-studio-marketplace/v/selfint.code-blocks.svg?color=blue&amp;label=VS%20Code%20Marketplace&logo=visual-studio-code" alt="Visual Studio Marketplace Version" /></a>
+<a href="https://marketplace.visualstudio.com/items?itemName=selfint.code-blocks" target="__blank"><img src="https://img.shields.io/visual-studio-marketplace/d/selfint.code-blocks.svg?color=4bdbe3" alt="Visual Studio Marketplace Downloads" /></a>
+<a href="https://marketplace.visualstudio.com/items?itemName=selfint.code-blocks" target="__blank"><img src="https://img.shields.io/visual-studio-marketplace/i/selfint.code-blocks.svg?color=63ba83" alt="Visual Studio Marketplace Installs" /></a>
+<br/>
+<a href="https://github.com/selfint/code-blocks/actions/workflows/vscode-extension-ci-cd.yml" target="__blank"><img alt="GitHub CI" src="https://img.shields.io/github/actions/workflow/status/selfint/code-blocks/vscode-extension-ci-cd.yml"></a>
+<a href="https://github.com/selfint/code-blocks" target="__blank"><img src="https://img.shields.io/github/last-commit/selfint/code-blocks.svg?color=c977be" alt="GitHub last commit" /></a>
+<a href="https://github.com/selfint/code-blocks/issues" target="__blank"><img src="https://img.shields.io/github/issues/selfint/code-blocks.svg?color=a38eed" alt="GitHub issues" /></a>
+<a href="https://github.com/selfint/code-blocks" target="__blank"><img alt="GitHub stars" src="https://img.shields.io/github/stars/selfint/code-blocks?style=social"></a>
+
+</p>
+
+<br>
+
+  <h1><p align="center">Code blocks</p></h1>
 
 Supercharge your editor with syntactically aware code navigation and manipulation, **_in any language_** supported by [tree-sitter](https://tree-sitter.github.io/tree-sitter/#parsers).
 
@@ -226,3 +241,7 @@ since whitespace is meaningful it's a bit tricky. Hopefully in the future
 this is stabilized.
 
 > Moving methods and classes with decorators
+
+## License
+
+MIT License © 2023 [Tom Selfin](https://github.com/selfint)
