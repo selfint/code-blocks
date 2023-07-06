@@ -1,91 +1,73 @@
+<p align="center">
+  <img src="assets/extension-logo.png" />
+  <h1><p align="center">Code blocks</p></h1>
+</p>
+
 [![vscode-extension CI/CD](https://github.com/selfint/code-blocks/actions/workflows/vscode-extension-ci-cd.yml/badge.svg)](https://github.com/selfint/code-blocks/actions/workflows/vscode-extension-ci-cd.yml)
 
-# Code Blocks
+Supercharge your editor with syntactically aware code navigation and manipulation, **_in any language_** supported by [tree-sitter](https://tree-sitter.github.io/tree-sitter/#parsers).
 
-Move your code blocks around!
+## Features
 
-This extension allows you to move your code as blocks, **_in any language_\***.
+### Block mode
 
-Rust (technically just `cargo`) is required for this extension to work, go to [rust-lang.org](https://www.rust-lang.org/) to install it.
+Syntactically aware code selection (e.g. select scope), navigation (e.g. goto next function)
+and manipulation (e.g. re-order function parameters), right inside your editor.
 
-# Installation
+<p align="center">
+<img width="49%" src="assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20rust%201.gif" />
+<img width="49%" src="assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20svelte%201.gif" />
+</p>
 
-1. Install the extension from:
+### Code Blocks Editor
 
-    - Inside vscode, search for the `selfint.code-blocks` extension.
-    - The [vscode marketplace](https://marketplace.visualstudio.com/items?itemName=selfint.code-blocks).
-    - The GitHub [releases](https://github.com/selfint/code-blocks/releases?q=vscode-extension&expanded=true) page.
+Birds eye view over all your code blocks, with point and click refactoring.
 
-2. Open a file with the Code Blocks Editor, the `code-blocks-cli` will need to be downloaded
-   by the method of your choosing (using `cargo` or downloading from the latest release).
+![svelte-1](./assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20svelte%201.gif)
 
-3. Then the tree sitter grammar will be downloaded and compiled automatically.
+## Requirements
 
-That's it!
+-   `node` / `npm`: Used to download tree-sitter language parsers. Can be installed from [here](https://nodejs.org/en/download).
 
-The next time you open a file in the same language, everything will already be setup.
+-   `tree-sitter`: Used to build tree-sitter language parsers. After installing `npm`, can be installed by running:
 
-If you open a file in a new language, the appropriate tree sitter grammar will be downloaded and compiled again.
+    ```console
+    $ npm i -g tree-sitter
+    ```
 
-## Installation from GitHub release demo
+-   `emcc`: Emscripten compiler, used by `tree-sitter` to compile parsers to WASM. Can be provided either through:
 
-![installation video](./assets/Code-Blocks-Installation-Demo.gif)
+    -   [Emscripten](https://emscripten.org/docs/getting_started/downloads.html) (preferred): Provides `emcc` directly.
 
-# Usage
+    -   [Docker](https://docs.docker.com/get-docker/): Provides `emcc` via the [`emscripten/emsdk`](https://hub.docker.com/r/emscripten/emsdk) image. Note that the first parser installation can take some time (depending on internet speed), since the image is 1.68GB. Next installs will re-use the image and should take a few seconds at most.
 
-The purpose of this extension is to allow for fast and correct manipulation
-and navigation of the syntax tree of the current file's code.
+## Commands
 
-It does this by parsing the source code using [tree-sitter](https://tree-sitter.github.io/tree-sitter/)
-to get the syntax tree of the file. It then runs [tree-sitter queries](https://tree-sitter.github.io/tree-sitter/using-parsers#pattern-matching-with-queries)
-on that tree, to create a simpler tree containing the desired _blocks_. A
-_block_ can be whatever you want, for example, this is a query for a function
-block in python: `(function_definition) @item`. After the blocks are resolved,
-they are made available for manipulation and navigation in two "modes",
-the "block" mode, and the "editor" mode.
+| Command                            | Usage                                                           |
+| ---------------------------------- | --------------------------------------------------------------- |
+| `codeBlocks.toggleActive`          | Toggle auto-parsing current file                                |
+| `codeBlocks.toggleBlockMode`       | Toggle Block Mode, will `toggleActive` if auto-parsing disabled |
+| `codeBlocks.toggleBlockModeColors` | Toggle Block Mode sibling/parent highlights                     |
+| `codeBlocks.open`                  | Reopen current file with Code Blocks editor                     |
+| `codeBlocks.openToTheSide`         | Open current file with Code Blocks editor on the side           |
+| `codeBlocks.openTreeViewer`        | View current file syntax tree                                   |
+| `codeBlocks.moveUp`                | Swap block with its previous sibling                            |
+| `codeBlocks.moveDown`              | Swap block with its next sibling                                |
+| `codeBlocks.moveUpForce`           | Move block before its parent                                    |
+| `codeBlocks.moveDownForce`         | Move block after its parent                                     |
+| `codeBlocks.navigateUp`            | Navigate to previous sibling                                    |
+| `codeBlocks.navigateDown`          | Navigate to next sibling                                        |
+| `codeBlocks.navigateUpForce`       | Navigate to parent start                                        |
+| `codeBlocks.navigateDownForce`     | Navigate to parent end                                          |
+| `codeBlocks.selectBlock`           | Expand selection to previous sibling                            |
+| `codeBlocks.selectPrevious`        | Expand selection to previous sibling                            |
+| `codeBlocks.selectNext`            | Expand selection to next sibling                                |
+| `codeBlocks.selectParent`          | Expand selection to parent                                      |
+| `codeBlocks.selectChild`           | Contract selection to first child                               |
 
-The "block" mode is the preferred and simpler variant, with the "editor" mode
-allowing for more niche use cases.
+## Keybindings
 
-## Block mode
-
-To enter "block" mode, use the `codeBlocks.toggle` command, and again to exit.
-
-In "block" mode, the block containing the current cursor position is highlighted,
-and optionally the next and previous blocks as well. To navigate between the blocks,
-use the `codeBlocks.navigateUp` / `codeBlocks.navigateDown` commands, to move the
-current block, use the `codeBlocks.moveUp` / `codeBlocks.moveDown` commands. In some
-cases the previous/next block's color will change, and the navigate/move command will
-not work. This is because Code Blocks won't move a block outside it's parent scope,
-unless you "force" it to. To perform a "force" move/navigate command, use their force
-variant: `codeBlocks.navigateUpForce` / `codeBlocks.moveUpForce`.
-
-To select the current block, use the `codeBlocks.selectBlock` command.
-
-### Example
-
-![svelte-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20svelte%201.gif)
-
-More examples below.
-
-### Tl;dr
-
-| Command                                                       | Usage                                            |
-| ------------------------------------------------------------- | ------------------------------------------------ |
-| `codeBlocks.toggle`                                           | Toggle "block mode" on / off                     |
-| `codeBlocks.moveUp` / `codeBlocks.moveDown`                   | Move the current block up / down                 |
-| `codeBlocks.moveUpForce` / `codeBlocks.moveDownForce`         | Move the current block before / after its parent |
-| `codeBlocks.navigateUp` / `codeBlocks.navigateDown`           | Jump to the previous / next block                |
-| `codeBlocks.navigateUpForce` / `codeBlocks.navigateDownForce` | Jump to the parent / child block                 |
-| `codeBlocks.selectBlock`                                      | Select the current block                         |
-| `codeBlocks.selectNext`                                       | Expand selection to next block                   |
-| `codeBlocks.selectPrevious`                                   | Expand selection to previous block               |
-| `codeBlocks.selectParent`                                     | Expand selection to parent                       |
-| `codeBlocks.selectChild`                                      | Reduce selection to first child                  |
-
-### Keybindings
-
-These are the default key bindings, they are only active when "block mode" is on:
+These are the default key bindings, they are only active when "block mode" is active, and when the cursor is inside a text editor tab:
 
 | Command                        | Keybinding (cmd on mac) |
 | ------------------------------ | ----------------------- |
@@ -93,47 +75,91 @@ These are the default key bindings, they are only active when "block mode" is on
 | `codeBlocks.moveDown`          | `alt+right`             |
 | `codeBlocks.moveUpForce`       | `alt+up`                |
 | `codeBlocks.moveDownForce`     | `alt+down`              |
-| `codeBlocks.navigateUp`        | `ctrl/cmd+up`           |
-| `codeBlocks.navigateDown`      | `ctrl/cmd+down`         |
-| `codeBlocks.navigateUpForce`   | `ctrl/cmd+shift+up`     |
-| `codeBlocks.navigateDownForce` | `ctrl/cmd+shift+down`   |
-| `codeBlocks.selectNext`        | `shift+right`           |
+| `codeBlocks.navigateUp`        | `ctrl/cmd+left`         |
+| `codeBlocks.navigateDown`      | `ctrl/cmd+right`        |
+| `codeBlocks.navigateUpForce`   | `ctrl/cmd+up`           |
+| `codeBlocks.navigateDownForce` | `ctrl/cmd+down`         |
+| `codeBlocks.selectBlock`       | -                       |
 | `codeBlocks.selectPrevious`    | `shift+left`            |
+| `codeBlocks.selectNext`        | `shift+right`           |
 | `codeBlocks.selectParent`      | `shift+up`              |
 | `codeBlocks.selectChild`       | `shift+down`            |
 
-These commands are not bound by default:
+## Configuration
 
-| Command                    |
-| -------------------------- |
-| `codeBlocks.toggle`        |
-| `codeBlocks.selectBlock`   |
-| `codeBlocks.open`          |
-| `codeBlocks.openToTheSide` |
+### Global
 
-## Editor mode
+-   `codeBlocks.colors.enabled`: Whether Block Mode should color selections or not. Defaults to `true`.
+-   `codeBlocks.colors.sibling`: CSS string for sibling selection background color. Defaults to `var(--vscode-editor-selectionHighlightBackground)`.
+-   `codeBlocks.colors.parent`: CSS string for parent selection background color. Defaults to `var(--vscode-editor-linkedEditingBackground)`.
+-   `codeBlocks.ignoredLanguageIds`: Array of VScode [languageId](https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers)s not to install/load parsers for.
 
-To enter "editor" mode, use the `codeBlocks.open` or `codeBlocks.openToTheSide` commands.
+### Language specific (advanced)
 
-To exit, either use the `workbench.action.reopenWithEditor` and open with the Text Editor, or
-simply close the Code Blocks Editor tab.
+These configurations are set at the [languageId](https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers) level.
 
-In "editor" mode, all the blocks in the current file are visible. To move a block,
-click it, then click on another block. The first block will be moved below
-the second block. Clicking the same block twice will de-select the block.
+Most languages should just work™, if you find a language that requires manual configuration please [create an issue](https://github.com/selfint/code-blocks/issues).
+Or [create a pull request](https://github.com/selfint/code-blocks/pulls) with your configuration added to the `configurationDefaults` section of the `package.json` file.
 
-In contrast to "block" mode, this allows you to move any block in the file to anywhere else
-in the file, in one command.
+-   `codeBlocks.npmPackageName`: [NPM](https://www.npmjs.com/) package name of the `tree-sitter` parser to use for the
+    language. Defaults to `tree-sitter-<languageId>`, change if the package name doesn't match the languageId.
 
-Note that the same "force" semantics are enforced, you can't move a block to a different scope.
-If you try, you'll receive a warning and a "Try force" notification, which will allow you
-to perform the move operation.
+-   `codeBlocks.parserName`: Filename of the WASM parser built by the `tree-sitter build-wasm` command, without the
+    `.wasm` extension. Defaults to `tree-sitter-<languageId>`, change if the parser filename doesn't match the languageId.
 
-## Examples - Block mode
+-   `codeBlocks.subdirectory`: Directory inside the NPM package containing the `tree-sitter` grammar. Defaults to the
+    root directory of the package, change if the grammar isn't there.
 
-In this mode, the current, previous, and next blocks are highlighted inside the editor.
-Then, by running the "Move block up/down" commands, the current block is moved in the
-appropriate direction.
+-   `codeBlocks.queries`: Tree-sitter [queries](https://tree-sitter.github.io/tree-sitter/using-parsers#query-syntax)
+    to generate blocks, must contain at least one `@capture`. The name of the capture doesn't matter, the entire match will be a block.
+
+    Required by [Code Blocks Editor](#code-blocks-editor).
+
+    Optional for [Block Mode](#block-mode) - will auto-expand a selection if it is contained by a block.
+
+#### **Example configuration for `tsx`**
+
+Language ID: `typescriptreact`
+
+NPM package name: [tree-sitter-typescript](https://www.npmjs.com/package/tree-sitter-typescript)
+
+Parser name: `tree-sitter-tsx`
+
+Desired blocks: JSX blocks. Documentation comments should be merged with documentees.
+
+```jsonc
+{
+    // language ID of .tsx files is 'typescriptreact'
+    "[typescriptreact]": {
+        // languageID != package name
+        "codeBlocks.npmPackageName": "tree-sitter-typescript",
+        // languageID != parser name
+        "codeBlocks.parserName": "tree-sitter-tsx",
+        // tree-sitter-typescript package contains a 'typescript' dir and a 'tsx' dir, so we need to specify 'tsx
+        "codeBlocks.subdirectory": "tsx",
+        "codeBlocks.queries": [
+            // group documentation comments with their documentees
+            "( (comment)* @header . (class_declaration) @item)",
+            "( (comment)* @header . (method_definition) @item)",
+            "( (comment)* @header . (function_declaration) @item)",
+            "( (comment)* @header . (export_statement) @item)",
+            // build blocks from jsx elements
+            "(jsx_element) @item",
+            "(jsx_self_closing_element) @item"
+        ]
+    }
+}
+```
+
+### Custom editors
+
+-   Code Blocks Editor (viewType `codeBlocks.editor`): UI for moving code blocks inside a file. Useful when refactoring large blocks over long distances.
+
+## Known Issues
+
+-   Out of bounds memory access ([#154](https://github.com/selfint/code-blocks/issues/154)): For now, reloading the editor fixes this.
+
+## Gallery
 
 ### Rust
 
@@ -200,89 +226,3 @@ since whitespace is meaningful it's a bit tricky. Hopefully in the future
 this is stabilized.
 
 > Moving methods and classes with decorators
-
-![python-1](./assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20python%201.gif)
-
-## \*Supported languages
-
-To support a language, [tree-sitter queries](https://tree-sitter.github.io/tree-sitter/using-parsers#query-syntax)
-are required to resolve blocks. This involves some manual entry for each language, but not much.
-
-Also, to use a language, a [tree-sitter grammar](https://tree-sitter.github.io/tree-sitter/creating-parsers#the-grammar-dsl)
-is required. There are [many grammars](https://github.com/tree-sitter) already written,
-but to use them they need to be compiled to web assembly. The extension will
-automatically download and compile the grammar for you, but sometimes it needs some metadata
-to be manually configured.
-
-For now, these are the default configured languages:
-
--   [x] Rust
--   [x] TypeScript
--   [x] TypeScript + JSX (typescriptreact)
--   [x] Svelte
--   [x] Python
--   [x] Java
-
-Next up:
-
--   [ ] C#
--   [ ] C
--   [ ] C++
--   [ ] JavaScript
-
-### Adding a language
-
-To add support for a language yourself, you'll need to:
-
-1. Write the tree sitter queries for creating the blocks.
-
-2. Configure the installation method of the grammar (usually not needed).
-
-Both steps are only changes to your `.vscode/settings.json` file, and will automatically be used
-by the extension.
-
-Also, please [submit a PR](https://github.com/selfint/code-blocks/pulls) with your language
-configuration added to the `package.json` default configurations.
-
-#### Python example
-
-Python's [npm package](https://www.npmjs.com/package/tree-sitter-python) and languageId are the same
-`tree-sitter-python` and `python`, respectively. The grammar is at the root directory of the project
-(this is almost always true). That means only the queries need to be configured:
-
-```json
-"[python]": {
-    "codeBlocks.queries": [
-        "(class_definition) @item",
-        "(function_definition) @item",
-        "(decorated_definition) @item"
-    ]
-},
-```
-
-#### TSX example
-
-This is the most complex default configuration.
-In .ts(x) code, documentation comes before the object it is describing, so we need to account
-for that in the queries. Also, it's [npm package](https://www.npmjs.com/package/tree-sitter-typescript) is called
-`tree-sitter-typescript`, while it's languageId is `typescriptreact`. Finally, the grammar
-is inside a subdirectory called 'tsx'.
-
-```json
-"[typescriptreact]": {
-    "codeBlocks.npmPackageName": "tree-sitter-typescript",
-    "codeBlocks.parserName": "tree-sitter-tsx",
-    "codeBlocks.subdirectory": "tsx",
-    "codeBlocks.queries": [
-        "( (comment)* @header . (class_declaration) @item)",
-        "( (comment)* @header . (method_definition) @item)",
-        "( (comment)* @header . (function_declaration) @item)",
-        "( (comment)* @header . (export_statement) @item)",
-        "(jsx_element) @item",
-        "(jsx_self_closing_element) @item"
-    ]
-},
-```
-
-For figuring out how to write the queries, use the
-[Tree-sitter playground](https://tree-sitter.github.io/tree-sitter/playground).
