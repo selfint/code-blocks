@@ -66,9 +66,9 @@ jobs:
             - name: Build webview
               run: yarn run build:webview
             - name: Install asset generation dependencies
-              run: |
-                  sudo apt install -y ffmpeg libnss3 xvfb
-                  xvfb-run -s ":99 -ac -screen 0 800x600x24" yarn test &
+              run: sudo apt install -y ffmpeg libnss3 xvfb
+            - name: Build assets
+              run: xvfb-run -s ":99 -ac -screen 0 800x600x24" yarn test &
                   ffmpeg -y -f x11grab -video_size 800x600 -i :99 -r 60 assets.gif
             - name: Upload assets
               uses: actions/upload-artifact@v3
