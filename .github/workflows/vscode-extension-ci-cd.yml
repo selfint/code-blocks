@@ -69,7 +69,7 @@ jobs:
               run: sudo apt install -y ffmpeg libnss3 xvfb
             - name: Build assets
               run: xvfb-run -s ":99 -ac -screen 0 800x600x24" yarn test &
-                  ffmpeg -y -f x11grab -filter_complex "fps=10:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=32[p];[s1][p]paletteuse=dither=bayer" -video_size 800x600 -i :99 -r 60 assets.gif
+                  ffmpeg -y -f x11grab -filter_complex "fps=10:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=32[p];[s1][p]paletteuse=dither=bayer" -video_size 800x600 -i :99 -r 60 assets.gif &&
                   ffmpeg -i assets.gif -vf "select='gt(scene,0.0001)'" assets.gif
             - name: Upload assets
               uses: actions/upload-artifact@v3
