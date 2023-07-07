@@ -38,7 +38,7 @@ and manipulation (e.g. re-order function parameters), right inside your editor.
 
 Birds eye view over all your code blocks, with point and click refactoring.
 
-![svelte-1](./assets/editor/Code Blocks Demo - Editor - svelte 1.gif)
+![svelte-1](./assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20svelte%201.gif)
 
 ## Requirements
 
