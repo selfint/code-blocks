@@ -68,21 +68,18 @@ jobs:
             - name: Install asset generation dependencies
               run: |
                   sudo apt install -y ffmpeg libnss3 xvfb
-                  xvfb-run -s ":99 -auth /tmp/xvfb.auth -ac -screen 0 1920x1080x24" yarn test &
-                  sleep 10
-                  ffmpeg -y -f x11grab -video_size 1920x1080 -i :99 -codec:v libx264 -r 30 assets.mp4
-                  ffmpeg -ss 1 -t 30 -i assets.mp4 -vf "fps=10,scale=320:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse" -loop 0 assets.gif
+                  xvfb-run -s ":99 -ac -screen 0 800x600x24" yarn test &
+                  ffmpeg -y -f x11grab -video_size 800x600 -i :99 -r 60 assets.gif
             - name: Upload assets
               uses: actions/upload-artifact@v3
               with:
                   name: assets
                   path: |
-                      assets.mp4
                       assets.gif
 
     package:
         name: Package extension
-        needs: test
+        needs: [test, generate-assets]
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
@@ -106,25 +103,17 @@ jobs:
     release:
         name: Release extension
         if: startsWith(github.ref, 'refs/tags/v')
-        needs: test
+        needs: package
 
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
-            - name: Set Node.js 16.x
-              uses: actions/setup-node@v3
+            - name: Download package
+              uses: actions/download-artifact@v3
               with:
-                  node-version: 16.x
-            - name: Install vsce
-              run: npm i -g @vscode/vsce
-            - name: Install extension dependencies
-              run: yarn run install:all
-            - name: Build webview
-              run: yarn run build:webview
-            - name: Build extension
-              run: vsce package --yarn --githubBranch ${{ github.ref_name }}
+                  name: code-blocks-${{ github.ref_name }}.vsix
+                  path: .
             - name: Release
               uses: softprops/action-gh-release@v1
               with:
                   generate_release_notes: true
-                  files: code-blocks-*.vsix
+                  files: *.vsix
