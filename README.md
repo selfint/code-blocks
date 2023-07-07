@@ -26,6 +26,12 @@ Supercharge your editor with syntactically aware code navigation and manipulatio
 
 ### Block mode
 
+
+
+![vid2](https://github.com/selfint/code-blocks/assets/40059156/cf119c8c-184b-4bc5-933a-b20d36ac12ee)
+
+
+
 ![vid](./assets/assets_30fps_2.mov)
 
 Syntactically aware code selection (e.g. select scope), navigation (e.g. goto next function)
