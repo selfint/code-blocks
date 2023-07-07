@@ -26,10 +26,6 @@ Supercharge your editor with syntactically aware code navigation and manipulatio
 
 ### Block mode
 
-<video autoplay muted playsinline loop controls>
-    <source src="./assets/assets_30fps_2.mov" type="video/mp4" ></source>
-</video>
-
 Syntactically aware code selection (e.g. select scope), navigation (e.g. goto next function)
 and manipulation (e.g. re-order function parameters), right inside your editor.
 
