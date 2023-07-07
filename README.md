@@ -26,6 +26,8 @@ Supercharge your editor with syntactically aware code navigation and manipulatio
 
 ### Block mode
 
+![vid](./assets/assets_30fps_2.mov)
+
 Syntactically aware code selection (e.g. select scope), navigation (e.g. goto next function)
 and manipulation (e.g. re-order function parameters), right inside your editor.
 
