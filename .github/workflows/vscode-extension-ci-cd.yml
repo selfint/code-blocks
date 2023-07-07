@@ -51,7 +51,6 @@ jobs:
                   run: yarn test
 
     generate-assets:
-        timeout-minutes: 15
         name: Generate assets
         runs-on: ubuntu-latest
         steps:
@@ -63,22 +62,20 @@ jobs:
                   node-version: 16
             - name: Install extension dependencies
               run: yarn run install:all
-            - name: Build webview
-              run: yarn run build:webview
             - name: Install asset generation dependencies
               run: sudo apt install -y ffmpeg libnss3 xvfb
-            - name: Build assets
-              run: xvfb-run -s ":99 -ac -screen 0 800x600x24" yarn test &
-                  ffmpeg -y -f x11grab -video_size 800x600 -i :99 -c:v libx264 -pix_fmt yuv420p raw.mov
-            - name: Convert assets to gifs
-              run: |
-                  ffmpeg -i raw.mov -vf "select='gt(scene,0.0001)'" tests.gif
+            - name: Build webview
+              run: yarn run build:webview
+            - name: Build extension
+              run: yarn run compile
+            - name: Generate assets
+              run: chmod +x ./generate-assets.sh && ls ./out/generate-assets | xargs ./generate-assets.sh
             - name: Upload assets
               uses: actions/upload-artifact@v3
               with:
                   name: assets
                   path: |
-                      tests.gif
+                      *.gif
 
     package:
         name: Package extension
