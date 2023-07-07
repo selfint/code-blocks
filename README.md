@@ -26,9 +26,13 @@ Supercharge your editor with syntactically aware code navigation and manipulatio
 
 ### Block mode
 
-<video autoplay muted playsinline loop controls>
-    <source src="./assets/assets_30fps_2.mov" type="video/mp4" ></source>
-</video>
+<video src="https://user-images.githubusercontent.com/40059156/251854610-808f8c6e-615e-44f2-a59e-aa2f4128c337.mov" data-canonical-src="https://user-images.githubusercontent.com/40059156/251854610-808f8c6e-615e-44f2-a59e-aa2f4128c337.mov" controls="controls" muted="muted" class="d-block rounded-bottom-2 border-top width-fit"></video>
+
+---
+
+[./assets/assets_30fps_2.mov](https://github.com/selfint/code-blocks/assets/40059156/808f8c6e-615e-44f2-a59e-aa2f4128c337)
+
+---
 
 Syntactically aware code selection (e.g. select scope), navigation (e.g. goto next function)
 and manipulation (e.g. re-order function parameters), right inside your editor.
