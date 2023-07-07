@@ -12,7 +12,7 @@
 <a href="https://github.com/selfint/code-blocks/actions/workflows/vscode-extension-ci-cd.yml" target="__blank"><img alt="GitHub CI" src="https://img.shields.io/github/actions/workflow/status/selfint/code-blocks/vscode-extension-ci-cd.yml"></a>
 <a href="https://github.com/selfint/code-blocks" target="__blank"><img src="https://img.shields.io/github/last-commit/selfint/code-blocks.svg?color=c977be" alt="GitHub last commit" /></a>
 <a href="https://github.com/selfint/code-blocks/issues" target="__blank"><img src="https://img.shields.io/github/issues/selfint/code-blocks.svg?color=a38eed" alt="GitHub issues" /></a>
-<a href="https://github.com/selfint/code-blocks" target="__blank"><img alt="GitHub stars" src="https://img.shields.io/github/stars/selfint/code-blocks?style=social"></a>
+<a href="https://github.com/selfint/code-blocks/stargazers" target="__blank"><img alt="GitHub stars" src="https://img.shields.io/github/stars/selfint/code-blocks?style=social"></a>
 
 </p>
 
