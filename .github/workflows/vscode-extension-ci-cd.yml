@@ -72,14 +72,12 @@ jobs:
                   ffmpeg -y -f x11grab -video_size 800x600 -i :99 -c:v libx264 -pix_fmt yuv420p raw.mov
             - name: Process assets into .gif
               run: |
-                  ffmpeg -i raw.mov -vf "select='gt(scene,0.0001)'" tests.gif
-                  ffmpeg -i raw.mov -vf "select='gt(scene,0.0001)'" tests.mov
+                  ffmpeg -i raw.mov -vf "select='gt(scene,0.001)'" tests.mov
             - name: Upload assets
               uses: actions/upload-artifact@v3
               with:
                   name: assets
                   path: |
-                      tests.gif
                       tests.mov
 
     package:
