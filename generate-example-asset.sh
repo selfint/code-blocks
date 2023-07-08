@@ -14,6 +14,7 @@ output="${output%.*}".gif
 echo "Generating asset for example '$example' into '$output'"
 
 rawmov="raw.mov"
+croppedmov="cropped.mov"
 
 # record xvfb output
 EXAMPLE=$example xvfb-run -s ":99 -ac -screen 0 800x600x24" node ./out/examples/runExample.js &
@@ -22,4 +23,7 @@ ffmpeg -y -f x11grab -video_size 800x600 -i :99 -c:v libx264 -pix_fmt yuv420p $r
 wait
 
 # crop video start until vscode opens
-ffmpeg -i $rawmov -ss 5 -vf "select='gt(scene,0.0001)'" $output
+ffmpeg -i $rawmov -vf "select='gt(scene,0.0001)'" $croppedmov
+
+# remove time before test starts and convert to .gif
+ffmpeg -i $croppedmov -ss 5 $output
