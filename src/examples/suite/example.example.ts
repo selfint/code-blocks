@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { openDocument, initExample, sleep } from "../exampleUtils";
+import { initExample, openDocument, sleep } from "../exampleUtils";
 
 const TIMEOUT = process.env.EXAMPLE_TIMEOUT ?? "20s";
 test("Example", async function () {
