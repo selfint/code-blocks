@@ -14,7 +14,7 @@ echo
 for example in $(ls $examples)
 do
 
-    if [ "$example" != "template" ]; then
+    if [ "$example" != "template" ] && [ -d "$examples/$example" ]; then
         echo "Generating asset for example: $example"
         ./generate-example-asset.sh $example
     fi
