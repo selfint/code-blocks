@@ -3,14 +3,15 @@ import Mocha from "mocha";
 import glob from "glob";
 
 export function run(): Promise<void> {
-    if (process.argv.length !== 3) {
-        console.error(`Usage: node runExample.js <example>`);
-        console.log(`Got args: ${JSON.stringify(process.argv)}`);
+    if (process.env.EXAMPLE === undefined) {
+        console.log("@".repeat(1000));
+        console.error("No example file specified, set EXAMPLE environ found");
         process.exit(1);
     }
 
     // change extension to .js
-    const example = process.argv[2].substring(0, -2) + "js";
+    let example = process.env.EXAMPLE;
+    example = example.substring(0, example.length - 2) + "js";
 
     // Create the mocha test
     const mocha = new Mocha({
@@ -21,7 +22,7 @@ export function run(): Promise<void> {
     const testsRoot = path.resolve(__dirname, "..");
 
     return new Promise((c, e) => {
-        glob(`**/${example}`, { cwd: testsRoot }, (err, files) => {
+        glob(`suite/${example}`, { cwd: testsRoot }, (err, files) => {
             if (err) {
                 return e(err);
             }
