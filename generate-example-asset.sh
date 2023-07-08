@@ -26,7 +26,7 @@ wait
 
 # find timestamp of when vscode opens
 ffmpeg -i raw.mov -vf "select='gt(scene,0.0)',metadata=print:file=$example.log.txt" -an -f null -
-start=$(cat $example.log.txt | head -n 1 | awk -F'pts_time:' '{ print $2 + 1 }')
+start=$(head -n 1 $example.log.txt | awk -F 'pts_time:' '{ print $2 + 1 }')
 
 cat $example.log.txt
 echo start $start
