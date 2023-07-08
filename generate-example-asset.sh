@@ -22,4 +22,4 @@ ffmpeg -y -f x11grab -video_size 800x600 -i :99 -c:v libx264 -pix_fmt yuv420p $r
 wait
 
 # crop video start until vscode opens
-ffmpeg -i $rawmov -vf "select='gt(scene,0.0001)'" $output
+ffmpeg -i $rawmov -ss 5 -vf "select='gt(scene,0.0001)'" $output

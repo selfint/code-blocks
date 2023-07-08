@@ -1,8 +1,9 @@
-import { openFolder, sleep, testSelectionCommands } from "../exampleUtils";
+import { initExample, sleep, testSelectionCommands } from "../exampleUtils";
 
 const TIMEOUT = process.env.EXAMPLE_TIMEOUT ?? "2m";
 test("Block mode", async function () {
-    await openFolder();
+    await initExample();
+
     await testSelectionCommands({
         language: "rust",
         content: "fn main() { let a = [1, 2@22, 3]; }",

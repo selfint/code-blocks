@@ -7,12 +7,19 @@ import { join } from "path";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import settings from "./examples-editor/.vscode/settings.json";
 
-export async function openFolder(): Promise<void> {
+const GIF_SKIP_START_MS = 5000;
+export async function initExample(): Promise<void> {
+    const start = Math.floor(Date.now() / 1000);
+
     const exampleEditorPath = join(__dirname, "examples-editor");
     await vscode.commands.executeCommand("vscode.openFolder", vscode.Uri.file(exampleEditorPath), {
         forceNewWindow: false,
     });
     await vscode.commands.executeCommand("notifications.clearAll");
+
+    const duration = Math.floor(Date.now() / 1000) - start;
+    expect(duration).to.be.lessThan(GIF_SKIP_START_MS * 0.8);
+    await sleep(GIF_SKIP_START_MS * 1.1 - duration);
 }
 
 export async function sleep(ms: number): Promise<void> {
