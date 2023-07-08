@@ -51,7 +51,7 @@ export function getColorConfig(): ColorConfig {
     const colorConfig = vscode.workspace.getConfiguration("codeBlocks").get<ColorConfig>("colors");
 
     return {
-        enabled: colorConfig?.enabled ?? true,
+        enabled: colorConfig?.enabled ?? false,
         siblingColor: colorConfig?.siblingColor ?? defaultSiblingColor,
         parentColor: colorConfig?.parentColor ?? defaultParentColor,
     };

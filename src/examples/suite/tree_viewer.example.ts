@@ -1,15 +1,15 @@
 import * as vscode from "vscode";
-import { openDocument, sleep } from "../exampleUtils";
+import { notify, openDocument, sleep } from "../exampleUtils";
 import { TreeViewer } from "../../TreeViewer";
 import { expect } from "chai";
 
 const TIMEOUT = process.env.EXAMPLE_TIMEOUT ?? "2m";
 test("Tree viewer", async function () {
-    void vscode.window.showInformationMessage("Open any file");
+    await notify("Open any file");
 
-    await openDocument(
-        "rust",
-        `
+    await openDocument({
+        language: "rust",
+        content: `
 #[derive(Debug)]
 struct A {
     /// b property
@@ -19,11 +19,11 @@ struct A {
 fn main() {
 
 }
-`
-    );
+`,
+    });
 
     await sleep(1500);
-    void vscode.window.showInformationMessage("Call the 'codeBlocks.openTreeViewer' command");
+    await notify("Call the 'codeBlocks.openTreeViewer' command");
     await sleep(1500);
 
     await vscode.commands.executeCommand("codeBlocks.openTreeViewer");
@@ -53,13 +53,13 @@ source_file [1:0 - 10:0]
 
     await sleep(1500);
 
-    void vscode.window.showInformationMessage("Opening a different document updates the tree");
+    await notify("Opening a different document updates the tree");
 
     await sleep(1500);
 
-    await openDocument(
-        "typescriptreact",
-        `
+    await openDocument({
+        language: "typescriptreact",
+        content: `
 function main() {
     return (
         <>
@@ -67,8 +67,8 @@ function main() {
         </>
     )
 }
-    `
-    );
+    `,
+    });
 
     const didChange = (): boolean =>
         treeViewerDocument.getText() !== TreeViewer.placeholder &&

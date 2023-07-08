@@ -129,7 +129,7 @@ function navigate(direction: "up" | "down" | "left" | "right"): void {
 }
 
 function updateTargetHighlights(editor: vscode.TextEditor, vscodeSelection: vscode.Selection): void {
-    if (!blockModeActive.get()) {
+    if (!blockModeActive.get() || !colorConfig.get().enabled) {
         return;
     }
 
