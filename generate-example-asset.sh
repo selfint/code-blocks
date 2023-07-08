@@ -16,7 +16,7 @@ echo "Generating asset for example '$example' into '$output'"
 rawmov="raw.mov"
 croppedmov="cropped.mov"
 
-# run example in xvfb
+# run example in xvfb in the background
 EXAMPLE=$example xvfb-run -s ":99 -ac -screen 0 800x600x24" node ./out/examples/runExample.js &
 
 # record example into .mov (mov is better than gif for recording)
@@ -25,12 +25,16 @@ ffmpeg -y -f x11grab -video_size 800x600 -i :99 -c:v libx264 -pix_fmt yuv420p $r
 wait
 
 # find timestamp of when vscode opens
-ffmpeg -i raw.mov -vf "select='gt(scene,0.001)',metadata=print:file=log.txt" -an -f null -
-start=$(cat log.txt | head -n 1 | awk -F'pts_time:' '{ print $2 + 1 }')
+ffmpeg -i raw.mov -vf "select='gt(scene,0.0)',metadata=print:file=$example.log.txt" -an -f null -
+start=$(cat $example.log.txt | head -n 1 | awk -F'pts_time:' '{ print $2 + 1 }')
+
+cat $example.log.txt
+echo start $start
 
 # remove last second from recording
 newduration=$(ffprobe -v error -show_entries format=duration -of csv=p=0 $rawmov | awk '{print $1 - ' $start ' - 1}')
 
+echo start $start
 echo duration $(ffprobe -v error -show_entries format=duration -of csv=p=0 $rawmov)
 echo new duration $newduration
 
