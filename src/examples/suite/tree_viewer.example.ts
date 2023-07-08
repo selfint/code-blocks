@@ -6,7 +6,6 @@ import { expect } from "chai";
 const TIMEOUT = process.env.EXAMPLE_TIMEOUT ?? "2m";
 test("Tree viewer", async function () {
     void vscode.window.showInformationMessage("Open any file");
-    await sleep(1500);
 
     await openDocument(
         "rust",
