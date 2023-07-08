@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { openDocument, sleep } from "./testUtils";
+import { openDocument, sleep } from "../../exampleUtils";
 import { TreeViewer } from "../../../TreeViewer";
 import { expect } from "chai";
 

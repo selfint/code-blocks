@@ -1,6 +1,10 @@
 import * as vscode from "vscode";
-import { BlockMode, active, activeFileTree } from "../../../extension";
-import { FileTree } from "../../../FileTree";
+import { BlockMode, active, activeFileTree } from "../extension";
+import { FileTree } from "../FileTree";
+
+export async function sleep(ms: number): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 /**
  * Languages with .wasm parsers tracked by git

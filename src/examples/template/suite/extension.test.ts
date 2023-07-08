@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { SupportedTestLanguages, openDocument } from "./testUtils";
+import { SupportedTestLanguages, openDocument } from "../../exampleUtils";
 import { CodeBlocksEditorProvider } from "../../../editor/CodeBlocksEditorProvider";
 import { TreeViewer } from "../../../TreeViewer";
 import { expect } from "chai";
