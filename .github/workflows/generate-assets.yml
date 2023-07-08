@@ -15,7 +15,7 @@ permissions:
     contents: write
 
 env:
-    TEST_TIMEOUT: 5m
+    EXAMPLE_TIMEOUT: 5m
 
 jobs:
     generate-assets:
