@@ -50,40 +50,9 @@ jobs:
               with:
                   run: yarn test
 
-    generate-assets:
-        name: Generate assets
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v3
-            - name: Install Node.js
-              uses: actions/setup-node@v3
-              with:
-                  node-version: 16
-            - name: Install asset generation dependencies
-              run: sudo apt install -y ffmpeg libnss3 xvfb
-            - name: Install extension dependencies
-              run: yarn run install:all
-            - name: Build webview
-              run: yarn run build:webview
-            - name: Build extension
-              run: yarn run compile
-            - name: Generate assets
-              run: |
-                  chmod +x ./generate-assets.sh
-                  chmod +x ./generate-example-asset.sh
-                  ./generate-assets.sh
-
-            - name: Upload assets
-              uses: actions/upload-artifact@v3
-              with:
-                  name: assets
-                  path: |
-                      *.gif
-
     package:
         name: Package extension
-        needs: [test, generate-assets]
+        needs: test
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
