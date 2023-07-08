@@ -11,8 +11,8 @@ export async function sleep(ms: number): Promise<void> {
  */
 export type SupportedTestLanguages = "rust" | "typescriptreact";
 export async function openDocument(
-    content: string,
-    language: SupportedTestLanguages
+    language: SupportedTestLanguages,
+    content: string
 ): Promise<{ activeEditor: vscode.TextEditor; fileTree: FileTree }> {
     if (!active.get()) {
         active.set(true);

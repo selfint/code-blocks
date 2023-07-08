@@ -7,9 +7,9 @@ test("Example", async function () {
     await sleep(1500);
 
     await openDocument(
+        "rust",
         `// hello world
-`,
-        "rust"
+`
     );
 
     await sleep(1500);

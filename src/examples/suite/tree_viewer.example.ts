@@ -9,6 +9,7 @@ test("Tree viewer", async function () {
     await sleep(1500);
 
     await openDocument(
+        "rust",
         `
 #[derive(Debug)]
 struct A {
@@ -19,8 +20,7 @@ struct A {
 fn main() {
 
 }
-`,
-        "rust"
+`
     );
 
     await sleep(1500);
@@ -51,6 +51,59 @@ source_file [1:0 - 10:0]
     identifier [7:3 - 7:7]
     parameters [7:7 - 7:9]
     block [7:10 - 9:1]`);
+
+    await sleep(1500);
+
+    void vscode.window.showInformationMessage("Opening a different document updates the tree");
+
+    await sleep(1500);
+
+    await openDocument(
+        "typescriptreact",
+        `
+function main() {
+    return (
+        <>
+            <div>hello world</div>
+        </>
+    )
+}
+    `
+    );
+
+    const didChange = (): boolean =>
+        treeViewerDocument.getText() !== TreeViewer.placeholder &&
+        !treeViewerDocument.getText().startsWith("source_file");
+
+    if (didChange()) {
+        await new Promise<void>((r) =>
+            TreeViewer.treeViewer.onDidChange(() => {
+                if (!didChange()) {
+                    r();
+                }
+            })
+        );
+    }
+
+    await sleep(100);
+
+    expect("\n" + treeViewerDocument.getText()).to.be.equal(`
+program [1:0 - 8:4]
+  function_declaration [1:0 - 7:1]
+    identifier [1:9 - 1:13]
+    formal_parameters [1:13 - 1:15]
+    statement_block [1:16 - 7:1]
+      return_statement [2:4 - 6:5]
+        parenthesized_expression [2:11 - 6:5]
+          jsx_fragment [3:8 - 5:11]
+            jsx_text [3:10 - 4:12]
+            jsx_element [4:12 - 4:34]
+              jsx_opening_element [4:12 - 4:17]
+                identifier [4:13 - 4:16]
+              jsx_text [4:17 - 4:28]
+              jsx_closing_element [4:28 - 4:34]
+                identifier [4:30 - 4:33]
+            jsx_text [4:34 - 5:8]`);
 
     await sleep(1500);
 }).timeout(TIMEOUT);
