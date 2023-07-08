@@ -106,4 +106,6 @@ program [1:0 - 8:4]
             jsx_text [4:34 - 5:8]`);
 
     await sleep(1500);
+
+    await sleep(1500);
 }).timeout(TIMEOUT);

@@ -27,8 +27,8 @@ ffmpeg -y -f x11grab -video_size 800x600 -i :99 -c:v libx264 -pix_fmt yuv420p $r
 wait
 
 # find timestamp of when vscode opens
-ffmpeg -i raw.mov -vf "select='gt(scene,0.0)',metadata=print:file=log.txt" -an -f null -
-start=$(head -n 1 log.txt | awk  -F 'pts_time:' '{ print $2 + 1 }')
+ffmpeg -i raw.mov -vf "select='gt(scene,0.01)',metadata=print:file=log.txt" -an -f null -
+start=$(head -n 1 log.txt | awk  -F 'pts_time:' '{ print $2 + 5 }')
 
 cat log.txt
 echo start $start
