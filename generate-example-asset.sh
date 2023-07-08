@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/bin/sh -xv
+
+PS4='${LINENO}: '
 
 if [ "$#" -ne 1 ]; then
         echo "Usage: $0 <example-name>"
@@ -25,14 +27,14 @@ ffmpeg -y -f x11grab -video_size 800x600 -i :99 -c:v libx264 -pix_fmt yuv420p $r
 wait
 
 # find timestamp of when vscode opens
-ffmpeg -i raw.mov -vf "select='gt(scene,0.0)',metadata=print:file=$example.log.txt" -an -f null -
-start=$(head -n 1 $example.log.txt | awk -F 'pts_time:' '{ print $2 + 1 }')
+ffmpeg -i raw.mov -vf "select='gt(scene,0.0)',metadata=print:file=log.txt" -an -f null -
+start=$(head -n 1 log.txt | awk  -F 'pts_time:' '{ print $2 + 1 }')
 
-cat $example.log.txt
+cat log.txt
 echo start $start
 
 # remove last second from recording
-newduration=$(ffprobe -v error -show_entries format=duration -of csv=p=0 $rawmov | awk '{print $1 - ' $start ' - 1}')
+newduration=$(ffprobe -v error -show_entries format=duration -of csv=p=0 $rawmov | awk -v s="$start" '{print $1 - s - 1}')
 
 echo start $start
 echo duration $(ffprobe -v error -show_entries format=duration -of csv=p=0 $rawmov)
