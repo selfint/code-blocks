@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import { openDocument, sleep } from "../../exampleUtils";
-import { TreeViewer } from "../../../TreeViewer";
+import { openDocument, sleep } from "../exampleUtils";
+import { TreeViewer } from "../../TreeViewer";
 import { expect } from "chai";
 
 test("Tree viewer example", async function () {

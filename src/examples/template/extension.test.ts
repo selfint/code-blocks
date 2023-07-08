@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
-import { SupportedTestLanguages, openDocument } from "../../exampleUtils";
-import { CodeBlocksEditorProvider } from "../../../editor/CodeBlocksEditorProvider";
-import { TreeViewer } from "../../../TreeViewer";
+import { SupportedTestLanguages, openDocument } from "../exampleUtils";
+import { CodeBlocksEditorProvider } from "../../editor/CodeBlocksEditorProvider";
+import { TreeViewer } from "../../TreeViewer";
 import { expect } from "chai";
 
 suite("codeBlocks commands", function () {
