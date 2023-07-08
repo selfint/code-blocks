@@ -44,7 +44,7 @@ export type OpenDocumentParams = {
 export async function openDocument({
     language,
     content,
-    maximize = false,
+    maximize = true,
 }: OpenDocumentParams): Promise<{ activeEditor: vscode.TextEditor; fileTree: FileTree }> {
     if (!active.get()) {
         active.set(true);
