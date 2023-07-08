@@ -11,10 +11,10 @@ echo "Generating assets for examples:"
 ls $examples
 echo
 
-for example in $(ls $examples | grep -v .*.map)
+for example in $(ls $examples | grep ".*\.example\.js$")
 do
 
-    if [ "$example" != "index.js" ] ; then
+    if [ "$example" != "example.example.js" ] ; then
         ./generate-example-asset.sh $example
     fi
 done
