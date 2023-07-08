@@ -7,7 +7,11 @@ fi
 
 example=$1
 
-echo "Generating asset for example: $example"
+# replace .example.js suffix with .gif
+output="${example%.*}"
+output="${output%.*}".gif
+
+echo "Generating asset for example '$example' into '$output'"
 
 rawmov="raw.mov"
 
@@ -18,4 +22,4 @@ ffmpeg -y -f x11grab -video_size 800x600 -i :99 -c:v libx264 -pix_fmt yuv420p $r
 wait
 
 # crop video start until vscode opens
-ffmpeg -i $rawmov -vf "select='gt(scene,0.0001)'" $example.gif
+ffmpeg -i $rawmov -vf "select='gt(scene,0.0001)'" $output

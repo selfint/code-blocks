@@ -5,17 +5,16 @@ if [ "$#" -ne 1 ]; then
         exit 1
 fi
 
-examples=$1
+examples="$1/suite"
 
 echo "Generating assets for examples:"
 ls $examples
 echo
 
-for example in $(ls $examples)
+for example in $(ls $examples | grep -v .*.map)
 do
 
-    if [ "$example" != "template" ] && [ -d "$examples/$example" ]; then
-        echo "Generating asset for example: $example"
+    if [ "$example" != "index.js" ] ; then
         ./generate-example-asset.sh $example
     fi
 done

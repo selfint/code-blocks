@@ -3,7 +3,8 @@ import { openDocument, sleep } from "../exampleUtils";
 import { TreeViewer } from "../../TreeViewer";
 import { expect } from "chai";
 
-test("Tree viewer example", async function () {
+const TIMEOUT = process.env.EXAMPLE_TIMEOUT ?? "2m";
+test("Tree viewer", async function () {
     void vscode.window.showInformationMessage("Open any file");
     await sleep(1500);
 
@@ -52,4 +53,4 @@ source_file [1:0 - 10:0]
     block [7:10 - 9:1]`);
 
     await sleep(1500);
-}).timeout(process.env.TEST_TIMEOUT ?? "2s");
+}).timeout(TIMEOUT);
