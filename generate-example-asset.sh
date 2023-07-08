@@ -28,7 +28,7 @@ wait
 
 # find timestamp of when vscode opens
 ffmpeg -i raw.mov -vf "select='gt(scene,0.01)',metadata=print:file=log.txt" -an -f null -
-start=$(head -n 1 log.txt | awk  -F 'pts_time:' '{ print $2 + 10 }')
+start=$(head -n 1 log.txt | awk  -F 'pts_time:' '{ print $2 + 5 }')
 
 cat log.txt
 echo start $start
@@ -41,7 +41,7 @@ echo duration $(ffprobe -v error -show_entries format=duration -of csv=p=0 $rawm
 echo new duration $newduration
 
 # remove time before test starts and before window closes
-ffmpeg -y -i $rawmov -ss $start -t $newduration $croppedmov
+ffmpeg -y -ss $start -i $rawmov -t $newduration $croppedmov
 
 # speedup x2 and convert to gif
 ffmpeg -i $croppedmov -vf "setpts=0.5*PTS" $output
