@@ -69,6 +69,7 @@ function main() {
     )
 }
     `,
+        maximize: false,
     });
 
     const didChange = (): boolean =>

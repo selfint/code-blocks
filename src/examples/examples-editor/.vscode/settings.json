@@ -1,4 +1,9 @@
 {
     "editor.fontSize": 24,
     "explorer.autoReveal": false,
+    "[plaintext]": {
+        "editor.unicodeHighlight.ambiguousCharacters": false,
+        "editor.unicodeHighlight.invisibleCharacters": false,
+        "editor.fontSize": 12
+    }
 }
