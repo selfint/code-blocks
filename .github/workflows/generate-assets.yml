@@ -40,7 +40,7 @@ jobs:
               run: |
                   chmod +x ./generate-assets.sh
                   chmod +x ./generate-example-asset.sh
-                  ./generate-assets.sh
+                  ./generate-assets.sh ./out/examples
 
             - name: Upload assets
               uses: actions/upload-artifact@v3
