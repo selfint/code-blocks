@@ -68,12 +68,12 @@ jobs:
               run: yarn run build:webview
             - name: Build extension
               run: yarn run compile
-            - name: Display assets to generate
-              run: |
-                  chmod +x ./generate-asset.sh && ls ./out/assets | tr ' ' '\n' | awk '{print "echo will generate asset: " $1}' | sh
             - name: Generate assets
               run: |
-                  ls ./out/assets | tr ' ' '\n' | awk '{print "./generate-asset.sh " $1}' | sh
+                  chmod +x ./generate-assets.sh
+                  chmod +x ./generate-example-asset.sh
+                  ./generate-assets.sh
+
             - name: Upload assets
               uses: actions/upload-artifact@v3
               with:
