@@ -1,11 +1,12 @@
 import * as vscode from "vscode";
-import { initExample, notify, openDocument, sleep, type } from "../exampleUtils";
+import { initExample, notify, openDocument, sleep, startRecording, type } from "../exampleUtils";
 import { TreeViewer } from "../../TreeViewer";
 import { expect } from "chai";
 
 const TIMEOUT = process.env.EXAMPLE_TIMEOUT ?? "2m";
 test("Tree viewer", async function () {
     await initExample();
+    startRecording();
     await notify("Open any file");
 
     await openDocument({
