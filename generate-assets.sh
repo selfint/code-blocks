@@ -8,7 +8,7 @@ fi
 examples="$1/suite"
 
 echo "Generating assets for examples:"
-ls $examples
+ls $examples | grep ".*\.example\.js$"
 echo
 
 for example in $(ls $examples | grep ".*\.example\.js$")
