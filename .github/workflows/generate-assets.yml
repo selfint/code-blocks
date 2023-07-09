@@ -36,6 +36,8 @@ jobs:
               run: yarn run build:webview
             - name: Build extension
               run: yarn run compile
+            - name: Setting global vscode settings
+              run: cp -r ./out/examples/examples-editor/.vscode ~/.vscode
             - name: Generate assets
               run: |
                   chmod +x ./generate-assets.sh

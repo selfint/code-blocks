@@ -1,6 +1,8 @@
 {
-    "editor.fontSize": 24,
+    "editor.fontSize": 20,
+    "workbench.activityBar.visible": false,
     "explorer.autoReveal": false,
+    "workbench.colorTheme": "Default Dark Modern",
     "[plaintext]": {
         "editor.unicodeHighlight.ambiguousCharacters": false,
         "editor.unicodeHighlight.invisibleCharacters": false,

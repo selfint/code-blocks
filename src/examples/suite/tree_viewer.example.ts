@@ -106,7 +106,5 @@ program [1:0 - 8:4]
                 identifier [4:30 - 4:33]
             jsx_text [4:34 - 5:8]`);
 
-    await sleep(1500);
-
-    await sleep(1500);
+    await sleep(5000);
 }).timeout(TIMEOUT);

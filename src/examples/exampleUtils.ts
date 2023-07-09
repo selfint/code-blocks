@@ -7,16 +7,22 @@ import { join } from "path";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import settings from "./examples-editor/.vscode/settings.json";
 
+const TEST_START_SIGNAL = "@";
 export async function initExample(): Promise<void> {
     const exampleEditorPath = join(__dirname, "examples-editor");
     await vscode.commands.executeCommand("vscode.openFolder", vscode.Uri.file(exampleEditorPath), {
         forceNewWindow: false,
     });
     await vscode.commands.executeCommand("notifications.clearAll");
+    await sleep(100);
+    await vscode.commands.executeCommand("notifications.clearAll");
+}
 
+export function startRecording(): void {
+    // write the test start signal
     // write a lot to make sure no funny business happens with stdout flushing
     // TODO: is there a more elegant/deterministic way to do this?
-    console.log("@".repeat(1000));
+    console.log(TEST_START_SIGNAL.repeat(1000));
 }
 
 export async function sleep(ms: number): Promise<void> {
@@ -36,12 +42,14 @@ export type OpenDocumentParams = {
     language: SupportedTestLanguages;
     content: string;
     maximize?: boolean;
+    cursor?: string;
 };
 
 export async function openDocument({
     language,
     content,
     maximize = true,
+    cursor = undefined,
 }: OpenDocumentParams): Promise<{ activeEditor: vscode.TextEditor; fileTree: FileTree }> {
     if (!active.get()) {
         active.set(true);
@@ -51,12 +59,27 @@ export async function openDocument({
         BlockMode.toggleBlockMode();
     }
 
+    let cursorIndex = -1;
+    if (cursor !== undefined) {
+        cursorIndex = content.indexOf(cursor);
+        expect(cursorIndex).not.to.equal(-1, `failed to find cursor '${cursor}' in content:\n${content}`);
+
+        content = content.replace(cursor, "");
+    }
+
     const activeEditor = await vscode.window.showTextDocument(
         await vscode.workspace.openTextDocument({
             language,
             content,
         })
     );
+
+    if (cursorIndex !== -1) {
+        activeEditor.selection = new vscode.Selection(
+            activeEditor.document.positionAt(cursorIndex),
+            activeEditor.document.positionAt(cursorIndex)
+        );
+    }
 
     if (maximize) {
         await vscode.commands.executeCommand("workbench.action.maximizeEditor");
