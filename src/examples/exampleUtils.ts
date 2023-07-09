@@ -25,6 +25,30 @@ export function startRecording(): void {
     console.log(TEST_START_SIGNAL.repeat(1000));
 }
 
+export async function type(
+    editor: vscode.TextEditor,
+    position: vscode.Position,
+    text: string,
+    delay: number
+): Promise<vscode.Position> {
+    const chars = text.split("");
+    const document = editor.document;
+    let target = position;
+    let offset = document.offsetAt(position);
+    for (const char of chars) {
+        const edit = new vscode.WorkspaceEdit();
+        edit.insert(document.uri, target, char);
+        editor.selection = new vscode.Selection(target, target);
+        await vscode.workspace.applyEdit(edit);
+        const noise = Math.random() * (delay / 4) - delay / 8;
+        await sleep(delay + noise);
+        offset++;
+        target = document.positionAt(offset);
+    }
+
+    return target;
+}
+
 export async function sleep(ms: number): Promise<void> {
     await new Promise((resolve) => setTimeout(resolve, ms));
 }

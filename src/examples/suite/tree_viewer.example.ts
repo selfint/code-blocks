@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { initExample, notify, openDocument, sleep } from "../exampleUtils";
+import { initExample, notify, openDocument, sleep, type } from "../exampleUtils";
 import { TreeViewer } from "../../TreeViewer";
 import { expect } from "chai";
 
@@ -58,7 +58,7 @@ source_file [1:0 - 10:0]
 
     await sleep(1500);
 
-    await openDocument({
+    const { activeEditor } = await openDocument({
         language: "typescriptreact",
         content: `
 function main() {
@@ -106,5 +106,20 @@ program [1:0 - 8:4]
                 identifier [4:30 - 4:33]
             jsx_text [4:34 - 5:8]`);
 
-    await sleep(5000);
+    await sleep(2000);
+
+    const cursor = await type(activeEditor, new vscode.Position(0, 0), "// tree updates in real time\n", 100);
+    await sleep(1000);
+    await type(
+        activeEditor,
+        cursor,
+        `
+function hello(): string {
+    return "Hello, world!"
+}
+`,
+        100
+    );
+
+    await sleep(2000);
 }).timeout(TIMEOUT);
