@@ -4,7 +4,7 @@ const TIMEOUT = process.env.EXAMPLE_TIMEOUT ?? "2m";
 test("Block mode", async function () {
     await selectionExample({
         language: "typescriptreact",
-        content: "fn main() {\n    let a = [1, 2@22, 3];\n}",
+        content: "function main() {\n    let a = [1, 2@22, 3];\n}",
         maximize: true,
         cursor: "@",
         selectionCommands: [

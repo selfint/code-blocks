@@ -130,35 +130,39 @@ export type SelectionCommand =
     | "codeBlocks.selectParent"
     | "codeBlocks.selectChild";
 
-type TestSelectionCommandsParams = {
+export type TestSelectionCommandsParams = {
     language: SupportedTestLanguages;
     content: string;
+    cursor: string;
     selectionCommands: SelectionCommand[];
     expectedSelectionContent: string;
     pause: number;
     maximize: boolean;
 };
 
-export async function testSelectionCommands({
+export async function selectionExample({
     content,
+    cursor,
     selectionCommands,
     expectedSelectionContent,
     language,
     pause,
     maximize = false,
 }: TestSelectionCommandsParams): Promise<vscode.TextEditor> {
-    const cursor = "@";
-    const cursorIndex = content.indexOf(cursor);
-    content = content.replace(cursor, "");
-    const { activeEditor } = await openDocument({ language, content, maximize });
-    activeEditor.selection = new vscode.Selection(
-        activeEditor.document.positionAt(cursorIndex),
-        activeEditor.document.positionAt(cursorIndex)
-    );
+    await initExample();
+
+    const { activeEditor } = await openDocument({
+        language,
+        content,
+        maximize,
+        cursor,
+    });
+
+    startRecording();
 
     for (const command of selectionCommands) {
-        await notify(`call '${command}' command`);
-        await sleep(pause / 2);
+        await notify(`Call '${command}' command`);
+        await sleep(pause);
         await vscode.commands.executeCommand(command);
         await sleep(pause);
     }
@@ -188,7 +192,7 @@ export async function testMoveCommands({
     moveCommands,
     expectedContent,
 }: TestMoveCommandsParams): Promise<void> {
-    const activeEditor = await testSelectionCommands(testSelectionParams);
+    const activeEditor = await selectionExample(testSelectionParams);
 
     for (const command of moveCommands) {
         await vscode.commands.executeCommand(command);
@@ -228,7 +232,7 @@ export async function testNavigateCommands({
     );
     testSelectionParams.content = testSelectionParams.content.replace(targetCursor, "");
 
-    const activeEditor = await testSelectionCommands(testSelectionParams);
+    const activeEditor = await selectionExample(testSelectionParams);
 
     for (const command of navigateCommands) {
         await vscode.commands.executeCommand(command);
