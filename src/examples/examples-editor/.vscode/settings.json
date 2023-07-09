@@ -6,6 +6,6 @@
     "[plaintext]": {
         "editor.unicodeHighlight.ambiguousCharacters": false,
         "editor.unicodeHighlight.invisibleCharacters": false,
-        "editor.fontSize": 12
+        "editor.fontSize": 14
     }
 }

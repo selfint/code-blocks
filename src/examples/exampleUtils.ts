@@ -18,6 +18,10 @@ export async function initExample(): Promise<void> {
     await vscode.commands.executeCommand("notifications.clearAll");
 }
 
+export function zoomOut(): void {
+    void vscode.commands.executeCommand("editor.action.fontZoomOut");
+}
+
 export function startRecording(): void {
     // write the test start signal
     // write a lot to make sure no funny business happens with stdout flushing
@@ -40,7 +44,7 @@ export async function type(
         edit.insert(document.uri, target, char);
         editor.selection = new vscode.Selection(target, target);
         await vscode.workspace.applyEdit(edit);
-        const noise = Math.random() * (delay / 4) - delay / 8;
+        const noise = Math.random() * (delay / 2) - delay / 4;
         await sleep(delay + noise);
         offset++;
         target = document.positionAt(offset);

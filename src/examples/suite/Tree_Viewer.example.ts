@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { initExample, notify, openDocument, sleep, startRecording, type } from "../exampleUtils";
+import { initExample, notify, openDocument, sleep, startRecording, type, zoomOut } from "../exampleUtils";
 import { TreeViewer } from "../../TreeViewer";
 import { expect } from "chai";
 
@@ -63,15 +63,16 @@ source_file [1:0 - 10:0]
         language: "typescriptreact",
         content: `
 function main() {
-    return (
-        <>
-            <div>hello world</div>
-        </>
-    )
+  return (
+    <div>hello world</div>
+  )
 }
     `,
         maximize: false,
     });
+
+    zoomOut();
+    zoomOut();
 
     const didChange = (): boolean =>
         treeViewerDocument.getText() !== TreeViewer.placeholder &&
@@ -90,22 +91,19 @@ function main() {
     await sleep(100);
 
     expect("\n" + treeViewerDocument.getText()).to.be.equal(`
-program [1:0 - 8:4]
-  function_declaration [1:0 - 7:1]
+program [1:0 - 6:4]
+  function_declaration [1:0 - 5:1]
     identifier [1:9 - 1:13]
     formal_parameters [1:13 - 1:15]
-    statement_block [1:16 - 7:1]
-      return_statement [2:4 - 6:5]
-        parenthesized_expression [2:11 - 6:5]
-          jsx_fragment [3:8 - 5:11]
-            jsx_text [3:10 - 4:12]
-            jsx_element [4:12 - 4:34]
-              jsx_opening_element [4:12 - 4:17]
-                identifier [4:13 - 4:16]
-              jsx_text [4:17 - 4:28]
-              jsx_closing_element [4:28 - 4:34]
-                identifier [4:30 - 4:33]
-            jsx_text [4:34 - 5:8]`);
+    statement_block [1:16 - 5:1]
+      return_statement [2:2 - 4:3]
+        parenthesized_expression [2:9 - 4:3]
+          jsx_element [3:4 - 3:26]
+            jsx_opening_element [3:4 - 3:9]
+              identifier [3:5 - 3:8]
+            jsx_text [3:9 - 3:20]
+            jsx_closing_element [3:20 - 3:26]
+              identifier [3:22 - 3:25]`);
 
     await sleep(2000);
 
