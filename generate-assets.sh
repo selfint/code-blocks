@@ -15,6 +15,6 @@ for example in $(ls $examples | grep ".*\.example\.js$")
 do
 
     if [ "$example" != "example.example.js" ] ; then
-        ./generate-example-asset.sh $example
+        ./generate-example-asset.sh "$example"
     fi
 done
