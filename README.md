@@ -29,16 +29,19 @@ Supercharge your editor with syntactically aware code navigation and manipulatio
 Syntactically aware code selection (e.g. select scope), navigation (e.g. goto next function)
 and manipulation (e.g. re-order function parameters), right inside your editor.
 
-<p align="center">
-<img width="49%" src="./assets/block-mode/Code Blocks Demo - Block Mode - rust 1.gif" />
-<img width="49%" src="./assets/block-mode/Code Blocks Demo - Block Mode - svelte 1.gif" />
-</p>
+![tree_viewer](./assets/examples/block_mode_selection_rust.gif)
 
 ### Code Blocks Editor
 
 Birds eye view over all your code blocks, with point and click refactoring.
 
 ![svelte-1](./assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20svelte%201.gif)
+
+### Tree viewer
+
+View your code's syntax tree directly
+
+![tree_viewer](./assets/examples/tree_viewer.gif)
 
 ## Requirements
 
@@ -175,6 +178,14 @@ Desired blocks: JSX blocks. Documentation comments should be merged with documen
 -   Out of bounds memory access ([#154](https://github.com/selfint/code-blocks/issues/154)): For now, reloading the editor fixes this.
 
 ## Gallery
+
+### block mode selection rust
+
+![block mode selection rust](./assets/examples/block_mode_selection_rust.gif)
+
+### tree viewer
+
+![tree viewer](./assets/examples/tree_viewer.gif)
 
 ### Rust
 
