@@ -3,7 +3,7 @@ import { selectionExample } from "../exampleUtils";
 const TIMEOUT = process.env.EXAMPLE_TIMEOUT ?? "2m";
 test("Block mode", async function () {
     await selectionExample({
-        language: "typescriptreact",
+        language: "rust",
         content: "fn main() {\n    let a = [1, 2@22, 3];\n}",
         maximize: true,
         cursor: "@",
