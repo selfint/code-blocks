@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/bin/sh -xv
+
+PS4='${LINENO}: '
 
 if [ "$#" -ne 1 ]; then
     echo "Usage: $0 <examples-dir>"
