@@ -7,6 +7,9 @@ fi
 
 examples=$1
 
+echo "## Gallery"
+echo
+
 for example in $(ls $examples)
 do
     # remove suffix

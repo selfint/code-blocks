@@ -16,6 +16,8 @@ permissions:
 
 env:
     TEST_TIMEOUT: 5m
+    EXAMPLE_TIMEOUT: 5m
+    BRANCH: ${{ startsWith(github.head_ref, '') && github.head_ref || github.ref_name  }}
 
 jobs:
     test:
@@ -50,9 +52,41 @@ jobs:
               with:
                   run: yarn test
 
+    examples:
+        name: Build examples
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+            - name: Install Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 16
+            - name: Install asset generation dependencies
+              run: sudo apt install -y ffmpeg libnss3 xvfb
+            - name: Install extension dependencies
+              run: yarn run install:all
+            - name: Build webview
+              run: yarn run build:webview
+            - name: Build extension
+              run: yarn run compile
+            - name: Setting global vscode settings
+              run: cp -r ./out/examples/examples-editor/.vscode ~/.vscode
+            - name: Generate assets
+              run: |
+                  chmod +x ./generate-assets.sh
+                  chmod +x ./generate-example-asset.sh
+                  ./generate-assets.sh ./out/examples
+            - name: Upload assets
+              uses: actions/upload-artifact@v3
+              with:
+                  name: ${{ env.BRANCH }}-assets
+                  path: |
+                      *.gif
+
     package:
         name: Package extension
-        needs: test
+        needs: [test, examples]
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
@@ -65,12 +99,30 @@ jobs:
               run: yarn run install:all
             - name: Build webview
               run: yarn run build:webview
+            - name: Fetch examples
+              uses: actions/download-artifact@v3
+              with:
+                  name: ${{ env.BRANCH }}-assets
+                  path: assets/examples
+            - name: Update examples gallery
+              run: |
+                  sed -n '/## Gallery/q;p' README.md > README.md.tmp
+                  ./build_examples_gallery.sh assets/examples >> README.md.tmp
+                  mv README.md.tmp README.md
+            - name: Commit new examples
+              uses: EndBug/add-and-commit@v9.1.3
+              with:
+                  add: assets/examples README.md
+                  default_author: github_actions
+                  committer_name: GitHub Actions
+                  committer_email: actions@github.com
+                  message: "Update examples"
             - name: Package extension
-              run: npx @vscode/vsce package --yarn --githubBranch ${{ startsWith(github.head_ref, '') && github.head_ref || github.ref_name  }}
+              run: npx @vscode/vsce package --yarn --githubBranch ${{ env.BRANCH }}
             - name: Upload extension
               uses: actions/upload-artifact@v3
               with:
-                  name: code-blocks-${{ startsWith(github.head_ref, '') && github.head_ref || github.ref_name }}.vsix
+                  name: code-blocks-${{ env.BRANCH }}.vsix
                   path: code-blocks-*.vsix
 
     release:
@@ -83,7 +135,7 @@ jobs:
             - name: Download package
               uses: actions/download-artifact@v3
               with:
-                  name: code-blocks-${{ github.ref_name }}.vsix
+                  name: code-blocks-${{ env.BRANCH }}.vsix
                   path: .
             - name: Release
               uses: softprops/action-gh-release@v1

@@ -177,82 +177,21 @@ Desired blocks: JSX blocks. Documentation comments should be merged with documen
 
 -   Out of bounds memory access ([#154](https://github.com/selfint/code-blocks/issues/154)): For now, reloading the editor fixes this.
 
-## Gallery
-
-### block mode selection rust
-
-![block mode selection rust](./assets/examples/block_mode_selection_rust.gif)
-
-### tree viewer
-
-![tree viewer](./assets/examples/tree_viewer.gif)
-
-### Rust
-
-> Moving method in and around `impl` block
-
-![rust-2](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20rust%202.gif)
-
-> Moving `match` arms
-
-![rust-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20rust%201.gif)
-
-### Svelte
-
-> Rapidly changing UI look
-
-![svelte-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20svelte%201.gif)
-
-### React (TypeScript + JSX)
-
-> Rapidly changing UI look
-
-![react-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20react%201.gif)
-
-### Python
-
-**NOTE**: Force moving in Python almost never works correctly,
-since whitespace is meaningful
-
-> Moving methods and classes with decorators
-
-![python-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20python%201.gif)
-
-## Code Blocks editor
-
-This editor displays all blocks in the current file, in a custom editor.
-To move a block, click the source block, and then the block to move it under.
-
-### Rust
-
-> Moving method in and around `impl` block
-
-![rust-1](./assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20rust%201.gif)
-
-> Moving `match` arms
-
-![rust-2](./assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20rust%202.gif)
-
-### Svelte
-
-> Rapidly changing UI look
-
-![svelte-1](./assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20svelte%201.gif)
-
-### TypeScript + JSX
-
-> Rapidly changing UI look
-
-![tsx-1](./assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20react%201.gif)
-
-### Python
-
-**NOTE**: Force moving in Python almost never works correctly,
-since whitespace is meaningful it's a bit tricky. Hopefully in the future
-this is stabilized.
-
-> Moving methods and classes with decorators
-
 ## License
 
 MIT License © 2023 [Tom Selfin](https://github.com/selfint)
+
+## Gallery
+
+### Block Mode - Select Rust
+
+![Block Mode - Select Rust](assets/examples/Block_Mode_-_Select_Rust.gif)
+
+### Block Mode - Select TypeScript
+
+![Block Mode - Select TypeScript](assets/examples/Block_Mode_-_Select_TypeScript.gif)
+
+### Tree Viewer
+
+![Tree Viewer](assets/examples/Tree_Viewer.gif)
+
