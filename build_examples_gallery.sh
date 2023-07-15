@@ -1,6 +1,4 @@
-#!/bin/sh -xv
-
-PS4='${LINENO}: '
+#!/bin/sh
 
 if [ "$#" -ne 1 ]; then
     echo "Usage: $0 <examples-dir>"
@@ -18,7 +16,7 @@ do
     name="${example%.*}"
 
     # replace _ with space
-    name="${name//_/ }"
+    name=$(echo $name | sed 's/_/ /g')
 
     echo "### $name"
     echo
