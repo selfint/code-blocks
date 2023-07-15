@@ -129,7 +129,7 @@ jobs:
               if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
               run: |
                   git pull --rebase ${{ env.BRANCH }}
-                  git push
+                  git push origin HEAD:${{ env.BRANCH }}
             - name: Upload extension
               uses: actions/upload-artifact@v3
               with:
