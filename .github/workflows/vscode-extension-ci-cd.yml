@@ -127,7 +127,9 @@ jobs:
                   git push origin --tags
             - name: Push new examples to branch
               if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
-              run: git push
+              run: |
+                  git pull --rebase ${{ env.BRANCH }}
+                  git push
             - name: Upload extension
               uses: actions/upload-artifact@v3
               with:
