@@ -115,8 +115,8 @@ jobs:
               run: npx @vscode/vsce package --yarn --githubBranch ${{ env.BRANCH }}
             - name: Commit new examples
               run: |
-                  git config --local user.email "action@github.com"
-                  git config --local user.name "GitHub Actions"
+                  git config --local user.email "github-actions@github.com"
+                  git config --local user.name "github-actions"
                   git add assets/examples README.md
                   git commit -m "Update examples [skip ci]"
             - name: Push new examples to tag
@@ -129,8 +129,7 @@ jobs:
             - name: Push new examples to branch
               if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
               run: |
-                  git pull --rebase
-                  git push origin HEAD:${{ env.BRANCH }}
+                  git push
             - name: Upload extension
               uses: actions/upload-artifact@v3
               with:
