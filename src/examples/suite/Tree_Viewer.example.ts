@@ -59,6 +59,17 @@ source_file [1:0 - 10:0]
 
     await sleep(1500);
 
+    const didChange = new Promise<vscode.Disposable>((r) => {
+        const disposable = vscode.workspace.onDidChangeTextDocument(event => {
+            if (event.document.uri.toString() === treeViewerDocument.uri.toString()) {
+                if (event.document.getText() !== TreeViewer.placeholder &&
+                    !event.document.getText().startsWith("source_file")) {
+                    r(disposable);
+                }
+            }
+        })
+    });
+
     const { activeEditor } = await openDocument({
         language: "typescriptreact",
         content: `
@@ -74,19 +85,7 @@ function main() {
     zoomOut();
     zoomOut();
 
-    const didChange = (): boolean =>
-        treeViewerDocument.getText() !== TreeViewer.placeholder &&
-        !treeViewerDocument.getText().startsWith("source_file");
-
-    if (!didChange()) {
-        await new Promise<void>((r) =>
-            TreeViewer.treeViewer.onDidChange(() => {
-                if (!didChange()) {
-                    r();
-                }
-            })
-        );
-    }
+    (await didChange).dispose();
 
     await sleep(100);
 
