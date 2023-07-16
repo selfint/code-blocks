@@ -4,16 +4,33 @@ const TIMEOUT = process.env.EXAMPLE_TIMEOUT ?? "2m";
 test("Block mode", async function () {
     await selectionExample({
         language: "typescriptreact",
-        content: "function main() {\n    let a = [1, 2@22, 3];\n}",
+        content: `function main() {
+    switch (Date.now() % 3) {
+        case 0:
+            console.log("hi");
+        case 1:
+            console.log("he@llo");
+        case 2:
+            console.log("howdy");
+    }
+}`,
         maximize: true,
         cursor: "@",
         selectionCommands: [
-            "codeBlocks.selectBlock",
-            "codeBlocks.selectNext",
             "codeBlocks.selectParent",
-            "codeBlocks.selectChild",
+            "codeBlocks.selectParent",
+            "codeBlocks.selectParent",
+            "codeBlocks.selectParent",
+            "codeBlocks.selectParent",
+            "codeBlocks.selectNext",
+            "codeBlocks.selectPrevious",
         ],
-        expectedSelectionContent: "1",
-        pause: 2000,
+        expectedSelectionContent: `case 0:
+            console.log("hi");
+        case 1:
+            console.log("hello");
+        case 2:
+            console.log("howdy");`,
+        pause: 1000,
     });
 }).timeout(TIMEOUT);
