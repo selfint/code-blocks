@@ -181,13 +181,13 @@ MIT License © 2023 [Tom Selfin](https://github.com/selfint)
 
 ## Gallery
 
-### Block Mode - Select Rust
+### Block Mode - Select - Rust
 
-![Block Mode - Select Rust](assets/examples/Block_Mode_-_Select_Rust.gif)
+![Block Mode - Select - Rust](assets/examples/Block_Mode_-_Select_-_Rust.gif)
 
-### Block Mode - Select TypeScript
+### Block Mode - Select - TypeScript
 
-![Block Mode - Select TypeScript](assets/examples/Block_Mode_-_Select_TypeScript.gif)
+![Block Mode - Select - TypeScript](assets/examples/Block_Mode_-_Select_-_TypeScript.gif)
 
 ### Tree Viewer
 
