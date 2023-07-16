@@ -78,7 +78,7 @@ function main() {
         treeViewerDocument.getText() !== TreeViewer.placeholder &&
         !treeViewerDocument.getText().startsWith("source_file");
 
-    if (didChange()) {
+    if (!didChange()) {
         await new Promise<void>((r) =>
             TreeViewer.treeViewer.onDidChange(() => {
                 if (!didChange()) {
@@ -114,7 +114,7 @@ program [1:0 - 6:4]
         cursor,
         `
 function hello(): string {
-    return "Hello, world!"
+  return "Hello, world!"
 }
 `,
         100
