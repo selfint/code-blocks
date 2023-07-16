@@ -6,6 +6,7 @@ on:
 env:
     TEST_TIMEOUT: 5m
     EXAMPLE_TIMEOUT: 5m
+    BRANCH: ${{ startsWith(github.head_ref, '') && github.head_ref || github.ref_name  }}
 
 jobs:
     test:
@@ -64,7 +65,7 @@ jobs:
               run: |
                   chmod +x ./generate-assets.sh
                   chmod +x ./generate-example-asset.sh
-                  ./generate-assets.sh ./out/examples
+                  ./generate-assets.sh ./out/examples .
             - name: Upload assets
               uses: actions/upload-artifact@v3
               with:
