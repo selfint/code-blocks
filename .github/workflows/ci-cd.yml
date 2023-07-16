@@ -1,4 +1,4 @@
-name: vscode-extension CI/CD
+name: CI/CD
 
 on:
     push:
