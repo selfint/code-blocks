@@ -66,10 +66,12 @@ jobs:
               run: cp -r out/examples/examples-editor/.vscode ~/.vscode
             - name: Update examples assets
               run: |
-                  rm -rf assets/examples
                   chmod +x ./generate-assets.sh
                   chmod +x ./generate-example-asset.sh
-                  ./generate-assets.sh out/examples assets/examples
+                  mkdir assets/examples.tmp
+                  ./generate-assets.sh out/examples assets/examples.tmp
+                  rm -rf assets/examples
+                  mv assets/examples.tmp assets/examples
             - name: Update examples gallery
               run: |
                   ls assets/examples
