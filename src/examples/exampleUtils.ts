@@ -78,7 +78,7 @@ export async function openDocument({
     content,
     maximize = true,
     cursor = undefined,
-}: OpenDocumentParams): Promise<{ activeEditor: vscode.TextEditor; fileTree: FileTree }> {
+}: OpenDocumentParams): Promise<{ activeEditor: vscode.TextEditor; fileTree: FileTree; realContent: string }> {
     if (!active.get()) {
         active.set(true);
     }
@@ -124,7 +124,7 @@ export async function openDocument({
         });
     }
 
-    return { activeEditor, fileTree };
+    return { activeEditor, fileTree, realContent: content };
 }
 
 export type SelectionCommand =
@@ -141,7 +141,6 @@ export type TestSelectionCommandsParams = {
     selectionCommands: SelectionCommand[];
     expectedSelectionContent: string;
     pause: number;
-    maximize: boolean;
 };
 
 export async function selectionExample({
@@ -151,14 +150,13 @@ export async function selectionExample({
     expectedSelectionContent,
     language,
     pause,
-    maximize = false,
 }: TestSelectionCommandsParams): Promise<vscode.TextEditor> {
     await initExample();
 
     const { activeEditor } = await openDocument({
         language,
         content,
-        maximize,
+        maximize: true,
         cursor,
     });
 
@@ -187,19 +185,59 @@ export type MoveCommand =
     | "codeBlocks.moveDownForce";
 
 export type TestMoveCommandsParams = {
-    testSelectionParams: TestSelectionCommandsParams;
+    language: SupportedTestLanguages;
+    content: string;
+    cursor: string;
+    selectionCommands: SelectionCommand[];
+    selectionMessage: string;
     moveCommands: MoveCommand[];
+    expectedSelectionContent: string;
     expectedContent: string;
+    pause: number;
 };
-export async function testMoveCommands({
-    testSelectionParams,
+export async function moveExample({
+    language,
+    content,
+    cursor,
+    selectionCommands,
+    selectionMessage,
     moveCommands,
+    expectedSelectionContent,
     expectedContent,
+    pause,
 }: TestMoveCommandsParams): Promise<void> {
-    const activeEditor = await selectionExample(testSelectionParams);
+    await initExample();
+
+    const { activeEditor } = await openDocument({
+        language,
+        content,
+        maximize: true,
+        cursor,
+    });
+
+    startRecording();
+
+    await notify(selectionMessage);
+    await sleep(pause);
+
+    for (const command of selectionCommands) {
+        await vscode.commands.executeCommand(command);
+        await sleep(pause / 3);
+    }
+
+    await sleep(pause);
+
+    const selectionContent = activeEditor.document.getText(activeEditor.selection);
+    expect(selectionContent).to.equal(
+        expectedSelectionContent,
+        "selection commands didn't produce desired selection"
+    );
 
     for (const command of moveCommands) {
+        await notify(`Call '${command}' command`);
+        await sleep(pause);
         await vscode.commands.executeCommand(command);
+        await sleep(pause);
     }
 
     const newContent = activeEditor.document.getText();
@@ -207,7 +245,7 @@ export async function testMoveCommands({
 
     expect(newContent).to.equal(expectedContent, "move command didn't produce desired content");
     expect(newSelectionContent).to.equal(
-        testSelectionParams.expectedSelectionContent,
+        expectedSelectionContent,
         "move command didn't preserve selection content"
     );
 }
@@ -248,15 +286,13 @@ export async function testNavigateCommands({
     expect(newCursorIndex).to.equal(
         expectedNavigationDestinationIndex,
         "navigation commands didn't arrive to expected destination" +
-            `\n\tactual: ${
-                cleanContent.substring(0, newCursorIndex) +
-                targetCursor +
-                cleanContent.substring(newCursorIndex)
-            }` +
-            `\n\texpect: ${
-                cleanContent.substring(0, expectedNavigationDestinationIndex) +
-                targetCursor +
-                cleanContent.substring(expectedNavigationDestinationIndex)
-            }\n`
+        `\n\tactual: ${cleanContent.substring(0, newCursorIndex) +
+        targetCursor +
+        cleanContent.substring(newCursorIndex)
+        }` +
+        `\n\texpect: ${cleanContent.substring(0, expectedNavigationDestinationIndex) +
+        targetCursor +
+        cleanContent.substring(expectedNavigationDestinationIndex)
+        }\n`
     );
 }

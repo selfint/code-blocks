@@ -14,7 +14,6 @@ test("Block mode", async function () {
             console.log("howdy");
     }
 }`,
-        maximize: true,
         cursor: "@",
         selectionCommands: [
             "codeBlocks.selectParent",

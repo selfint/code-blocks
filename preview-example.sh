@@ -10,4 +10,4 @@ example=$1
 
 rm -rf $examples
 yarn run compile
-EXAMPLE_TIMEOUT=5m EXAMPLE=$example node $examples/runExample.js
+EXAMPLE=$example node $examples/runExample.js
