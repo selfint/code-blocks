@@ -67,7 +67,7 @@ source_file [1:0 - 10:0]
                     r(disposable);
                 }
             }
-        })
+        });
     });
 
     const { activeEditor } = await openDocument({
