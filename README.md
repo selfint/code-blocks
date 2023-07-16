@@ -27,7 +27,7 @@ Supercharge your editor with syntactically aware code navigation and manipulatio
 Syntactically aware code selection (e.g. select scope), navigation (e.g. goto next function)
 and manipulation (e.g. re-order function parameters), right inside your editor.
 
-![tree_viewer](./assets/examples/block_mode_selection_rust.gif)
+![rust_parameters_example](./assets/examples/Block_Mode_-_Move_-_Rust_-_Parameters.gif)
 
 ### Code Blocks Editor
 
