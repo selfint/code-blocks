@@ -10,12 +10,17 @@ import settings from "./examples-editor/.vscode/settings.json";
 const TEST_START_SIGNAL = "@";
 export async function initExample(): Promise<void> {
     const exampleEditorPath = join(__dirname, "examples-editor");
-    await vscode.commands.executeCommand("vscode.openFolder", vscode.Uri.file(exampleEditorPath), {
+    await cmd("workbench.action.toggleLightDarkThemes");
+    await cmd("vscode.openFolder", vscode.Uri.file(exampleEditorPath), {
         forceNewWindow: false,
     });
-    await vscode.commands.executeCommand("notifications.clearAll");
+    await cmd("notifications.clearAll");
     await sleep(100);
-    await vscode.commands.executeCommand("notifications.clearAll");
+    await cmd("notifications.clearAll");
+}
+
+export async function cmd(c: string, ...args: unknown[]): Promise<void> {
+    await vscode.commands.executeCommand(c, ...args);
 }
 
 export function zoomOut(): void {
