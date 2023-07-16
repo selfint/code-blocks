@@ -120,8 +120,6 @@ jobs:
             - name: Push new examples to branch
               if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
               run: |
-                  git status
-                  git log --oneline | head -n 10
                   git pull --ff-only origin ${{ github.ref_name }}
                   git push origin HEAD:${{ github.ref_name }}
             - name: Upload extension
