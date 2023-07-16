@@ -44,7 +44,8 @@ jobs:
                   run: yarn test
 
     examples:
-        name: Build examples
+        name: Update examples
+        concurrency: ${{ github.ref }}
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
@@ -74,36 +75,12 @@ jobs:
                   name: ${{ github.ref_name }}-assets
                   path: |
                       *.gif
-
-    package:
-        concurrency: ${{ github.ref }}
-        name: Package extension
-        needs: [test, examples]
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v3
-            - name: Install Node.js
-              uses: actions/setup-node@v3
-              with:
-                  node-version: 16
-            - name: Install extension dependencies
-              run: yarn run install:all
-            - name: Build webview
-              run: yarn run build:webview
-            - name: Fetch examples
-              uses: actions/download-artifact@v3
-              with:
-                  name: ${{ github.ref_name }}-assets
-                  path: assets/examples
             - name: Update examples gallery
               run: |
                   ls -R assets
                   sed -n '/## Gallery/q;p' README.md > README.md.tmp
                   ./build_examples_gallery.sh assets/examples >> README.md.tmp
                   mv README.md.tmp README.md
-            - name: Package extension
-              run: npx @vscode/vsce package --yarn --githubBranch ${{ github.ref_name }}
             - name: Commit new examples
               run: |
                   git config --local user.email "github-actions@github.com"
@@ -122,18 +99,34 @@ jobs:
               run: |
                   git pull --ff-only origin ${{ github.ref_name }}
                   git push origin HEAD:${{ github.ref_name }}
+
+    package:
+        name: Package extension
+        needs: [test, examples]
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+            - name: Install Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 16
+            - name: Install extension dependencies
+              run: yarn run install:all
+            - name: Build webview
+              run: yarn run build:webview
+            - name: Package extension
+              run: npx @vscode/vsce package --yarn --githubBranch ${{ github.ref_name }}
             - name: Upload extension
               uses: actions/upload-artifact@v3
               with:
                   name: code-blocks-${{ github.ref_name }}.vsix
-                  path: code-blocks-${{ github.ref_name }}.vsix
+                  path: code-blocks-*.vsix
 
     release:
         name: Release extension
-        concurrency: ${{ github.ref }}
         if: startsWith(github.ref, 'refs/tags/v')
         needs: package
-
         runs-on: ubuntu-latest
         steps:
             - name: Download package
@@ -145,6 +138,6 @@ jobs:
               uses: softprops/action-gh-release@v1
               with:
                   generate_release_notes: true
-                  files: code-blocks-${{ github.ref_name }}.vsix
+                  files: code-blocks-*.vsix
             - name: Publish GitHub release
-              run: npx @vscode/vsce publish -i code-blocks-${{ github.ref_name }}.vsix --githubBranch ${{ github.ref_name }}
+              run: npx @vscode/vsce publish -i $(ls code-blocks-*.vsix)
