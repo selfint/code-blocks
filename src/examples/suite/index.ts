@@ -13,9 +13,6 @@ export function run(): Promise<void> {
     let example = process.env.EXAMPLE;
     example = example.substring(0, example.length - 2) + "js";
 
-    console.log("#".repeat(1000));
-    console.log(example);
-
     // Create the mocha test
     const mocha = new Mocha({
         ui: "tdd",
