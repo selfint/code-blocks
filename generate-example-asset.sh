@@ -1,15 +1,16 @@
 #!/bin/sh
 
-if [ "$#" -ne 1 ]; then
-        echo "Usage: $0 <example-name>"
+if [ "$#" -ne 2 ]; then
+        echo "Usage: $0 <example-name> <assets-dir>"
         exit 1
 fi
 
 example=$1
+assets=$2
 
 # replace .example.js suffix with .gif
 output="${example%.*}"
-output="${output%.*}".gif
+output="$assets/${output%.*}".gif
 
 echo "Generating asset for example '$example' into '$output'"
 

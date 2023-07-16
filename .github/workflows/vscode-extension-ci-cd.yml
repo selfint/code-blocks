@@ -61,23 +61,18 @@ jobs:
             - name: Build webview
               run: yarn run build:webview
             - name: Build extension
-              run: yarn run compile
+              run: yarn run pretest
             - name: Setting global vscode settings
-              run: cp -r ./out/examples/examples-editor/.vscode ~/.vscode
-            - name: Generate assets
+              run: cp -r out/examples/examples-editor/.vscode ~/.vscode
+            - name: Update examples assets
               run: |
+                  rm -rf assets/examples
                   chmod +x ./generate-assets.sh
                   chmod +x ./generate-example-asset.sh
-                  ./generate-assets.sh ./out/examples
-            - name: Upload assets
-              uses: actions/upload-artifact@v3
-              with:
-                  name: ${{ github.ref_name }}-assets
-                  path: |
-                      *.gif
+                  ./generate-assets.sh out/examples assets/examples
             - name: Update examples gallery
               run: |
-                  ls -R assets
+                  ls assets/examples
                   sed -n '/## Gallery/q;p' README.md > README.md.tmp
                   ./build_examples_gallery.sh assets/examples >> README.md.tmp
                   mv README.md.tmp README.md
