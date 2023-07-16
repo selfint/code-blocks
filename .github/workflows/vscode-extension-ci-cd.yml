@@ -2,14 +2,6 @@ name: vscode-extension CI/CD
 
 on:
     push:
-        branches:
-            - main
-        tags:
-            - "v*.*.*"
-    pull_request:
-        branches:
-            - main
-            - "v*.*.*"
 
 permissions:
     contents: write
@@ -17,7 +9,6 @@ permissions:
 env:
     TEST_TIMEOUT: 5m
     EXAMPLE_TIMEOUT: 5m
-    BRANCH: ${{ startsWith(github.head_ref, '') && github.head_ref || github.ref_name  }}
 
 jobs:
     test:
@@ -80,7 +71,7 @@ jobs:
             - name: Upload assets
               uses: actions/upload-artifact@v3
               with:
-                  name: ${{ env.BRANCH }}-assets
+                  name: ${{ github.ref_name }}-assets
                   path: |
                       *.gif
 
@@ -103,7 +94,7 @@ jobs:
             - name: Fetch examples
               uses: actions/download-artifact@v3
               with:
-                  name: ${{ env.BRANCH }}-assets
+                  name: ${{ github.ref_name }}-assets
                   path: assets/examples
             - name: Update examples gallery
               run: |
@@ -112,7 +103,7 @@ jobs:
                   ./build_examples_gallery.sh assets/examples >> README.md.tmp
                   mv README.md.tmp README.md
             - name: Package extension
-              run: npx @vscode/vsce package --yarn --githubBranch ${{ env.BRANCH }}
+              run: npx @vscode/vsce package --yarn --githubBranch ${{ github.ref_name }}
             - name: Commit new examples
               run: |
                   git config --local user.email "github-actions@github.com"
@@ -122,22 +113,22 @@ jobs:
             - name: Push new examples to tag
               if: startsWith(github.ref, 'refs/tags/v')
               run: |
-                  git tag -d ${{ env.BRANCH }}
-                  git push origin :refs/tags/${{ env.BRANCH }}
-                  git tag -f ${{ env.BRANCH }}
+                  git tag -d ${{ github.ref_name }}
+                  git push origin :refs/tags/${{ github.ref_name }}
+                  git tag -f ${{ github.ref_name }}
                   git push origin --tags
             - name: Push new examples to branch
               if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
               run: |
                   git status
                   git log --oneline | head -n 10
-                  git pull --ff-only origin ${{ env.BRANCH }}
-                  git push origin HEAD:${{ env.BRANCH }}
+                  git pull --ff-only origin ${{ github.ref_name }}
+                  git push origin HEAD:${{ github.ref_name }}
             - name: Upload extension
               uses: actions/upload-artifact@v3
               with:
-                  name: code-blocks-${{ env.BRANCH }}.vsix
-                  path: code-blocks-${{ env.BRANCH }}.vsix
+                  name: code-blocks-${{ github.ref_name }}.vsix
+                  path: code-blocks-${{ github.ref_name }}.vsix
 
     release:
         name: Release extension
@@ -150,12 +141,12 @@ jobs:
             - name: Download package
               uses: actions/download-artifact@v3
               with:
-                  name: code-blocks-${{ env.BRANCH }}.vsix
+                  name: code-blocks-${{ github.ref_name }}.vsix
                   path: .
             - name: Publish GitHub release
               uses: softprops/action-gh-release@v1
               with:
                   generate_release_notes: true
-                  files: code-blocks-${{ env.BRANCH }}.vsix
+                  files: code-blocks-${{ github.ref_name }}.vsix
             - name: Publish GitHub release
-              run: npx @vscode/vsce publish -i code-blocks-${{ env.BRANCH }}.vsix --githubBranch ${{ env.BRANCH }}
+              run: npx @vscode/vsce publish -i code-blocks-${{ github.ref_name }}.vsix --githubBranch ${{ github.ref_name }}
