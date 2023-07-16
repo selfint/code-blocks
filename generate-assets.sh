@@ -12,7 +12,7 @@ echo "Generating assets for examples:"
 ls $examples | grep ".*\.example\.js$"
 echo
 
-for example in $(ls $examples | grep ".*\.example\.js$")
+for example in $(ls $examples | sort | grep ".*\.example\.js$")
 do
 
     if [ "$example" != "example.example.js" ] ; then
