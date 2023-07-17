@@ -1,8 +1,18 @@
-# Release Notes
+# Changelog
+
+# 0.6.0
+
+## Added
+
+## Fixed
+
+## Changed
+
+## Removed
 
 # 0.5.2
 
-## New
+## Added
 
 ## Fixed
 
@@ -11,7 +21,7 @@
 
 # 0.5.1
 
-## New
+## Added
 
 - Change "force" semantics:
 
@@ -25,13 +35,13 @@
   Regular "navigate" commands will not navigate to parent scope,
   for that there are the "force navigate" commands.
 
-  ![block-mode-navigation-demo](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20navigation%201.gif)
+  ![block-mode-navigation-demo](https://raw.githubusercontent.com/selfint/code-blocks/vscode-extension-v0.5.1/vscode-extension/assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20navigation%201.gif)
 
 - Make "block mode" a vscode context (useful for keybindings).
 - Add "block mode" status bar indicator.
 - Add "select current block" command:
 
-  ![block-mode-select-demo](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20select%201.gif)
+  ![block-mode-select-demo](https://raw.githubusercontent.com/selfint/code-blocks/vscode-extension-v0.5.1/vscode-extension/assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20select%201.gif)
 
 - Add configurable colors:
 
@@ -70,11 +80,11 @@
 
 # 0.5.0
 
-## New
+## Added
 
 - Add "block mode":
 
-  ![block-mode-demo](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20rust%201.gif)
+  ![block-mode-demo](https://raw.githubusercontent.com/selfint/code-blocks/vscode-extension-v0.5.0/vscode-extension/assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20rust%201.gif)
 
 ## Fixed
 

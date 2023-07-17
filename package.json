@@ -13,6 +13,10 @@
   },
   "homepage": "https://github.com/selfint/code-blocks#readme",
   "icon": "./assets/extension-logo.png",
+  "galleryBanner": {
+    "color": "#6295E3",
+    "theme": "dark"
+  },
   "version": "0.6.0",
   "private": true,
   "license": "MIT",
