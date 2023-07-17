@@ -16,6 +16,8 @@
 
   ![tree-viewer](./assets/examples/Tree_Viewer.gif)
 
+- Block mode highlights can be toggled.
+
 ## Fixed
 
 - Rapidly toggling block mode breaks extension.
@@ -44,6 +46,12 @@
   - Queries are an optional config, required only for the Code Blocks Editor (not for
     Block Mode) to work.
   - Configuration is by `[languageId]` instead of a massive `languageSupport` config.
+
+- Change Block Mode colors config:
+
+  - `codeBlocks.colors.enabled`: Whether Block Mode should color selections or not. Defaults to `false`.
+  - `codeBlocks.colors.sibling`: CSS string for sibling selection background color. Defaults to `var(--vscode-editor-selectionHighlightBackground)`.
+  - `codeBlocks.colors.parent`: CSS string for parent selection background color. Defaults to `var(--vscode-editor-linkedEditingBackground)`.
 
   ### Old config for Python and TSX
 
