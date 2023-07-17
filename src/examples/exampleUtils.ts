@@ -185,9 +185,7 @@ export async function selectionExample({
 
 export type MoveCommand =
     | "codeBlocks.moveDown"
-    | "codeBlocks.moveUp"
-    | "codeBlocks.moveUpForce"
-    | "codeBlocks.moveDownForce";
+    | "codeBlocks.moveUp";
 
 export type TestMoveCommandsParams = {
     language: SupportedTestLanguages;

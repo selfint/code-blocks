@@ -39,7 +39,7 @@ Birds eye view over all your code blocks, with point and click refactoring.
 
 View your code's syntax tree directly
 
-![tree_viewer](./assets/examples/tree_viewer.gif)
+![tree_viewer](./assets/examples/Tree_Viewer.gif)
 
 ## Requirements
 
@@ -69,8 +69,6 @@ View your code's syntax tree directly
 | `codeBlocks.openTreeViewer`        | View current file syntax tree                                   |
 | `codeBlocks.moveUp`                | Swap block with its previous sibling                            |
 | `codeBlocks.moveDown`              | Swap block with its next sibling                                |
-| `codeBlocks.moveUpForce`           | Move block before its parent                                    |
-| `codeBlocks.moveDownForce`         | Move block after its parent                                     |
 | `codeBlocks.navigateUp`            | Navigate to previous sibling                                    |
 | `codeBlocks.navigateDown`          | Navigate to next sibling                                        |
 | `codeBlocks.navigateUpForce`       | Navigate to parent start                                        |
@@ -89,8 +87,6 @@ These are the default key bindings, they are only active when "block mode" is ac
 | ------------------------------ | ----------------------- |
 | `codeBlocks.moveUp`            | `alt+left`              |
 | `codeBlocks.moveDown`          | `alt+right`             |
-| `codeBlocks.moveUpForce`       | `alt+up`                |
-| `codeBlocks.moveDownForce`     | `alt+down`              |
 | `codeBlocks.navigateUp`        | `ctrl/cmd+left`         |
 | `codeBlocks.navigateDown`      | `ctrl/cmd+right`        |
 | `codeBlocks.navigateUpForce`   | `ctrl/cmd+up`           |

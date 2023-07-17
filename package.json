@@ -75,14 +75,6 @@
         "title": "Code Blocks: Move selected block down"
       },
       {
-        "command": "codeBlocks.moveUpForce",
-        "title": "Code Blocks: Force move selected block up"
-      },
-      {
-        "command": "codeBlocks.moveDownForce",
-        "title": "Code Blocks: Force move selected block down"
-      },
-      {
         "command": "codeBlocks.navigateUp",
         "title": "Code Blocks: Navigate to previous block"
       },
@@ -136,16 +128,6 @@
       {
         "command": "codeBlocks.moveDown",
         "key": "alt+right",
-        "when": "editorTextFocus && codeBlocks.blockMode"
-      },
-      {
-        "command": "codeBlocks.moveUpForce",
-        "key": "alt+up",
-        "when": "editorTextFocus && codeBlocks.blockMode"
-      },
-      {
-        "command": "codeBlocks.moveDownForce",
-        "key": "alt+down",
         "when": "editorTextFocus && codeBlocks.blockMode"
       },
       {
