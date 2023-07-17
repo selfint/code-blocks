@@ -35,7 +35,7 @@ ffmpeg -y -f x11grab -video_size 800x600 -i :99 -c:v libx264 -pix_fmt yuv420p "$
 wait
 
 # speedup and convert to gif
-ffmpeg -i "$mov" -vf "setpts=0.7*PTS" "$output"
+ffmpeg -i "$mov" -vf "setpts=0.5*PTS" "$output"
 
 # cleanup
 rm "$signal" "$mov"
