@@ -45,27 +45,33 @@ jobs:
 
     examples:
         name: Update examples
-        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
         concurrency: ${{ github.ref }}
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
               uses: actions/checkout@v3
             - name: Install Node.js
+              if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
               uses: actions/setup-node@v3
               with:
                   node-version: 16
             - name: Install asset generation dependencies
+              if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
               run: sudo apt install -y ffmpeg libnss3 xvfb
             - name: Install extension dependencies
+              if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
               run: yarn run install:all
             - name: Build webview
+              if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
               run: yarn run build:webview
             - name: Build extension
+              if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
               run: yarn run pretest
             - name: Setting global vscode settings
+              if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
               run: cp -r out/examples/examples-editor/.vscode ~/.vscode
             - name: Update examples assets
+              if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
               run: |
                   chmod +x ./generate-assets.sh
                   chmod +x ./generate-example-asset.sh
@@ -74,18 +80,21 @@ jobs:
                   rm -rf assets/examples
                   mv assets/examples.tmp assets/examples
             - name: Update examples gallery
+              if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
               run: |
                   ls assets/examples
                   sed -n '/## Gallery/q;p' README.md > README.md.tmp
                   ./build_examples_gallery.sh assets/examples >> README.md.tmp
                   mv README.md.tmp README.md
             - name: Commit new examples
+              if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
               run: |
                   git config --local user.email "github-actions@github.com"
                   git config --local user.name "github-actions"
                   git add assets/examples README.md
                   git commit -m "Update examples [skip ci]"
             - name: Push new examples to branch
+              if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
               run: |
                   git pull --ff-only origin ${{ github.ref_name }}
                   git push origin HEAD:${{ github.ref_name }}
@@ -129,5 +138,5 @@ jobs:
               with:
                   generate_release_notes: true
                   files: code-blocks-*.vsix
-            - name: Publish GitHub release
-              run: npx @vscode/vsce publish -i $(ls code-blocks-*.vsix)
+            # - name: Publish GitHub release
+            #   run: npx @vscode/vsce publish -i $(ls code-blocks-*.vsix)
