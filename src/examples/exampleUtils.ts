@@ -165,6 +165,8 @@ export async function selectionExample({
         cursor,
     });
 
+    await sleep(1000);
+
     startRecording();
 
     for (const command of selectionCommands) {
@@ -217,6 +219,8 @@ export async function moveExample({
         maximize: true,
         cursor,
     });
+
+    await sleep(1000);
 
     startRecording();
 
