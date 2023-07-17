@@ -20,6 +20,7 @@ screen=1000
 for example in $(ls $examples | sort | grep ".*\.example\.js$" | grep -v "^example.example.js$")
 do
     echo "Generating asset for example: '$example' using screen: '$screen'"
+    # TODO: somehow vscode still knows other instances are running, how?
     docker run --rm -v $(pwd):/code-blocks -w /code-blocks base /bin/bash -c "./generate-example-asset.sh \"$example\" \"$assets\" $screen 2>&1 > \"$example.log\" " &
     screen=$((screen+1))
 done
