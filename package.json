@@ -243,21 +243,13 @@
     "configurationDefaults": {
       "[rust]": {
         "codeBlocks.queries": [
-          "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (function_item) @item)",
-          "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (mod_item) @item)",
-          "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (struct_item) @item)",
-          "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (impl_item) @item)",
-          "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (enum_item) @item)",
-          "(match_arm) @arm"
+          "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (_) @item)"
         ]
       },
       "[typescript]": {
         "codeBlocks.subdirectory": "typescript",
         "codeBlocks.queries": [
-          "( (comment)* @header . (class_declaration) @item)",
-          "( (comment)* @header . (method_definition) @item)",
-          "( (comment)* @header . (function_declaration) @item)",
-          "( (comment)* @header . (export_statement) @item)"
+          "( (comment)* @c . (_) @item)"
         ]
       },
       "[typescriptreact]": {
@@ -265,45 +257,23 @@
         "codeBlocks.parserName": "tree-sitter-tsx",
         "codeBlocks.subdirectory": "tsx",
         "codeBlocks.queries": [
-          "( (comment)* @header . (class_declaration) @item)",
-          "( (comment)* @header . (method_definition) @item)",
-          "( (comment)* @header . (function_declaration) @item)",
-          "( (comment)* @header . (export_statement) @item)",
-          "(jsx_element) @item",
-          "(jsx_self_closing_element) @item"
+          "((comment)* @c . (_) @item)"
         ]
       },
       "[javascriptreact]": {
         "codeBlocks.npmPackageName": "tree-sitter-javascript",
         "codeBlocks.queries": [
-          "( (comment)* @header . (class_declaration) @item)",
-          "( (comment)* @header . (method_definition) @item)",
-          "( (comment)* @header . (function_declaration) @item)",
-          "( (comment)* @header . (export_statement) @item)",
-          "(jsx_element) @item",
-          "(jsx_self_closing_element) @item"
+          "((comment)* @c . (_) @item)"
         ]
       },
       "[svelte]": {
         "codeBlocks.queries": [
-          "( (comment)* @header . (element) @item)",
-          "( (comment)* @header . (each_statement) @item)",
-          "( (comment)* @header . (if_statement) @item)",
-          "( (comment)* @header . (style_element) @item)",
-          "( (comment)* @header . (script_element) @item)"
-        ]
-      },
-      "[python]": {
-        "codeBlocks.queries": [
-          "(class_definition) @item",
-          "(function_definition) @item",
-          "(decorated_definition) @item"
+          "((comment)* @c . (_) @item)"
         ]
       },
       "[java]": {
         "codeBlocks.queries": [
-          "( (block_comment)* @header . (class_declaration) @item)",
-          "( (block_comment)* @header . (method_declaration) @item)"
+          "( (block_comment)* @c . (_) @item)"
         ]
       },
       "[csharp]": {
