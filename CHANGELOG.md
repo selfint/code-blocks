@@ -24,6 +24,18 @@
 
 ## Changed
 
+- Block mode blocks: Instead of only using blocks, block mode now has
+  access to all nodes in the syntax tree. Blocks are now only used to automatically
+  expand a selection.
+
+  ### Fine grained selection of nodes
+
+  ![example](./assets/examples/Block_Mode_-_Select_-_TypeScript.gif)
+
+  ### Selection expansion to nearest block
+
+  ![example](./assets/examples/Block_Mode_-_Select_-_TypeScript_-_Selection_expands_to_block.gif)
+
 - Simplify language config:
 
   - Parsers are now installed from NPM, instead of from GitHub.
@@ -64,7 +76,7 @@
   }
   ```
 
-  ### New for Python and TSX
+  ### New config for Python and TSX
 
   ```json
   // Python now doesn't need to be configured at all
@@ -82,25 +94,13 @@
   }
   ```
 
-- Block mode blocks: Instead of only using blocks, block mode now has
-  access to all nodes in the syntax tree. Blocks are now only used to automatically
-  expand a selection.
-
-  ### Fine grained selection of nodes
-
-  ![example](./assets/examples/Block_Mode_-_Select_-_TypeScript.gif)
-
-  ### Selection expansion to nearest block
-
-  ![example](./assets/examples/Block_Mode_-_Select_-_TypeScript_-_Selection_expands_to_block.gif)
-
 ## Removed
 
 - Rust dependencies: `cargo`, `code-blocks-server`, no longer required.
 
 - Force moves: Were inconsistent (especially in indent-based languages) and rarely useful.
 
-  > If they are missed, please [comment on this issue](https://github.com/selfint/code-blocks/issues/160) with your use case.
+  > If they are missed, please [comment on this issue](https://github.com/selfint/code-blocks/issues/160), preferably with your use case.
 
 # 0.5.2
 
