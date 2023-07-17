@@ -9,8 +9,8 @@
 <a href="https://marketplace.visualstudio.com/items?itemName=selfint.code-blocks" target="__blank"><img src="https://img.shields.io/visual-studio-marketplace/d/selfint.code-blocks.svg?color=4bdbe3" alt="Visual Studio Marketplace Downloads" /></a>
 <a href="https://marketplace.visualstudio.com/items?itemName=selfint.code-blocks" target="__blank"><img src="https://img.shields.io/visual-studio-marketplace/i/selfint.code-blocks.svg?color=63ba83" alt="Visual Studio Marketplace Installs" /></a>
 <a href="https://github.com/selfint/code-blocks/actions/workflows/ci-cd.yml" target="__blank"><img alt="GitHub CI" src="https://img.shields.io/github/actions/workflow/status/selfint/code-blocks/ci-cd.yml"></a>
-<a href="https://github.com/selfint/code-blocks" target="__blank"><img src="https://img.shields.io/github/last-commit/selfint/code-blocks.svg?color=c977be" alt="GitHub last commit" /></a>
-<a href="https://github.com/selfint/code-blocks/issues" target="__blank"><img src="https://img.shields.io/github/issues/selfint/code-blocks.svg?color=a38eed" alt="GitHub issues" /></a>
+<a href="https://github.com/selfint/code-blocks" target="__blank"><img src="https://img.shields.io/github/last-commit/selfint/code-blocks.svg?color=24ba83" alt="GitHub last commit" /></a>
+<a href="https://github.com/selfint/code-blocks/issues" target="__blank"><img src="https://img.shields.io/github/issues/selfint/code-blocks.svg?color=orange" alt="GitHub issues" /></a>
 <a href="https://github.com/selfint/code-blocks/stargazers" target="__blank"><img alt="GitHub stars" src="https://img.shields.io/github/stars/selfint/code-blocks?style=social"></a>
 </p>
 
