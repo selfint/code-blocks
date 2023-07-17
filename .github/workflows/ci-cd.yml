@@ -1,0 +1,140 @@
+name: CI/CD
+
+on:
+    push:
+
+permissions:
+    contents: write
+
+env:
+    TEST_TIMEOUT: 5m
+    EXAMPLE_TIMEOUT: 5m
+
+jobs:
+    test:
+        timeout-minutes: 60
+        strategy:
+            fail-fast: false
+            matrix:
+                os: [macos-latest, ubuntu-latest, windows-latest]
+        runs-on: ${{ matrix.os }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+            - name: Install Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 16
+            - name: Install extension dependencies
+              run: yarn run install:all
+            - name: Build webview
+              if: matrix.os != 'macos-latest'
+              run: yarn run build:webview
+            # TODO: fix this command getting stuck on macos
+            - name: Build webview
+              if: matrix.os == 'macos-latest'
+              uses: nick-fields/retry@v2
+              with:
+                  timeout_minutes: 1
+                  max_attempts: 5
+                  command: yarn run build:webview
+            - name: Run tests
+              uses: coactions/setup-xvfb@v1
+              with:
+                  run: yarn test
+
+    examples:
+        name: Update examples
+        concurrency: ${{ github.ref }}
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+            - name: Install Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 16
+            - name: Install asset generation dependencies
+              run: sudo apt install -y ffmpeg libnss3 xvfb
+            - name: Install extension dependencies
+              run: yarn run install:all
+            - name: Build webview
+              run: yarn run build:webview
+            - name: Build extension
+              run: yarn run pretest
+            - name: Setting global vscode settings
+              run: cp -r out/examples/examples-editor/.vscode ~/.vscode
+            - name: Update examples assets
+              run: |
+                  chmod +x ./generate-assets.sh
+                  chmod +x ./generate-example-asset.sh
+                  mkdir assets/examples.tmp
+                  ./generate-assets.sh out/examples assets/examples.tmp
+                  rm -rf assets/examples
+                  mv assets/examples.tmp assets/examples
+            - name: Update examples gallery
+              run: |
+                  ls assets/examples
+                  sed -n '/## Gallery/q;p' README.md > README.md.tmp
+                  ./build_examples_gallery.sh assets/examples >> README.md.tmp
+                  mv README.md.tmp README.md
+            - name: Commit new examples
+              run: |
+                  git config --local user.email "github-actions@github.com"
+                  git config --local user.name "github-actions"
+                  git add assets/examples README.md
+                  git commit -m "Update examples [skip ci]"
+            - name: Push new examples to tag
+              if: startsWith(github.ref, 'refs/tags/v')
+              run: |
+                  git tag -d ${{ github.ref_name }}
+                  git push origin :refs/tags/${{ github.ref_name }}
+                  git tag -f ${{ github.ref_name }}
+                  git push origin --tags
+            - name: Push new examples to branch
+              if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+              run: |
+                  git pull --ff-only origin ${{ github.ref_name }}
+                  git push origin HEAD:${{ github.ref_name }}
+
+    package:
+        name: Package extension
+        needs: [test, examples]
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+            - name: Install Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 16
+            - name: Install extension dependencies
+              run: yarn run install:all
+            - name: Build webview
+              run: yarn run build:webview
+            - name: Package extension
+              run: npx @vscode/vsce package --yarn --githubBranch ${{ github.ref_name }}
+            - name: Upload extension
+              uses: actions/upload-artifact@v3
+              with:
+                  name: code-blocks-${{ github.ref_name }}.vsix
+                  path: code-blocks-*.vsix
+
+    release:
+        name: Release extension
+        if: startsWith(github.ref, 'refs/tags/v')
+        needs: package
+        runs-on: ubuntu-latest
+        steps:
+            - name: Download package
+              uses: actions/download-artifact@v3
+              with:
+                  name: code-blocks-${{ github.ref_name }}.vsix
+                  path: .
+            - name: Publish GitHub release
+              uses: softprops/action-gh-release@v1
+              with:
+                  generate_release_notes: true
+                  files: code-blocks-*.vsix
+            - name: Publish GitHub release
+              run: npx @vscode/vsce publish -i $(ls code-blocks-*.vsix)

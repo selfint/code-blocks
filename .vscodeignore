@@ -1,0 +1,12 @@
+.*
+.*/
+*/
+*
+
+!CHANGELOG.md
+!LICENSE
+!README.md
+!assets/extension-logo.png
+!node_modules/web-tree-sitter
+!out/extension.js
+!webview-ui/public

@@ -1,0 +1,352 @@
+{
+  "name": "code-blocks",
+  "publisher": "selfint",
+  "displayName": "Code Blocks",
+  "description": "Move code blocks around",
+  "repository": {
+    "url": "https://github.com/selfint/code-blocks",
+    "type": "git"
+  },
+  "bugs": {
+    "url": "https://github.com/selfint/code-blocks/issues",
+    "email": "selfint@gmail.com"
+  },
+  "homepage": "https://github.com/selfint/code-blocks#readme",
+  "icon": "./assets/extension-logo.png",
+  "galleryBanner": {
+    "color": "#6295E3",
+    "theme": "dark"
+  },
+  "version": "0.6.0",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.79.0"
+  },
+  "categories": [
+    "Visualization",
+    "Other"
+  ],
+  "keywords": [
+    "blocks",
+    "code-blocks",
+    "refactor",
+    "tree-sitter",
+    "treesitter",
+    "visualization"
+  ],
+  "preview": true,
+  "activationEvents": [
+    "onLanguage"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "codeBlocks.editor",
+        "displayName": "Code Blocks",
+        "selector": [
+          {
+            "filenamePattern": "*"
+          }
+        ],
+        "priority": "option"
+      }
+    ],
+    "commands": [
+      {
+        "command": "codeBlocks.open",
+        "title": "Code Blocks: Open active file in Code Blocks editor"
+      },
+      {
+        "command": "codeBlocks.openToTheSide",
+        "title": "Code Blocks: Open active file in Code Blocks editor to the side"
+      },
+      {
+        "command": "codeBlocks.toggleActive",
+        "title": "Code Blocks: Toggle extension"
+      },
+      {
+        "command": "codeBlocks.toggleBlockMode",
+        "title": "Code Blocks: Toggle block mode"
+      },
+      {
+        "command": "codeBlocks.moveUp",
+        "title": "Code Blocks: Move selected block up"
+      },
+      {
+        "command": "codeBlocks.moveDown",
+        "title": "Code Blocks: Move selected block down"
+      },
+      {
+        "command": "codeBlocks.navigateUp",
+        "title": "Code Blocks: Navigate to previous block"
+      },
+      {
+        "command": "codeBlocks.navigateDown",
+        "title": "Code Blocks: Navigate to next block"
+      },
+      {
+        "command": "codeBlocks.navigateUpForce",
+        "title": "Code Blocks: Force navigate to previous block"
+      },
+      {
+        "command": "codeBlocks.navigateDownForce",
+        "title": "Code Blocks: Force navigate to next block"
+      },
+      {
+        "command": "codeBlocks.selectBlock",
+        "title": "Code Blocks: Select current block"
+      },
+      {
+        "command": "codeBlocks.openTreeViewer",
+        "title": "Code Blocks: Open tree viewer"
+      },
+      {
+        "command": "codeBlocks.selectParent",
+        "title": "Code Blocks: Scope selection - parent"
+      },
+      {
+        "command": "codeBlocks.selectChild",
+        "title": "Code Blocks: Scope selection - child"
+      },
+      {
+        "command": "codeBlocks.selectNext",
+        "title": "Code Blocks: Scope selection - next"
+      },
+      {
+        "command": "codeBlocks.selectPrevious",
+        "title": "Code Blocks: Scope selection - previous"
+      },
+      {
+        "command": "codeBlocks.toggleBlockModeColors",
+        "title": "Code Blocks: Toggle block mode colors"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "codeBlocks.moveUp",
+        "key": "alt+left",
+        "when": "editorTextFocus && codeBlocks.blockMode"
+      },
+      {
+        "command": "codeBlocks.moveDown",
+        "key": "alt+right",
+        "when": "editorTextFocus && codeBlocks.blockMode"
+      },
+      {
+        "command": "codeBlocks.navigateUp",
+        "key": "ctrl+left",
+        "mac": "cmd+left",
+        "when": "editorTextFocus && codeBlocks.blockMode"
+      },
+      {
+        "command": "codeBlocks.navigateDown",
+        "key": "ctrl+right",
+        "mac": "cmd+right",
+        "when": "editorTextFocus && codeBlocks.blockMode"
+      },
+      {
+        "command": "codeBlocks.navigateUpForce",
+        "key": "ctrl+up",
+        "mac": "cmd+up",
+        "when": "editorTextFocus && codeBlocks.blockMode"
+      },
+      {
+        "command": "codeBlocks.navigateDownForce",
+        "key": "ctrl+down",
+        "mac": "cmd+down",
+        "when": "editorTextFocus && codeBlocks.blockMode"
+      },
+      {
+        "command": "codeBlocks.selectNext",
+        "key": "shift+right",
+        "mac": "shift+right",
+        "when": "editorTextFocus && codeBlocks.blockMode"
+      },
+      {
+        "command": "codeBlocks.selectPrevious",
+        "key": "shift+left",
+        "mac": "shift+left",
+        "when": "editorTextFocus && codeBlocks.blockMode"
+      },
+      {
+        "command": "codeBlocks.selectParent",
+        "key": "shift+up",
+        "mac": "shift+up",
+        "when": "editorTextFocus && codeBlocks.blockMode"
+      },
+      {
+        "command": "codeBlocks.selectChild",
+        "key": "shift+down",
+        "mac": "shift+down",
+        "when": "editorTextFocus && codeBlocks.blockMode"
+      }
+    ],
+    "configuration": {
+      "title": "CodeBlocks",
+      "properties": {
+        "codeBlocks.colors.enabled": {
+          "type": "boolean",
+          "description": "Whether block mode colors are enabled",
+          "default": false
+        },
+        "codeBlocks.colors.sibling": {
+          "type": "string",
+          "description": "Background color of current block's siblings. Can be any valid css string.",
+          "default": "var(--vscode-editor-selectionHighlightBackground)"
+        },
+        "codeBlocks.colors.parent": {
+          "type": "string",
+          "description": "Background color of current block's parent (only visible if there's no previous or next sibling). Can be any valid css string.",
+          "default": "var(--vscode-editor-linkedEditingBackground)"
+        },
+        "codeBlocks.ignoredLanguageIds": {
+          "type": "array",
+          "markdownDescription": "Array of VScode [languageId](https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers)s not to install/load parsers for.",
+          "default": [
+            "plaintext"
+          ]
+        },
+        "codeBlocks.queries": {
+          "type": "array",
+          "markdownDescription": "Tree-sitter [queries](https://tree-sitter.github.io/tree-sitter/using-parsers#query-syntax) to generate blocks, must contain a `@capture` (note that the entire match will be a block, not just the capture). Specified per [language ID](https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers), example: `\"[python]\": {\"codeBlocks.queries\": [ \"(class_definition) @item\", \"(function_definition) @item\", \"(decorated_definition) @item\" ]}`",
+          "editPresentation": "multilineText",
+          "scope": "language-overridable"
+        },
+        "codeBlocks.npmPackageName": {
+          "markdownDescription": "NPM package name of the tree-sitter grammar to use (defaults to `tree-sitter-<languageId>`). Specified per [language ID](https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers), example: `\"[csharp]\": {\"codeBlocks.npmPackageName\": \"tree-sitter-c-sharp\"}`.",
+          "scope": "language-overridable",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "codeBlocks.parserName": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "markdownDescription": "Name of the .wasm parser generated by tree-sitter-cli, without the .wasm extension (defaults to `codeBlocks.npmPackageName`). Specified per [language ID](https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers), example: `\"[csharp]\": {\"codeBlocks.parserName\": \"tree-sitter-c_sharp\"}`.",
+          "scope": "language-overridable"
+        },
+        "codeBlocks.subdirectory": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "markdownDescription": "Name of the subdirectory containing the tree-sitter grammar inside the npm package (leave empty to use the root directory). Specified per [language ID](https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers), example: `\"[typescript]\": {\"codeBlocks.subdirectory\": \"typescript\"}`.",
+          "scope": "language-overridable"
+        }
+      }
+    },
+    "configurationDefaults": {
+      "[rust]": {
+        "codeBlocks.queries": [
+          "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (function_item) @item)",
+          "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (mod_item) @item)",
+          "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (struct_item) @item)",
+          "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (impl_item) @item)",
+          "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (enum_item) @item)",
+          "(match_arm) @arm"
+        ]
+      },
+      "[typescript]": {
+        "codeBlocks.subdirectory": "typescript",
+        "codeBlocks.queries": [
+          "( (comment)* @header . (class_declaration) @item)",
+          "( (comment)* @header . (method_definition) @item)",
+          "( (comment)* @header . (function_declaration) @item)",
+          "( (comment)* @header . (export_statement) @item)"
+        ]
+      },
+      "[typescriptreact]": {
+        "codeBlocks.npmPackageName": "tree-sitter-typescript",
+        "codeBlocks.parserName": "tree-sitter-tsx",
+        "codeBlocks.subdirectory": "tsx",
+        "codeBlocks.queries": [
+          "( (comment)* @header . (class_declaration) @item)",
+          "( (comment)* @header . (method_definition) @item)",
+          "( (comment)* @header . (function_declaration) @item)",
+          "( (comment)* @header . (export_statement) @item)",
+          "(jsx_element) @item",
+          "(jsx_self_closing_element) @item"
+        ]
+      },
+      "[javascriptreact]": {
+        "codeBlocks.npmPackageName": "tree-sitter-javascript",
+        "codeBlocks.queries": [
+          "( (comment)* @header . (class_declaration) @item)",
+          "( (comment)* @header . (method_definition) @item)",
+          "( (comment)* @header . (function_declaration) @item)",
+          "( (comment)* @header . (export_statement) @item)",
+          "(jsx_element) @item",
+          "(jsx_self_closing_element) @item"
+        ]
+      },
+      "[svelte]": {
+        "codeBlocks.queries": [
+          "( (comment)* @header . (element) @item)",
+          "( (comment)* @header . (each_statement) @item)",
+          "( (comment)* @header . (if_statement) @item)",
+          "( (comment)* @header . (style_element) @item)",
+          "( (comment)* @header . (script_element) @item)"
+        ]
+      },
+      "[python]": {
+        "codeBlocks.queries": [
+          "(class_definition) @item",
+          "(function_definition) @item",
+          "(decorated_definition) @item"
+        ]
+      },
+      "[java]": {
+        "codeBlocks.queries": [
+          "( (block_comment)* @header . (class_declaration) @item)",
+          "( (block_comment)* @header . (method_declaration) @item)"
+        ]
+      },
+      "[csharp]": {
+        "codeBlocks.npmPackageName": "tree-sitter-c-sharp",
+        "codeBlocks.parserName": "tree-sitter-c_sharp"
+      }
+    }
+  },
+  "scripts": {
+    "install:all": "yarn install && cd webview-ui && yarn install",
+    "start:webview": "cd webview-ui && yarn run dev",
+    "build:webview": "cd webview-ui && yarn run build && yarn run check",
+    "vscode:prepublish": "yarn run esbuild-base --minify",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "yarn run compile && yarn run lint",
+    "test": "node ./out/test/runTest.js",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --external:web-tree-sitter --format=cjs --platform=node",
+    "esbuild": "yarn run esbuild-base --sourcemap",
+    "esbuild-watch": "yarn run esbuild-base --sourcemap --watch",
+    "lint": "tsc --noEmit && eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.3.5",
+    "@types/glob": "^8.0.1",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "20.3.3",
+    "@types/tar": "^6.1.5",
+    "@types/vscode": "^1.79.0",
+    "@types/which": "^3.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.49.0",
+    "@typescript-eslint/parser": "^5.49.0",
+    "@vscode/test-electron": "^2.2.2",
+    "chai": "^4.3.7",
+    "esbuild": "^0.18.11",
+    "eslint": "^8.44.0",
+    "glob": "^8.1.0",
+    "mocha": "^10.2.0",
+    "typescript": "^5.1.6"
+  },
+  "dependencies": {
+    "tar": "^6.1.15",
+    "web-tree-sitter": "^0.20.8",
+    "which": "^3.0.1"
+  }
+}

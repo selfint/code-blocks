@@ -1,0 +1,32 @@
+module.exports = {
+  extends: [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    "plugin:@typescript-eslint/strict",
+  ],
+  parser: "@typescript-eslint/parser",
+  parserOptions: {
+    ecmaVersion: 6,
+    sourceType: "module",
+    project: "tsconfig.json",
+    tsconfigRootDir: __dirname,
+  },
+  plugins: ["@typescript-eslint"],
+  root: true,
+  rules: {
+    "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_.*" }],
+    "@typescript-eslint/naming-convention": "warn",
+    "@typescript-eslint/semi": "warn",
+    "@typescript-eslint/consistent-type-definitions": ["error", "type"],
+    "curly": "warn",
+    "eqeqeq": "warn",
+    "no-throw-literal": "warn",
+    "semi": "off",
+    "@typescript-eslint/explicit-function-return-type": "warn",
+    "no-duplicate-imports": "warn",
+    "sort-imports": "warn",
+    "no-trailing-spaces": "warn",
+  },
+  ignorePatterns: ["webview-ui/**", ".eslintrc.js"],
+};

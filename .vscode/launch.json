@@ -12,9 +12,6 @@
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}"
 			],
-			"outFiles": [
-				"${workspaceFolder}/out/**/*.js"
-			],
 			"preLaunchTask": "build-extension"
 		},
 		{
@@ -25,9 +22,9 @@
 				"--extensionDevelopmentPath=${workspaceFolder}",
 				"--extensionTestsPath=${workspaceFolder}/out/test/suite/index"
 			],
-			"outFiles": [
-				"${workspaceFolder}/out/test/**/*.js"
-			],
+			"env": {
+				"TEST_TIMEOUT": "10h"
+			},
 			"preLaunchTask": "build-extension"
 		}
 	]
