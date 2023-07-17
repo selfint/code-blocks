@@ -68,7 +68,10 @@
           "name": "tree_sitter_typescript"
       },
       "queries": [
-          "( (comment)* @comment . (_) @item)",
+          "( (comment)* @header . (class_declaration) @item)",
+          "( (comment)* @header . (method_definition) @item)",
+          "( (comment)* @header . (function_declaration) @item)",
+          "( (comment)* @header . (export_statement) @item)",
           "(jsx_element) @item",
           "(jsx_self_closing_element) @item"
       ]
@@ -79,7 +82,14 @@
   ### New config for Python and TSX
 
   ```json
-  // Python now doesn't need to be configured at all
+  "[python]": {
+    // single-node blocks are only for the Code Blocks Editor
+    "codeBlocks.queries": [
+      "(class_definition) @item",
+      "(function_definition) @item",
+      "(decorated_definition) @item"
+    ]
+  },
 
   // parser is configured inside each languageId's config
   "[typescriptreact]": {
@@ -88,8 +98,13 @@
     "codeBlocks.subdirectory": "tsx",
     // queries are now optional
     "codeBlocks.queries": [
-      "((comment)* @comment . (_) @item)",
-      // single-node blocks are unnecessary
+      "( (comment)* @header . (class_declaration) @item)",
+      "( (comment)* @header . (method_definition) @item)",
+      "( (comment)* @header . (function_declaration) @item)",
+      "( (comment)* @header . (export_statement) @item)",
+      // single-node blocks are only for the Code Blocks Editor
+      "(jsx_element) @item",
+      "(jsx_self_closing_element) @item"
     ]
   }
   ```
