@@ -197,6 +197,10 @@ MIT License © 2023 [Tom Selfin](https://github.com/selfint)
 
 ![Block Mode - Select - TypeScript](assets/examples/Block_Mode_-_Select_-_TypeScript.gif)
 
+### Block Mode - Select - TypeScript - Selection expands to block
+
+![Block Mode - Select - TypeScript - Selection expands to block](assets/examples/Block_Mode_-_Select_-_TypeScript_-_Selection_expands_to_block.gif)
+
 ### Tree Viewer
 
 ![Tree Viewer](assets/examples/Tree_Viewer.gif)
