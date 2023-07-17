@@ -252,9 +252,7 @@ export function activate(): vscode.Disposable[] {
     const commands = [
         cmd("codeBlocks.toggleBlockMode", () => toggleBlockMode()),
         cmd("codeBlocks.moveUp", async () => await moveSelection("swap-previous")),
-        cmd("codeBlocks.moveUpForce", async () => await moveSelection("before-parent")),
         cmd("codeBlocks.moveDown", async () => await moveSelection("swap-next")),
-        cmd("codeBlocks.moveDownForce", async () => await moveSelection("after-parent")),
         cmd("codeBlocks.selectBlock", selectBlock),
         cmd("codeBlocks.selectParent", () => updateSelection("parent")),
         cmd("codeBlocks.selectChild", () => updateSelection("child")),

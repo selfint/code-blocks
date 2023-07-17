@@ -49,9 +49,7 @@ suite("codeBlocks commands", function () {
 
     type MoveCommand =
         | "codeBlocks.moveDown"
-        | "codeBlocks.moveUp"
-        | "codeBlocks.moveUpForce"
-        | "codeBlocks.moveDownForce";
+        | "codeBlocks.moveUp";
 
     type TestMoveCommandsParams = {
         content: string;
@@ -135,16 +133,14 @@ suite("codeBlocks commands", function () {
         expect(newCursorIndex).to.equal(
             expectedNavigationDestinationIndex,
             "navigation commands didn't arrive to expected destination" +
-                `\n\tactual: ${
-                    cleanContent.substring(0, newCursorIndex) +
-                    targetCursor +
-                    cleanContent.substring(newCursorIndex)
-                }` +
-                `\n\texpect: ${
-                    cleanContent.substring(0, expectedNavigationDestinationIndex) +
-                    targetCursor +
-                    cleanContent.substring(expectedNavigationDestinationIndex)
-                }\n`
+            `\n\tactual: ${cleanContent.substring(0, newCursorIndex) +
+            targetCursor +
+            cleanContent.substring(newCursorIndex)
+            }` +
+            `\n\texpect: ${cleanContent.substring(0, expectedNavigationDestinationIndex) +
+            targetCursor +
+            cleanContent.substring(expectedNavigationDestinationIndex)
+            }\n`
         );
     }
 
@@ -311,54 +307,6 @@ source_file [0:0 - 0:12]
                     moveCommands: ["codeBlocks.moveDown"],
                     expectedContent: "fn main() { let a = [3, 1, 2]; }",
                     expectedSelectionContent: "1, 2",
-                    language: "rust",
-                });
-            });
-        });
-
-        suite(".moveUpForce", function () {
-            test("moves selection up and updates selection", async () => {
-                await testMoveCommands({
-                    content: "fn main() { { let a = 1@; }}",
-                    selectionCommands: ["codeBlocks.selectBlock"],
-                    moveCommands: ["codeBlocks.moveUpForce"],
-                    expectedContent: "fn main() { let a = 1;{  }}",
-                    expectedSelectionContent: "let a = 1;",
-                    language: "rust",
-                });
-            });
-
-            test("multiple nodes selected", async () => {
-                await testMoveCommands({
-                    content: "fn main() { { let a = 1@; let b = 2; }}",
-                    selectionCommands: ["codeBlocks.selectNext"],
-                    moveCommands: ["codeBlocks.moveUpForce"],
-                    expectedContent: "fn main() { let a = 1; let b = 2;{  }}",
-                    expectedSelectionContent: "let a = 1; let b = 2;",
-                    language: "rust",
-                });
-            });
-        });
-
-        suite(".moveDownForce", function () {
-            test("moves selection up and updates selection", async () => {
-                await testMoveCommands({
-                    content: "fn main() { { let a = 1@; }}",
-                    selectionCommands: ["codeBlocks.selectBlock"],
-                    moveCommands: ["codeBlocks.moveDownForce"],
-                    expectedContent: "fn main() { {  }let a = 1;}",
-                    expectedSelectionContent: "let a = 1;",
-                    language: "rust",
-                });
-            });
-
-            test("multiple nodes selected", async () => {
-                await testMoveCommands({
-                    content: "fn main() { { let a = 1@; let b = 2; }}",
-                    selectionCommands: ["codeBlocks.selectNext"],
-                    moveCommands: ["codeBlocks.moveDownForce"],
-                    expectedContent: "fn main() { {  }let a = 1; let b = 2;}",
-                    expectedSelectionContent: "let a = 1; let b = 2;",
                     language: "rust",
                 });
             });
