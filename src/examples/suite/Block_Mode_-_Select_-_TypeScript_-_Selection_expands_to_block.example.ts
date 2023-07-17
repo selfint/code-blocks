@@ -6,13 +6,17 @@ test("Block mode", async function () {
         language: "typescriptreact",
         content: `/** Selection is always expanded to the nearest block
 */
-function m@ain() {
+funct@ion main() {
     console.log("hello world");
-}`,
+}
+
+function foo() {
+    console.log("hi");
+}
+`,
         cursor: "@",
         selectionCommands: [
             "codeBlocks.selectBlock",
-            "codeBlocks.selectParent",
         ],
         expectedSelectionContent: `/** Selection is always expanded to the nearest block
 */
