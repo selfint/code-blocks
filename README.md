@@ -4,21 +4,19 @@
 </a>
 </p>
 
-<p align="center">
-<a href="https://marketplace.visualstudio.com/items?itemName=selfint.code-blocks" target="__blank"><img src="https://img.shields.io/visual-studio-marketplace/v/selfint.code-blocks.svg?color=blue&amp;label=VS%20Code%20Marketplace&logo=visual-studio-code" alt="Visual Studio Marketplace Version" /></a>
+<p align="center" style="margin-left: 20%; margin-right: 20%;">
+<a href="https://marketplace.visualstudio.com/items?itemName=selfint.code-blocks" target="__blank"><img src="https://img.shields.io/visual-studio-marketplace/v/selfint.code-blocks.svg?color=blue&logo=visual-studio-code" alt="Visual Studio Marketplace Version" /></a>
 <a href="https://marketplace.visualstudio.com/items?itemName=selfint.code-blocks" target="__blank"><img src="https://img.shields.io/visual-studio-marketplace/d/selfint.code-blocks.svg?color=4bdbe3" alt="Visual Studio Marketplace Downloads" /></a>
 <a href="https://marketplace.visualstudio.com/items?itemName=selfint.code-blocks" target="__blank"><img src="https://img.shields.io/visual-studio-marketplace/i/selfint.code-blocks.svg?color=63ba83" alt="Visual Studio Marketplace Installs" /></a>
-<br/>
-<a href="https://github.com/selfint/code-blocks/actions/workflows/vscode-extension-ci-cd.yml" target="__blank"><img alt="GitHub CI" src="https://img.shields.io/github/actions/workflow/status/selfint/code-blocks/vscode-extension-ci-cd.yml"></a>
+<a href="https://github.com/selfint/code-blocks/actions/workflows/ci-cd.yml" target="__blank"><img alt="GitHub CI" src="https://img.shields.io/github/actions/workflow/status/selfint/code-blocks/ci-cd.yml"></a>
 <a href="https://github.com/selfint/code-blocks" target="__blank"><img src="https://img.shields.io/github/last-commit/selfint/code-blocks.svg?color=c977be" alt="GitHub last commit" /></a>
 <a href="https://github.com/selfint/code-blocks/issues" target="__blank"><img src="https://img.shields.io/github/issues/selfint/code-blocks.svg?color=a38eed" alt="GitHub issues" /></a>
-<a href="https://github.com/selfint/code-blocks" target="__blank"><img alt="GitHub stars" src="https://img.shields.io/github/stars/selfint/code-blocks?style=social"></a>
-
+<a href="https://github.com/selfint/code-blocks/stargazers" target="__blank"><img alt="GitHub stars" src="https://img.shields.io/github/stars/selfint/code-blocks?style=social"></a>
 </p>
 
 <br>
 
-  <h1><p align="center">Code blocks</p></h1>
+<h1><p align="center">Code blocks</p></h1>
 
 Supercharge your editor with syntactically aware code navigation and manipulation, **_in any language_** supported by [tree-sitter](https://tree-sitter.github.io/tree-sitter/#parsers).
 
@@ -29,16 +27,19 @@ Supercharge your editor with syntactically aware code navigation and manipulatio
 Syntactically aware code selection (e.g. select scope), navigation (e.g. goto next function)
 and manipulation (e.g. re-order function parameters), right inside your editor.
 
-<p align="center">
-<img width="49%" src="./assets/block-mode/Code Blocks Demo - Block Mode - rust 1.gif" />
-<img width="49%" src="./assets/block-mode/Code Blocks Demo - Block Mode - svelte 1.gif" />
-</p>
+![rust_parameters_example](./assets/examples/Block_Mode_-_Move_-_Rust_-_Parameters.gif)
 
 ### Code Blocks Editor
 
 Birds eye view over all your code blocks, with point and click refactoring.
 
 ![svelte-1](./assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20svelte%201.gif)
+
+### Tree viewer
+
+View your code's syntax tree directly
+
+![tree_viewer](./assets/examples/tree_viewer.gif)
 
 ## Requirements
 
@@ -174,74 +175,33 @@ Desired blocks: JSX blocks. Documentation comments should be merged with documen
 
 -   Out of bounds memory access ([#154](https://github.com/selfint/code-blocks/issues/154)): For now, reloading the editor fixes this.
 
-## Gallery
-
-### Rust
-
-> Moving method in and around `impl` block
-
-![rust-2](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20rust%202.gif)
-
-> Moving `match` arms
-
-![rust-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20rust%201.gif)
-
-### Svelte
-
-> Rapidly changing UI look
-
-![svelte-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20svelte%201.gif)
-
-### React (TypeScript + JSX)
-
-> Rapidly changing UI look
-
-![react-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20react%201.gif)
-
-### Python
-
-**NOTE**: Force moving in Python almost never works correctly,
-since whitespace is meaningful
-
-> Moving methods and classes with decorators
-
-![python-1](./assets/block-mode/Code%20Blocks%20Demo%20-%20Block%20Mode%20-%20python%201.gif)
-
-## Code Blocks editor
-
-This editor displays all blocks in the current file, in a custom editor.
-To move a block, click the source block, and then the block to move it under.
-
-### Rust
-
-> Moving method in and around `impl` block
-
-![rust-1](./assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20rust%201.gif)
-
-> Moving `match` arms
-
-![rust-2](./assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20rust%202.gif)
-
-### Svelte
-
-> Rapidly changing UI look
-
-![svelte-1](./assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20svelte%201.gif)
-
-### TypeScript + JSX
-
-> Rapidly changing UI look
-
-![tsx-1](./assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20react%201.gif)
-
-### Python
-
-**NOTE**: Force moving in Python almost never works correctly,
-since whitespace is meaningful it's a bit tricky. Hopefully in the future
-this is stabilized.
-
-> Moving methods and classes with decorators
-
 ## License
 
 MIT License © 2023 [Tom Selfin](https://github.com/selfint)
+
+## Gallery
+
+### Block Mode - Move - Rust - Functions
+
+![Block Mode - Move - Rust - Functions](assets/examples/Block_Mode_-_Move_-_Rust_-_Functions.gif)
+
+### Block Mode - Move - Rust - Match arms
+
+![Block Mode - Move - Rust - Match arms](assets/examples/Block_Mode_-_Move_-_Rust_-_Match_arms.gif)
+
+### Block Mode - Move - Rust - Parameters
+
+![Block Mode - Move - Rust - Parameters](assets/examples/Block_Mode_-_Move_-_Rust_-_Parameters.gif)
+
+### Block Mode - Select - Rust
+
+![Block Mode - Select - Rust](assets/examples/Block_Mode_-_Select_-_Rust.gif)
+
+### Block Mode - Select - TypeScript
+
+![Block Mode - Select - TypeScript](assets/examples/Block_Mode_-_Select_-_TypeScript.gif)
+
+### Tree Viewer
+
+![Tree Viewer](assets/examples/Tree_Viewer.gif)
+

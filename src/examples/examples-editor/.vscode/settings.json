@@ -1,0 +1,13 @@
+{
+    "editor.fontSize": 20,
+    "workbench.activityBar.visible": false,
+    "explorer.autoReveal": false,
+    "workbench.colorTheme": "Default Dark Modern",
+    "workbench.preferredDarkColorTheme": "Default Dark Modern",
+    "workbench.preferredLightColorTheme": "Default Dark Modern",
+    "[plaintext]": {
+        "editor.unicodeHighlight.ambiguousCharacters": false,
+        "editor.unicodeHighlight.invisibleCharacters": false,
+        "editor.fontSize": 14
+    }
+}

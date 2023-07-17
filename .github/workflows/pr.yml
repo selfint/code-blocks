@@ -1,21 +1,12 @@
-name: vscode-extension CI/CD
+name: Pull request checks
 
 on:
-    push:
-        branches:
-            - main
-        tags:
-            - "v*.*.*"
     pull_request:
-        branches:
-            - main
-            - "v*.*.*"
-
-permissions:
-    contents: write
 
 env:
     TEST_TIMEOUT: 5m
+    EXAMPLE_TIMEOUT: 5m
+    BRANCH: ${{ startsWith(github.head_ref, '') && github.head_ref || github.ref_name  }}
 
 jobs:
     test:
@@ -50,9 +41,8 @@ jobs:
               with:
                   run: yarn test
 
-    package:
-        name: Package extension
-        needs: test
+    examples:
+        name: Build examples
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
@@ -61,40 +51,24 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: 16
-            - name: Install extension dependencies
-              run: yarn run install:all
-            - name: Build webview
-              run: yarn run build:webview
-            - name: Package extension
-              run: npx @vscode/vsce package --yarn --githubBranch ${{ startsWith(github.head_ref, '') && github.head_ref || github.ref_name  }}
-            - name: Upload extension
-              uses: actions/upload-artifact@v3
-              with:
-                  name: code-blocks-${{ startsWith(github.head_ref, '') && github.head_ref || github.ref_name }}.vsix
-                  path: code-blocks-*.vsix
-
-    release:
-        name: Release extension
-        if: startsWith(github.ref, 'refs/tags/v')
-        needs: test
-
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v3
-            - name: Set Node.js 16.x
-              uses: actions/setup-node@v3
-              with:
-                  node-version: 16.x
-            - name: Install vsce
-              run: npm i -g @vscode/vsce
+            - name: Install asset generation dependencies
+              run: sudo apt install -y ffmpeg libnss3 xvfb
             - name: Install extension dependencies
               run: yarn run install:all
             - name: Build webview
               run: yarn run build:webview
             - name: Build extension
-              run: vsce package --yarn --githubBranch ${{ github.ref_name }}
-            - name: Release
-              uses: softprops/action-gh-release@v1
+              run: yarn run compile
+            - name: Setting global vscode settings
+              run: cp -r ./out/examples/examples-editor/.vscode ~/.vscode
+            - name: Generate assets
+              run: |
+                  chmod +x ./generate-assets.sh
+                  chmod +x ./generate-example-asset.sh
+                  ./generate-assets.sh ./out/examples .
+            - name: Upload assets
+              uses: actions/upload-artifact@v3
               with:
-                  generate_release_notes: true
-                  files: code-blocks-*.vsix
+                  name: ${{ env.BRANCH }}-assets
+                  path: |
+                      *.gif
