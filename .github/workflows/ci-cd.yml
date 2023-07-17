@@ -45,6 +45,7 @@ jobs:
 
     examples:
         name: Update examples
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
         concurrency: ${{ github.ref }}
         runs-on: ubuntu-latest
         steps:
@@ -84,15 +85,7 @@ jobs:
                   git config --local user.name "github-actions"
                   git add assets/examples README.md
                   git commit -m "Update examples [skip ci]"
-            - name: Push new examples to tag
-              if: startsWith(github.ref, 'refs/tags/v')
-              run: |
-                  git tag -d ${{ github.ref_name }}
-                  git push origin :refs/tags/${{ github.ref_name }}
-                  git tag -f ${{ github.ref_name }}
-                  git push origin --tags
             - name: Push new examples to branch
-              if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
               run: |
                   git pull --ff-only origin ${{ github.ref_name }}
                   git push origin HEAD:${{ github.ref_name }}
