@@ -48,7 +48,7 @@ View your code's syntax tree directly
 -   `tree-sitter`: Used to build tree-sitter language parsers. After installing `npm`, can be installed by running:
 
     ```console
-    $ npm i -g tree-sitter
+    $ npm i -g tree-sitter-cli
     ```
 
 -   `emcc`: Emscripten compiler, used by `tree-sitter` to compile parsers to WASM. Can be provided either through:
