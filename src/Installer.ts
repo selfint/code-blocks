@@ -172,7 +172,7 @@ export async function getLanguage(
     const parserWasmBindings = getWasmBindingsPath(parsersDir, npmPackageName, parserName);
 
     const npm = "npm";
-    const treeSitterCli = "tree-sitter";
+    const treeSitterCli = configuration.getTreeSitterCliPath();
 
     await parserFinishedInit;
 

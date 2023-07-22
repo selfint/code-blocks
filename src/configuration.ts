@@ -56,3 +56,9 @@ export function getColorConfig(): ColorConfig {
         parentColor: colorConfig?.parentColor ?? defaultParentColor,
     };
 }
+
+export function getTreeSitterCliPath(): string {
+    const treeSitterCliPath = vscode.workspace.getConfiguration("codeBlocks").get<string>("treeSitterCliPath");
+
+    return treeSitterCliPath ?? "tree-sitter";
+}
