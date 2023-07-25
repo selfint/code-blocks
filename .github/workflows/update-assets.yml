@@ -1,0 +1,57 @@
+name: Update assets
+
+on:
+    workflow_dispatch:
+
+permissions:
+    contents: write
+
+env:
+    EXAMPLE_TIMEOUT: 5m
+
+jobs:
+    update:
+        name: Update examples
+        concurrency: ${{ github.ref }}
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+            - name: Install Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 16
+            - name: Install asset generation dependencies
+              run: sudo apt install -y ffmpeg libnss3 xvfb
+            - name: Install extension dependencies
+              run: yarn run install:all
+            - name: Build webview
+              run: yarn run build:webview
+            - name: Build extension
+              run: yarn run pretest
+            - name: Setting global vscode settings
+              run: cp -r out/examples/examples-editor/.vscode ~/.vscode
+            - name: Update examples assets
+              run: |
+                  chmod +x ./generate-assets.sh
+                  chmod +x ./generate-example-asset.sh
+                  mkdir assets/examples.tmp
+                  ./generate-assets.sh out/examples assets/examples.tmp
+                  rm -rf assets/examples
+                  mv assets/examples.tmp assets/examples
+            - name: Update examples gallery
+              run: |
+                  ls assets/examples
+                  sed -n '/## Gallery/q;p' README.md > README.md.tmp
+                  ./build_examples_gallery.sh assets/examples >> README.md.tmp
+                  mv README.md.tmp README.md
+            - name: Commit new examples
+              run: |
+                  git config --local user.email "github-actions@github.com"
+                  git config --local user.name "github-actions"
+                  git add assets/examples README.md
+                  git commit -m "Update examples [skip ci]"
+            - name: Push new examples to branch
+              run: |
+                  git pull --ff-only origin ${{ github.ref_name }}
+                  git push origin HEAD:${{ github.ref_name }}
