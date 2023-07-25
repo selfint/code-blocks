@@ -9,6 +9,7 @@ permissions:
 env:
     TEST_TIMEOUT: 5m
     EXAMPLE_TIMEOUT: 5m
+    UPDATE_ASSETS: ${{ contains(github.event.head_commit.message, '[update assets]') && !startsWith(github.ref, 'refs/tags/v') }}
 
 jobs:
     test:
@@ -51,27 +52,27 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v3
             - name: Install Node.js
-              if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+              if: ${{ env.UPDATE_ASSETS }}
               uses: actions/setup-node@v3
               with:
                   node-version: 16
             - name: Install asset generation dependencies
-              if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+              if: ${{ env.UPDATE_ASSETS }}
               run: sudo apt install -y ffmpeg libnss3 xvfb
             - name: Install extension dependencies
-              if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+              if: ${{ env.UPDATE_ASSETS }}
               run: yarn run install:all
             - name: Build webview
-              if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+              if: ${{ env.UPDATE_ASSETS }}
               run: yarn run build:webview
             - name: Build extension
-              if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+              if: ${{ env.UPDATE_ASSETS }}
               run: yarn run pretest
             - name: Setting global vscode settings
-              if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+              if: ${{ env.UPDATE_ASSETS }}
               run: cp -r out/examples/examples-editor/.vscode ~/.vscode
             - name: Update examples assets
-              if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+              if: ${{ env.UPDATE_ASSETS }}
               run: |
                   chmod +x ./generate-assets.sh
                   chmod +x ./generate-example-asset.sh
@@ -80,21 +81,21 @@ jobs:
                   rm -rf assets/examples
                   mv assets/examples.tmp assets/examples
             - name: Update examples gallery
-              if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+              if: ${{ env.UPDATE_ASSETS }}
               run: |
                   ls assets/examples
                   sed -n '/## Gallery/q;p' README.md > README.md.tmp
                   ./build_examples_gallery.sh assets/examples >> README.md.tmp
                   mv README.md.tmp README.md
             - name: Commit new examples
-              if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+              if: ${{ env.UPDATE_ASSETS }}
               run: |
                   git config --local user.email "github-actions@github.com"
                   git config --local user.name "github-actions"
                   git add assets/examples README.md
                   git commit -m "Update examples [skip ci]"
             - name: Push new examples to branch
-              if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+              if: ${{ env.UPDATE_ASSETS }}
               run: |
                   git pull --ff-only origin ${{ github.ref_name }}
                   git push origin HEAD:${{ github.ref_name }}
