@@ -1,5 +1,11 @@
 # Changelog
 
+# 0.6.1
+
+## Added
+
+- `codeBlocks.treeSitterCliPath` configuration: Set path to `tree-sitter` command.
+
 # 0.6.0
 
 ## Added
