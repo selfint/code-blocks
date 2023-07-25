@@ -11,7 +11,6 @@ import { parserFinishedInit } from "./extension";
 import which from "which";
 
 const NPM_INSTALL_URL = "https://nodejs.org/en/download";
-const TREE_SITTER_CLI_INSTALL_URL = "https://github.com/tree-sitter/tree-sitter/blob/master/cli/README.md";
 const EMCC_INSTALL_URL = "https://emscripten.org/docs/getting_started/downloads.html#download-and-install";
 const DOCKER_INSTALL_URL = "https://docs.docker.com/get-docker/";
 
@@ -62,11 +61,13 @@ export async function downloadAndBuildParser(
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    const treeSitterCliOk = (await which(treeSitterCli, { nothrow: true })) !== null;
-    // auto install tree-sitter cli to parsersDir if not present
-    if (!treeSitterCliOk) {
+    const treeSitterCliOk = await runCmd(`${treeSitterCli} --version`);
+    if (treeSitterCliOk.status === "err") {
         return err(
-            `tree-sitter cli command: '${treeSitterCli}' is not in PATH, try installing it from: ${TREE_SITTER_CLI_INSTALL_URL}`
+            `
+            tree-sitter cli command '${treeSitterCli}' failed:
+            ${treeSitterCliOk.result[0].name} ${treeSitterCliOk.result[0].message.replace("\n", " > ")}.` +
+                (treeSitterCliOk.result[1].length > 1 ? ` Logs: ${treeSitterCliOk.result[1].join(">")}` : "")
         );
     }
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -77,7 +78,7 @@ export async function downloadAndBuildParser(
 
     if (dockerOk && !emccOk) {
         void vscode.window.showInformationMessage(
-            `tree-sitter requirement emcc not found, but docker was found and will be used. Note that using emcc is much faster, try installing if from: ${EMCC_INSTALL_URL}`
+            `tree-sitter requirement emcc not found, but docker was found and is being used. Note that using emcc is much faster, try installing if from: ${EMCC_INSTALL_URL}`
         );
     } else if (!dockerOk && !emccOk) {
         return err(
@@ -137,7 +138,7 @@ export async function downloadAndBuildParser(
 
 async function runCmd(
     cmd: string,
-    options: ExecOptions,
+    options: ExecOptions = {},
     onData?: (data: string) => void
 ): Promise<Result<string, [ExecException, string[]]>> {
     const logs: string[] = [];
