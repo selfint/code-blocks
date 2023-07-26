@@ -32,7 +32,7 @@ jobs:
             - name: Install tree-sitter cli
               run: npm install --global tree-sitter-cli
             - name: Pull parser
-              run: npm pack --verbose --json --pack-destination . ${{ inputs.npmPackageName }}`
+              run: npm pack --verbose --json --pack-destination . ${{ inputs.npmPackageName }}
             - name: Build parser
               # will use docker to build parser
               run: tree-sitter build-wasm ${{ inputs.subdirectory }}
