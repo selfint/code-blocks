@@ -1,0 +1,43 @@
+name: Build parser
+
+on:
+    workflow_dispatch:
+        inputs:
+            npmPackageName:
+                description: "NPM package name of parser to build"
+                type: string
+                required: true
+            parserName:
+                description: ".wasm file name of parser (without .wasm extension), defaults to npmPackageName"
+                type: string
+                required: false
+            subdirectory:
+                description: "Subdirectory containing the parser grammar"
+                type: string
+                required: false
+                default: ""
+
+jobs:
+    build:
+        name: Build parser
+        concurrency: ${{ inputs.npmPackageName }}-${{ inputs.parserName }}
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+            - name: Install Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 16
+            - name: Install tree-sitter cli
+              run: npm install --global tree-sitter-cli
+            - name: Pull parser
+              run: npm pack --verbose --json --pack-destination . ${{ inputs.npmPackageName }}`
+            - name: Build parser
+              # will use docker to build parser
+              run: tree-sitter build-wasm ${{ inputs.subdirectory }}
+            - name: Upload parser
+              uses: actions/upload-artifact@v3
+              with:
+                  name: ${{ inputs.parserName }}
+                  path: ${{ inputs.parserName }}
