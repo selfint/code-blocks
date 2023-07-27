@@ -136,7 +136,7 @@ export async function downloadAndBuildParser(
     }
 }
 
-async function runCmd(
+export async function runCmd(
     cmd: string,
     options: ExecOptions = {},
     onData?: (data: string) => void
