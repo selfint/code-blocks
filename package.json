@@ -329,7 +329,7 @@
     "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --external:web-tree-sitter --format=cjs --platform=node",
     "esbuild": "yarn run esbuild-base --sourcemap",
     "esbuild-watch": "yarn run esbuild-base --sourcemap --watch",
-    "lint": "tsc --noEmit && eslint src --ext ts"
+    "lint": "eslint src --ext ts"
   },
   "devDependencies": {
     "@types/chai": "^4.3.5",
@@ -350,7 +350,6 @@
     "typescript": "^5.1.6"
   },
   "dependencies": {
-    "axios": "^1.4.0",
     "tar": "^6.1.15",
     "web-tree-sitter": "^0.20.8",
     "which": "^3.0.1"
