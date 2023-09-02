@@ -66,8 +66,8 @@ export async function downloadAndBuildParser(
         return err(
             `
             tree-sitter cli command '${treeSitterCli}' failed:
-            ${treeSitterCliOk.result[0].name} ${treeSitterCliOk.result[0].message.replace("\n", " > ")}.` +
-                (treeSitterCliOk.result[1].length > 1 ? ` Logs: ${treeSitterCliOk.result[1].join(">")}` : "")
+            ${treeSitterCliOk.result[0].name} ${treeSitterCliOk.result[0].message.replace(/\n/g, " > ")}.` +
+            (treeSitterCliOk.result[1].length > 1 ? ` Logs: ${treeSitterCliOk.result[1].join(">")}` : "")
         );
     }
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
