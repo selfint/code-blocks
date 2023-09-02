@@ -9,8 +9,7 @@ on:
             npmPackageName:
                 description: "NPM package name of parser to build"
                 type: string
-                required: false
-                default: "tree-sitter-javascript"
+                required: true
             parserName:
                 description: ".wasm file name of parser (without .wasm extension), defaults to npmPackageName"
                 type: string
@@ -41,15 +40,15 @@ jobs:
             - name: Install tree-sitter cli
               run: npm install --global tree-sitter-cli
             - name: Pull parser
-              run: mkdir ${{ inputs.npmPackageName }} && npm pack --verbose --pack-destination . ${{ inputs.npmPackageName }}
+              run: mkdir tree-sitter-javascript && npm pack --verbose --pack-destination tree-sitter-javascript
             - name: Extract parser
-              run: tar --strip-components=1 -xzvf ${{ inputs.npmPackageName }}/*
-              working-directory: ${{ inputs.npmPackageName }}
+              run: tar --strip-components=1 -xzvf tree-sitter-javascript/*
+              working-directory: tree-sitter-javascript
             - name: Build parser
               run: tree-sitter build-wasm ${{ inputs.subdirectory }}
-              working-directory: ${{ inputs.npmPackageName }}
+              working-directory: tree-sitter-javascript
             - name: Upload parser
               uses: actions/upload-artifact@v3
               with:
-                  name: ${{ inputs.parserName }}
-                  path: ${{ inputs.npmPackageName}}/${{ inputs.parserName }}
+                  name: tree-sitter-javascript
+                  path: tree-sitter-javascript/tree-sitter-javascript.wasm
