@@ -40,7 +40,7 @@ jobs:
             - name: Install tree-sitter cli
               run: npm install --global tree-sitter-cli
             - name: Pull parser
-              run: mkdir tree-sitter-javascript && cd tree-sitter-javascript && npm pack --verbose --pack-destination tree-sitter-javascript
+              run: mkdir tree-sitter-javascript && npm pack --verbose --pack-destination tree-sitter-javascript tree-sitter-javascript
             - name: Extract parser
               run: cd tree-sitter-javascript && tar --strip-components=1 -xzvf *
             - name: Build parser
