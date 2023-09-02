@@ -1,0 +1,50 @@
+name: Build parser
+
+on:
+    push:
+        branches:
+            - "149-precompile-wasm-parsers"
+    workflow_dispatch:
+        inputs:
+            npmPackageName:
+                description: "NPM package name of parser to build"
+                type: string
+                required: true
+            parserName:
+                description: ".wasm file name of parser (without .wasm extension), defaults to npmPackageName"
+                type: string
+                required: false
+            subdirectory:
+                description: "Subdirectory containing the parser grammar"
+                type: string
+                required: false
+                default: ""
+
+jobs:
+    build:
+        name: Build parser
+        concurrency: ${{ inputs.npmPackageName }}-${{ inputs.parserName }}
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+            - name: Install Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 16
+            - name: Install tree-sitter cli
+              run: npm install --global tree-sitter-cli
+            - name: Pull parser
+              run: mkdir tree-sitter-javascript && npm pack --verbose --pack-destination tree-sitter-javascript tree-sitter-javascript
+            - name: Extract parser
+              run: tar --strip-components=1 -xzvf *
+              working-directory: tree-sitter-javascript
+            - name: Build parser
+              # will use docker for emscripten
+              run: tree-sitter build-wasm ${{ inputs.subdirectory }}
+              working-directory: tree-sitter-javascript
+            - name: Upload parser
+              uses: actions/upload-artifact@v3
+              with:
+                  name: tree-sitter-javascript
+                  path: tree-sitter-javascript/tree-sitter-javascript.wasm
