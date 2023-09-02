@@ -41,11 +41,15 @@ jobs:
             - name: Install tree-sitter cli
               run: npm install --global tree-sitter-cli
             - name: Pull parser
-              run: npm pack --verbose --json --pack-destination . ${{ inputs.npmPackageName }}
+              run: mkdir ${{ inputs.npmPackageName }} && npm pack --verbose --pack-destination . ${{ inputs.npmPackageName }}
+            - name: Extract parser
+              run: tar --strip-components=1 -xzvf ${{ inputs.npmPackageName }}/*
+              working-directory: ${{ inputs.npmPackageName }}
             - name: Build parser
               run: tree-sitter build-wasm ${{ inputs.subdirectory }}
+              working-directory: ${{ inputs.npmPackageName }}
             - name: Upload parser
               uses: actions/upload-artifact@v3
               with:
                   name: ${{ inputs.parserName }}
-                  path: ${{ inputs.parserName }}
+                  path: ${{ inputs.npmPackageName}}/${{ inputs.parserName }}
