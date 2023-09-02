@@ -32,19 +32,17 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: 16
-            - name: Install emscripten
-              uses: awalsh128/cache-apt-pkgs-action@latest
-              with:
-                packages: emscripten
-                version: 1.0
             - name: Install tree-sitter cli
               run: npm install --global tree-sitter-cli
             - name: Pull parser
               run: mkdir tree-sitter-javascript && npm pack --verbose --pack-destination tree-sitter-javascript tree-sitter-javascript
             - name: Extract parser
-              run: cd tree-sitter-javascript && tar --strip-components=1 -xzvf *
+              run: tar --strip-components=1 -xzvf *
+              working-directory: tree-sitter-javascript
             - name: Build parser
-              run: cd tree-sitter-javascript && ls -R && tree-sitter build-wasm ${{ inputs.subdirectory }}
+              # will use docker for emscripten
+              run: tree-sitter build-wasm ${{ inputs.subdirectory }}
+              working-directory: tree-sitter-javascript
             - name: Upload parser
               uses: actions/upload-artifact@v3
               with:
