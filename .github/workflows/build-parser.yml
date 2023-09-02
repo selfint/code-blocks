@@ -42,7 +42,7 @@ jobs:
             - name: Pull parser
               run: mkdir tree-sitter-javascript && npm pack --verbose --pack-destination tree-sitter-javascript
             - name: Extract parser
-              run: tar --strip-components=1 -xzvf tree-sitter-javascript/*
+              run: tar --strip-components=1 -xzvf *
               working-directory: tree-sitter-javascript
             - name: Build parser
               run: tree-sitter build-wasm ${{ inputs.subdirectory }}
