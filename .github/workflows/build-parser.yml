@@ -1,12 +1,16 @@
 name: Build parser
 
 on:
+    push:
+        branches:
+            - "149-precompile-wasm-parsers"
     workflow_dispatch:
         inputs:
             npmPackageName:
                 description: "NPM package name of parser to build"
                 type: string
-                required: true
+                required: false
+                default: "tree-sitter-javascript"
             parserName:
                 description: ".wasm file name of parser (without .wasm extension), defaults to npmPackageName"
                 type: string
@@ -29,12 +33,16 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: 16
+            - name: Install emscripten
+              uses: awalsh128/cache-apt-pkgs-action@latest
+              with:
+                packages: emscripten
+                version: 1.0
             - name: Install tree-sitter cli
               run: npm install --global tree-sitter-cli
             - name: Pull parser
               run: npm pack --verbose --json --pack-destination . ${{ inputs.npmPackageName }}
             - name: Build parser
-              # will use docker to build parser
               run: tree-sitter build-wasm ${{ inputs.subdirectory }}
             - name: Upload parser
               uses: actions/upload-artifact@v3
