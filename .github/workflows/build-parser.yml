@@ -42,11 +42,9 @@ jobs:
             - name: Pull parser
               run: mkdir tree-sitter-javascript && npm pack --verbose --pack-destination tree-sitter-javascript
             - name: Extract parser
-              run: tar --strip-components=1 -xzvf *
-              working-directory: tree-sitter-javascript
+              run: cd tree-sitter-javascript && tar --strip-components=1 -xzvf *
             - name: Build parser
-              run: tree-sitter build-wasm ${{ inputs.subdirectory }}
-              working-directory: tree-sitter-javascript
+              run: cd tree-sitter-javascript && ls -R && tree-sitter build-wasm ${{ inputs.subdirectory }}
             - name: Upload parser
               uses: actions/upload-artifact@v3
               with:
