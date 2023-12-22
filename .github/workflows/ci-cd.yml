@@ -27,7 +27,7 @@ jobs:
             - name: Install Node.js
               uses: actions/setup-node@v3
               with:
-                  node-version: 16
+                  node-version: 18
             - name: Install extension dependencies
               run: yarn install
             - name: Run tests
@@ -45,7 +45,7 @@ jobs:
             - name: Install Node.js
               uses: actions/setup-node@v3
               with:
-                  node-version: 16
+                  node-version: 18
             - name: Install extension dependencies
               run: yarn install
             - name: Package extension
