@@ -9,5 +9,7 @@ examples="./out/examples"
 example=$1
 
 rm -rf $examples
+# https://github.com/microsoft/vscode-test/issues/232
+rm -rf .vscode-test/user-data
 yarn run compile
-EXAMPLE=$example node $examples/runExample.js
+EXAMPLE=$example yarn run example
