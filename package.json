@@ -41,27 +41,7 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
-    "customEditors": [
-      {
-        "viewType": "codeBlocks.editor",
-        "displayName": "Code Blocks",
-        "selector": [
-          {
-            "filenamePattern": "*"
-          }
-        ],
-        "priority": "option"
-      }
-    ],
     "commands": [
-      {
-        "command": "codeBlocks.open",
-        "title": "Code Blocks: Open active file in Code Blocks editor"
-      },
-      {
-        "command": "codeBlocks.openToTheSide",
-        "title": "Code Blocks: Open active file in Code Blocks editor to the side"
-      },
       {
         "command": "codeBlocks.toggleActive",
         "title": "Code Blocks: Toggle extension"

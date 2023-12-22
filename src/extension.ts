@@ -1,6 +1,5 @@
 import * as BlockMode from "./BlockMode";
 import * as vscode from "vscode";
-import { CodeBlocksEditorProvider } from "./editor/CodeBlocksEditorProvider";
 import { FileTree } from "./FileTree";
 import Parser from "web-tree-sitter";
 import { TreeViewer } from "./TreeViewer";
@@ -14,28 +13,6 @@ export const parserFinishedInit = new Promise<void>((resolve) => {
     });
 });
 
-async function reopenWithCodeBocksEditor(): Promise<void> {
-    const activeTabInput = vscode.window.tabGroups.activeTabGroup.activeTab?.input as {
-        [key: string]: unknown;
-        uri: vscode.Uri | undefined;
-    };
-
-    if (activeTabInput.uri !== undefined) {
-        await vscode.commands.executeCommand("vscode.openWith", activeTabInput.uri, "codeBlocks.editor");
-    }
-}
-
-async function openCodeBlocksEditorToTheSide(): Promise<void> {
-    const activeTabInput = vscode.window.tabGroups.activeTabGroup.activeTab?.input as {
-        [key: string]: unknown;
-        uri: vscode.Uri | undefined;
-    };
-
-    if (activeTabInput.uri !== undefined) {
-        await vscode.commands.executeCommand("vscode.openWith", activeTabInput.uri, "codeBlocks.editor");
-        await vscode.commands.executeCommand("workbench.action.moveEditorToNextGroup");
-    }
-}
 
 async function getEditorFileTree(
     parsersDir: string,
@@ -81,10 +58,6 @@ export function activate(context: vscode.ExtensionContext): void {
     );
 
     const uiDisposables = [
-        vscode.window.registerCustomEditorProvider(
-            CodeBlocksEditorProvider.viewType,
-            new CodeBlocksEditorProvider(context)
-        ),
         vscode.workspace.registerTextDocumentContentProvider(TreeViewer.scheme, TreeViewer.treeViewer),
     ];
 
@@ -118,15 +91,9 @@ export function activate(context: vscode.ExtensionContext): void {
         }),
     ];
 
-    const cmd = (
-        command: string,
-        callback: (...args: unknown[]) => unknown,
-        thisArg?: unknown
-    ): vscode.Disposable => vscode.commands.registerCommand(command, callback, thisArg);
+    const cmd = vscode.commands.registerCommand;
     const commands = [
         cmd("codeBlocks.toggleActive", () => toggleActive()),
-        cmd("codeBlocks.open", async () => await reopenWithCodeBocksEditor()),
-        cmd("codeBlocks.openToTheSide", async () => await openCodeBlocksEditorToTheSide()),
         cmd("codeBlocks.openTreeViewer", async () => await TreeViewer.open()),
     ];
 
