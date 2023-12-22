@@ -25,7 +25,7 @@ jobs:
               with:
                   node-version: 16
             - name: Install extension dependencies
-              run: yarn run install:all
+              run: yarn install
             - name: Build webview
               if: matrix.os != 'macos-latest'
               run: yarn run build:webview
@@ -54,7 +54,7 @@ jobs:
               with:
                   node-version: 16
             - name: Install extension dependencies
-              run: yarn run install:all
+              run: yarn install
             - name: Build webview
               run: yarn run build:webview
             - name: Package extension
