@@ -26,17 +26,6 @@ jobs:
                   node-version: 16
             - name: Install extension dependencies
               run: yarn install
-            - name: Build webview
-              if: matrix.os != 'macos-latest'
-              run: yarn run build:webview
-            # TODO: fix this command getting stuck on macos
-            - name: Build webview
-              if: matrix.os == 'macos-latest'
-              uses: nick-fields/retry@v2
-              with:
-                  timeout_minutes: 1
-                  max_attempts: 5
-                  command: yarn run build:webview
             - name: Run tests
               uses: coactions/setup-xvfb@v1
               with:
@@ -55,8 +44,6 @@ jobs:
                   node-version: 16
             - name: Install extension dependencies
               run: yarn install
-            - name: Build webview
-              run: yarn run build:webview
             - name: Package extension
               run: npx @vscode/vsce package --yarn --githubBranch ${{ github.ref_name }}
             - name: Upload extension
