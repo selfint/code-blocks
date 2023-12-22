@@ -1,7 +1,7 @@
-import { moveExample } from "../exampleUtils";
+import { moveExample } from "./exampleUtils";
 
 const TIMEOUT = process.env.EXAMPLE_TIMEOUT ?? "2m";
-test("Block mode 2", async function () {
+test("Block_Mode_-_Move_-_Rust_-_Functions", async function () {
     await moveExample({
         language: "rust",
         content: `

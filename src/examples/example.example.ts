@@ -1,17 +1,24 @@
 import * as vscode from "vscode";
-import { initExample, openDocument, sleep, startRecording } from "../exampleUtils";
+import {
+    initExample,
+    openDocument,
+    sleep,
+    startRecording,
+} from "./exampleUtils";
 
 const TIMEOUT = process.env.EXAMPLE_TIMEOUT ?? "20s";
 test("Example", async function () {
     await initExample();
-    startRecording();
+    console.log("starting recording");
+    await startRecording();
+    console.log("started recording");
     void vscode.window.showInformationMessage("Hello world");
     await sleep(1500);
 
     await openDocument({
         language: "rust",
-        content: `// hello world
-`,
+        content: `\
+// hello world`,
         maximize: true,
     });
 

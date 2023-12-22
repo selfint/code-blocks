@@ -1,4 +1,4 @@
-import { selectionExample } from "../exampleUtils";
+import { selectionExample } from "./exampleUtils";
 
 const TIMEOUT = process.env.EXAMPLE_TIMEOUT ?? "30s";
 test("Block mode", async function () {

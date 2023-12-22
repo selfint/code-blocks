@@ -27,11 +27,10 @@ export function zoomOut(): void {
     void vscode.commands.executeCommand("editor.action.fontZoomOut");
 }
 
-export function startRecording(): void {
-    // write the test start signal
-    // write a lot to make sure no funny business happens with stdout flushing
-    // TODO: is there a more elegant/deterministic way to do this?
-    console.log(TEST_START_SIGNAL.repeat(1000));
+export async function startRecording(): Promise<void> {
+    // write the test start signal and wait until it is flushed
+    // TODO: should we handle stdout write errors more gracefully?
+    await new Promise(r => process.stdout.write(TEST_START_SIGNAL, r));
 }
 
 export async function type(
@@ -101,10 +100,7 @@ export async function openDocument({
     }
 
     const activeEditor = await vscode.window.showTextDocument(
-        await vscode.workspace.openTextDocument({
-            language,
-            content,
-        })
+        await vscode.workspace.openTextDocument({ language, content })
     );
 
     if (cursorIndex !== -1) {
@@ -115,7 +111,7 @@ export async function openDocument({
     }
 
     if (maximize) {
-        await vscode.commands.executeCommand("workbench.action.maximizeEditor");
+        await vscode.commands.executeCommand("workbench.action.minimizeOtherEditors");
     }
 
     let fileTree = activeFileTree.get();
@@ -167,7 +163,7 @@ export async function selectionExample({
 
     await sleep(1000);
 
-    startRecording();
+    await startRecording();
 
     for (const command of selectionCommands) {
         await notify(`Call '${command}' command`);
@@ -222,7 +218,7 @@ export async function moveExample({
 
     await sleep(1000);
 
-    startRecording();
+    await startRecording();
 
     await notify(selectionMessage);
     await sleep(pause);

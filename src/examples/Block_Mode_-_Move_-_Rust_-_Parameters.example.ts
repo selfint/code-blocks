@@ -1,4 +1,4 @@
-import { moveExample } from "../exampleUtils";
+import { moveExample } from "./exampleUtils";
 
 const TIMEOUT = process.env.EXAMPLE_TIMEOUT ?? "2m";
 test("Block mode 2", async function () {
