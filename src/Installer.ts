@@ -152,10 +152,16 @@ export async function runCmd(
         });
 
         if (onData !== undefined) {
-            proc.stdout?.on("data", onData);
-            proc.stdout?.on("data", (l) => logs.push(JSON.stringify(l)));
-            proc.stderr?.on("data", onData);
-            proc.stderr?.on("data", (l) => logs.push(JSON.stringify(l)));
+            proc.stdout?.on("data", (d) => {
+                const data = JSON.stringify(d);
+                onData(data);
+                return logs.push(data);
+            });
+            proc.stderr?.on("data", (d) => {
+                const data = JSON.stringify(d);
+                onData(data);
+                return logs.push(data);
+            });
         }
     });
 }
