@@ -21,7 +21,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v3
             - name: Disable Windows Defender
-              if: matrix.os == 'windows-os'
+              if: matrix.os == 'windows-2019'
               run: Set-MpPreference -DisableRealtimeMonitoring $true
               shell: powershell
             - name: Install Node.js
