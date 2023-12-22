@@ -23,7 +23,7 @@ rm -f "$signal"
 touch "$signal"
 
 # run example in xvfb in the background
-EXAMPLE="$example" xvfb-run -s ":99 -ac -screen 0 800x600x24" node ./out/examples/runExample.js > "$signal" &
+EXAMPLE="$example" xvfb-run -s ":99 -ac -screen 0 800x600x24" yarn run example > "$signal" &
 
 # wait for example to start
 while ! grep -q "@" "$signal"; do sleep 0.1; done
