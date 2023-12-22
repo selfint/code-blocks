@@ -1,5 +1,5 @@
 import { SupportedTestLanguages, openDocument } from "./testUtils";
-import { UpdateSelectionDirection } from "../../Selection";
+import { UpdateSelectionDirection } from "../Selection";
 import { expect } from "chai";
 
 suite("Selection", function () {

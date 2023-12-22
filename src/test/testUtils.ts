@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import { BlockMode, active, activeFileTree } from "../../extension";
-import { FileTree } from "../../FileTree";
+import { BlockMode, active, activeFileTree } from "../extension";
+import { FileTree } from "../FileTree";
 
 /**
  * Languages with .wasm parsers tracked by git

@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
-import { FileTree, MoveSelectionDirection } from "../../FileTree";
+import { FileTree, MoveSelectionDirection } from "../FileTree";
 import { SupportedTestLanguages, openDocument } from "./testUtils";
-import { Selection } from "../../Selection";
+import { Selection } from "../Selection";
 import assert from "assert";
 import { expect } from "chai";
 

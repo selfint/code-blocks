@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 import { SupportedTestLanguages, openDocument } from "./testUtils";
-import { CodeBlocksEditorProvider } from "../../editor/CodeBlocksEditorProvider";
-import { TreeViewer } from "../../TreeViewer";
+import { TreeViewer } from "../TreeViewer";
 import { expect } from "chai";
 
 suite("codeBlocks commands", function () {
@@ -143,20 +142,6 @@ suite("codeBlocks commands", function () {
             }\n`
         );
     }
-
-    suite(".open", function () {
-        this.beforeAll(() => {
-            return void vscode.window.showInformationMessage("Start code-blocks.open tests");
-        });
-
-        test("Opens active tab with Code Blocks Editor", async function () {
-            await openDocument("fn main() {}", "rust");
-            await vscode.commands.executeCommand("codeBlocks.open");
-            expect(
-                (vscode.window.tabGroups.activeTabGroup.activeTab?.input as { viewType: string }).viewType
-            ).to.equal(CodeBlocksEditorProvider.viewType);
-        });
-    });
 
     suite(".openTreeViewer", function () {
         test("shows file tree", async () => {

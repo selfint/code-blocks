@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { BlockTree, getBlockTrees } from "../../BlockTree";
+import { BlockTree, getBlockTrees } from "../BlockTree";
 import { expect } from "chai";
 import { openDocument } from "./testUtils";
 
