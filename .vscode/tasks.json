@@ -5,37 +5,24 @@
 	"tasks": [
 		{
 			"type": "npm",
-			"script": "install:all",
-			"label": "install-extension-deps",
-			"options": {
-				"cwd": "${workspaceFolder}"
-			}
-		},
-		{
-			"type": "npm",
-			"script": "compile",
-			"label": "build-extension",
+			"script": "watch",
+			"problemMatcher": "$tsc-watch",
+			"isBackground": true,
 			"presentation": {
 				"reveal": "never"
 			},
 			"group": {
 				"kind": "build",
 				"isDefault": true
-			},
-			"options": {
-				"cwd": "${workspaceFolder}"
-			},
-			"dependsOn": [
-				"webview-ui",
-			]
+			}
 		},
 		{
 			"type": "npm",
-			"script": "build",
-			"label": "webview-ui",
+			"script": "install",
+			"label": "install-extension-deps",
 			"options": {
-				"cwd": "${workspaceFolder}${pathSeparator}webview-ui"
-			},
-		}
+				"cwd": "${workspaceFolder}"
+			}
+		},
 	]
 }

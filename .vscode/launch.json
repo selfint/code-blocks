@@ -12,20 +12,7 @@
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}"
 			],
-			"preLaunchTask": "build-extension"
+			"preLaunchTask": "${defaultBuildTask}"
 		},
-		{
-			"name": "Extension Tests",
-			"type": "extensionHost",
-			"request": "launch",
-			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}",
-				"--extensionTestsPath=${workspaceFolder}/out/test/suite/index"
-			],
-			"env": {
-				"TEST_TIMEOUT": "10h"
-			},
-			"preLaunchTask": "build-extension"
-		}
 	]
 }
