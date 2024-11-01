@@ -2,17 +2,13 @@ import * as BlockMode from "./BlockMode";
 import * as vscode from "vscode";
 import { CodeBlocksEditorProvider } from "./editor/CodeBlocksEditorProvider";
 import { FileTree } from "./FileTree";
-import Parser from "web-tree-sitter";
+import Parser from "tree-sitter";
 import { TreeViewer } from "./TreeViewer";
 import { getLanguage } from "./Installer";
 import { join } from "path";
 import { state } from "./state";
 
-export const parserFinishedInit = new Promise<void>((resolve) => {
-    void Parser.init().then(() => {
-        resolve();
-    });
-});
+export const parserFinishedInit = Promise.resolve();
 
 async function reopenWithCodeBocksEditor(): Promise<void> {
     const activeTabInput = vscode.window.tabGroups.activeTabGroup.activeTab?.input as {

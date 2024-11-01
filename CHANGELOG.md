@@ -1,5 +1,12 @@
 # Changelog
 
+# 0.7.0
+
+## Changed
+
+- Switched to `node-tree-sitter` from `web-tree-sitter` for parsing. This means that
+  the extension no longer requires `tree-sitter-cli` or `docker` to be installed.
+
 # 0.6.1
 
 ## Added

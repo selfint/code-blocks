@@ -5,6 +5,8 @@ import * as vscode from "vscode";
 import { CodeBlocksEditor } from "./CodeBlocksEditor";
 import { FileTree } from "../FileTree";
 
+import { Query } from "tree-sitter";
+
 export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider {
     public static readonly viewType = "codeBlocks.editor";
     public static readonly parsersDir = "parsers";
@@ -50,7 +52,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
 
         const queries = [];
         for (const query of languageQueries) {
-            queries.push(language.result.query(query));
+            queries.push(new Query(language.result, query));
         }
         const fileTree = await FileTree.new(language.result, document);
 

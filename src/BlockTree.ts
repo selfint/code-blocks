@@ -1,4 +1,4 @@
-import { Query, SyntaxNode, Tree, TreeCursor } from "web-tree-sitter";
+import { Query, SyntaxNode, Tree, TreeCursor } from "tree-sitter";
 
 export type Block = SyntaxNode[];
 export type BlockTree = {
@@ -33,12 +33,12 @@ export function getQueryBlocks(root: SyntaxNode, queries: Query[]): Block[] {
 }
 
 function buildBlockTrees(blocks: Block[], cursor: TreeCursor): BlockTree[] {
-    const node = cursor.currentNode();
+    const node = cursor.currentNode;
     let trees: BlockTree[] = [];
 
     if (cursor.gotoFirstChild()) {
         const children = buildBlockTrees(blocks, cursor);
-        const blockIndex = blocks.findIndex((block) => block.at(-1)?.equals(node));
+        const blockIndex = blocks.findIndex((block) => block.at(-1) === node);
 
         if (blockIndex !== -1) {
             const block = blocks.splice(blockIndex, 1)[0];

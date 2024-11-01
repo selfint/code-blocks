@@ -3,7 +3,6 @@ import { Result, err, ok } from "./result";
 
 export type LanguageConfig = {
     npmPackageName: string;
-    parserName: string;
     subdirectory?: string;
     queries?: string[];
 };
@@ -16,7 +15,6 @@ export function getLanguageConfig(languageId: string): LanguageConfig {
     const npmPackageName = get("npmPackageName", `tree-sitter-${languageId}`);
     return {
         npmPackageName,
-        parserName: get("parserName", npmPackageName),
         subdirectory: get("subdirectory"),
         queries: get("queries"),
     };
@@ -58,7 +56,9 @@ export function getColorConfig(): ColorConfig {
 }
 
 export function getTreeSitterCliPath(): string {
-    const treeSitterCliPath = vscode.workspace.getConfiguration("codeBlocks").get<string>("treeSitterCliPath");
+    const treeSitterCliPath = vscode.workspace
+        .getConfiguration("codeBlocks")
+        .get<string>("treeSitterCliPath");
 
     return treeSitterCliPath ?? "tree-sitter";
 }

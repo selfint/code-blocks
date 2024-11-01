@@ -17,7 +17,7 @@
     "color": "#6295E3",
     "theme": "dark"
   },
-  "version": "0.6.1",
+  "version": "0.7.0",
   "private": true,
   "license": "MIT",
   "engines": {
@@ -267,7 +267,6 @@
       },
       "[typescriptreact]": {
         "codeBlocks.npmPackageName": "tree-sitter-typescript",
-        "codeBlocks.parserName": "tree-sitter-tsx",
         "codeBlocks.subdirectory": "tsx",
         "codeBlocks.queries": [
           "( (comment)* @header . (class_declaration) @item)",
@@ -326,7 +325,7 @@
     "watch": "tsc -watch -p ./",
     "pretest": "yarn run compile && yarn run lint",
     "test": "node ./out/test/runTest.js",
-    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --external:web-tree-sitter --format=cjs --platform=node",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --external:tree-sitter --format=cjs --platform=node",
     "esbuild": "yarn run esbuild-base --sourcemap",
     "esbuild-watch": "yarn run esbuild-base --sourcemap --watch",
     "lint": "tsc --noEmit && eslint src --ext ts"
@@ -351,7 +350,7 @@
   },
   "dependencies": {
     "tar": "^6.1.15",
-    "web-tree-sitter": "^0.20.8",
+    "tree-sitter": "^0.22.0",
     "which": "^3.0.1"
   }
 }

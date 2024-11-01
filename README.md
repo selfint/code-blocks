@@ -117,7 +117,7 @@ Or [create a pull request](https://github.com/selfint/code-blocks/pulls) with yo
 -   `codeBlocks.npmPackageName`: [NPM](https://www.npmjs.com/) package name of the `tree-sitter` parser to use for the
     language. Defaults to `tree-sitter-<languageId>`, change if the package name doesn't match the languageId.
 
--   `codeBlocks.parserName`: Filename of the WASM parser built by the `tree-sitter build-wasm` command, without the
+-   `codeBlocks.parserName`: Filename of the WASM parser built by the `tree-sitter build --wasm` command, without the
     `.wasm` extension. Defaults to `tree-sitter-<languageId>`, change if the parser filename doesn't match the languageId.
 
 -   `codeBlocks.subdirectory`: Directory inside the NPM package containing the `tree-sitter` grammar. Defaults to the
