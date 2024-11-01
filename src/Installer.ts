@@ -11,7 +11,7 @@ import which from "which";
 
 const NPM_INSTALL_URL = "https://nodejs.org/en/download";
 
-export type Language = any;
+export type Language = unknown;
 
 export function getAbsoluteParserDir(parsersDir: string, npmPackageName: string): string {
     return path.resolve(path.join(parsersDir, npmPackageName));
@@ -36,10 +36,11 @@ export async function loadParser(
     } else {
         await parserFinishedInit;
         try {
-            let language = await import(wasmPath);
+            let language = (await import(wasmPath)) as Language;
 
             if (subdirectory !== undefined) {
-                language = language[subdirectory];
+                // @ts-expect-error we know this is a language
+                language = language[subdirectory] as Language;
             }
 
             return ok(language);

@@ -2,7 +2,6 @@ import * as BlockMode from "./BlockMode";
 import * as vscode from "vscode";
 import { CodeBlocksEditorProvider } from "./editor/CodeBlocksEditorProvider";
 import { FileTree } from "./FileTree";
-import Parser from "tree-sitter";
 import { TreeViewer } from "./TreeViewer";
 import { getLanguage } from "./Installer";
 import { join } from "path";

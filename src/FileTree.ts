@@ -1,10 +1,13 @@
 import * as vscode from "vscode";
-import { Block, getQueryBlocks } from "./BlockTree";
+
 import Parser, { Query, SyntaxNode, Tree } from "tree-sitter";
-import { Result, err, ok } from "./result";
-import { Selection } from "./Selection";
+
+import { Block, getQueryBlocks } from "./BlockTree";
 import { getLanguageConfig } from "./configuration";
 import { parserFinishedInit } from "./extension";
+import { Language } from "./Installer";
+import { Result, err, ok } from "./result";
+import { Selection } from "./Selection";
 
 function positionToPoint(pos: vscode.Position): Parser.Point {
     return {
@@ -44,7 +47,7 @@ export class FileTree implements vscode.Disposable {
 
         const queryStrings = getLanguageConfig(document.languageId).queries;
         if (queryStrings !== undefined) {
-            const language = parser.getLanguage();
+            const language = parser.getLanguage() as Language;
             this.queries = queryStrings.map((q) => new Query(language, q));
             this.blocks = getQueryBlocks(this.tree.rootNode, this.queries);
         }
@@ -68,7 +71,7 @@ export class FileTree implements vscode.Disposable {
         );
     }
 
-    public static async new(language: any, document: vscode.TextDocument): Promise<FileTree> {
+    public static async new(language: Language, document: vscode.TextDocument): Promise<FileTree> {
         await parserFinishedInit;
         const parser = new Parser();
         parser.setLanguage(language);
