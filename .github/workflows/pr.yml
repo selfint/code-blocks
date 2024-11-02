@@ -98,7 +98,7 @@ jobs:
 
     comment:
         name: Post download link in PR
-        needs: package
+        needs: [package, test]
         runs-on: ubuntu-latest
         steps:
             - name: Comment on PR with download link
