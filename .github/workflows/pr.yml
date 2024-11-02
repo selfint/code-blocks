@@ -69,24 +69,46 @@ jobs:
             - name: Upload assets
               uses: actions/upload-artifact@v4
               with:
-                  name: "${{ env.BRANCH }}-assets"
+                  name: ${{ env.BRANCH }}-assets
                   path: |
                       *.gif
 
-            # Optional: Add PR annotation with link to artifact
-            - name: Comment artifact download link
-              if: ${{ github.event_name == 'pull_request' }}
-              run: |
-                  echo "::set-output name=comment::Download the latest artifact [here](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-              id: artifact-link
-            - name: Post artifact link to PR
-              if: ${{ github.event_name == 'pull_request' }}
-              uses: actions/github-script@v6
+    package:
+        name: Package extension
+        needs: examples
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Install Node.js
+              uses: actions/setup-node@v4
               with:
-                  script: |
-                      github.issues.createComment({
-                        issue_number: ${{ github.event.pull_request.number }},
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                        body: steps.artifact-link.outputs.comment
-                      })
+                  node-version: 18
+            - name: Install extension dependencies
+              run: yarn run install:all
+            - name: Build webview
+              run: yarn run build:webview
+            - name: Package extension
+              run: npx @vscode/vsce package --yarn --githubBranch ${{ github.ref_name }}
+            - name: Upload extension
+              uses: actions/upload-artifact@v4
+              with:
+                  name: code-blocks-${{ github.ref_name }}.vsix
+                  path: code-blocks-*.vsix
+
+    comment:
+        name: Post download link in PR
+        needs: package
+        runs-on: ubuntu-latest
+        steps:
+            - name: Comment on PR with download link
+              if: ${{ github.event_name == 'pull_request' }}
+              uses: peter-evans/create-or-update-comment@v3
+              with:
+                  token: ${{ secrets.GITHUB_TOKEN }}
+                  repository: ${{ github.repository }}
+                  issue-number: ${{ github.event.pull_request.number }}
+                  body: |
+                      🎉 The latest build is ready for download!
+
+                      You can download the VSIX package for this pull request [here](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifact).
