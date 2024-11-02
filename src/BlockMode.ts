@@ -4,6 +4,7 @@ import * as vscode from "vscode";
 import { MoveSelectionDirection } from "./FileTree";
 import { UpdateSelectionDirection } from "./Selection";
 import { state } from "./state";
+import { getLogger } from "./outputChannel";
 
 export const blockModeActive = state(false);
 const colorConfig = state(configuration.getColorConfig());
@@ -93,7 +94,8 @@ async function moveSelection(direction: MoveSelectionDirection): Promise<void> {
 
         case "err":
             // TODO: add this as a text box above the cursor (can vscode do that?)
-            console.debug(result.result);
+            getLogger().appendLine(result.result);
+
             break;
     }
 }

@@ -8,6 +8,7 @@ import { Language } from "./Installer";
 import { Selection } from "./Selection";
 import { getLanguageConfig } from "./configuration";
 import { parserFinishedInit } from "./extension";
+import { getLogger } from "./outputChannel";
 
 function positionToPoint(pos: vscode.Position): Parser.Point {
     return {
@@ -71,12 +72,26 @@ export class FileTree implements vscode.Disposable {
         );
     }
 
-    public static async new(language: Language, document: vscode.TextDocument): Promise<FileTree> {
+    public static async new(
+        language: Language,
+        document: vscode.TextDocument
+    ): Promise<Result<FileTree, unknown>> {
         await parserFinishedInit;
         const parser = new Parser();
-        parser.setLanguage(language);
+        const logger = getLogger();
+        try {
+            logger.appendLine(
+                `Setting language for parser, language !== undefined = ${JSON.stringify(
+                    language !== undefined
+                )}`
+            );
+            parser.setLanguage(language);
+        } catch (error) {
+            logger.appendLine(`Error setting language for parser: ${JSON.stringify(error)}`);
+            return err(error);
+        }
 
-        return new FileTree(parser, document);
+        return ok(new FileTree(parser, document));
     }
 
     private update(event: vscode.TextDocumentChangeEvent): void {

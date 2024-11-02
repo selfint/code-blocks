@@ -6,6 +6,7 @@ import { TreeViewer } from "./TreeViewer";
 import { getLanguage } from "./Installer";
 import { join } from "path";
 import { state } from "./state";
+import { getLogger } from "./outputChannel";
 
 export const parserFinishedInit = Promise.resolve();
 
@@ -36,27 +37,35 @@ async function getEditorFileTree(
     parsersDir: string,
     editor: vscode.TextEditor | undefined
 ): Promise<FileTree | undefined> {
+    const logger = getLogger();
+
     if (editor?.document === undefined) {
+        logger.appendLine("No active document");
         return undefined;
     }
 
     const activeDocument = editor.document;
     const language = await getLanguage(parsersDir, activeDocument.languageId);
+    if (language.status === "err" || language.result === undefined) {
+        if (language.status === "err") {
+            void vscode.window.showErrorMessage(`Failed to get language: ${language.result}`);
+        } else {
+            logger.appendLine(`No language found for ${activeDocument.languageId}`);
+        }
 
-    switch (language.status) {
-        case "ok":
-            if (language.result !== undefined) {
-                return await FileTree.new(language.result, activeDocument);
-            } else {
-                return undefined;
-            }
-
-        case "err":
-            void vscode.window.showErrorMessage(
-                `Failed to load parser for ${activeDocument.languageId}: ${language.result}`
-            );
-            return undefined;
+        return undefined;
     }
+
+    const tree = await FileTree.new(language.result, activeDocument);
+    if (tree.status === "ok") {
+        return tree.result;
+    }
+
+    void vscode.window.showErrorMessage(
+        `Failed to load parser for ${activeDocument.languageId}: ${JSON.stringify(tree.result)}`
+    );
+
+    return undefined;
 }
 
 export const active = state(true);
@@ -69,6 +78,9 @@ export function toggleActive(): void {
 export { BlockMode };
 
 export function activate(context: vscode.ExtensionContext): void {
+    // init channel
+    getLogger().appendLine("CodeBlocks activated");
+
     const parsersDir = join(
         context.extensionPath,
         context.extensionMode === vscode.ExtensionMode.Test ? "test-parsers" : "parsers"

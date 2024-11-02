@@ -20,16 +20,17 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
         webviewPanel: vscode.WebviewPanel
         // token: vscode.CancellationToken
     ): Promise<void> {
-        const languageQueries = configuration.getLanguageConfig(document.languageId).queries;
+        const languageId = document.languageId;
+        const languageQueries = configuration.getLanguageConfig(languageId).queries;
         if (languageQueries === undefined) {
             await vscode.window.showErrorMessage(
-                `Opened file in language without queries support: '${document.languageId}'. Try adding ` +
-                    ` support via the '[${document.languageId}].codeBlocks.queries' setting`
+                `Opened file in language without queries support: '${languageId}'. Try adding ` +
+                    ` support via the '[${languageId}].codeBlocks.queries' setting`
             );
             return;
         }
 
-        let language = await Installer.getLanguage(this.extensionParsersDirPath, document.languageId);
+        let language = await Installer.getLanguage(this.extensionParsersDirPath, languageId);
 
         while (language.status !== "ok") {
             const choice = await vscode.window.showErrorMessage(
@@ -41,7 +42,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
                 return;
             }
 
-            language = await Installer.getLanguage(this.extensionParsersDirPath, document.languageId);
+            language = await Installer.getLanguage(this.extensionParsersDirPath, languageId);
         }
 
         if (language.result === undefined) {
@@ -52,7 +53,15 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
         for (const query of languageQueries) {
             queries.push(new Query(language.result, query));
         }
-        const fileTree = await FileTree.new(language.result, document);
+        const fileTreeResult = await FileTree.new(language.result, document);
+        if (fileTreeResult.status === "err") {
+            await vscode.window.showErrorMessage(
+                `Failed to load parser for ${languageId}: ${JSON.stringify(fileTreeResult.result)}`
+            );
+            return;
+        }
+
+        const fileTree = fileTreeResult.result;
 
         new CodeBlocksEditor(this.context, document, webviewPanel, queries, fileTree);
     }
