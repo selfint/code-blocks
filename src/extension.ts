@@ -85,8 +85,6 @@ export function activate(context: vscode.ExtensionContext): void {
         context.extensionMode === vscode.ExtensionMode.Test ? "test-parsers" : "parsers"
     );
 
-    console.log("***************", "using parsersDir", parsersDir, "***************");
-
     void getEditorFileTree(parsersDir, vscode.window.activeTextEditor).then((newActiveFileTree) =>
         activeFileTree.set(newActiveFileTree)
     );
