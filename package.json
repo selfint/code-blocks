@@ -210,7 +210,8 @@
           "type": "array",
           "markdownDescription": "Array of VScode [languageId](https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers)s not to install/load parsers for.",
           "default": [
-            "plaintext"
+            "plaintext",
+            "Log"
           ]
         },
         "codeBlocks.queries": {
@@ -246,6 +247,10 @@
       }
     },
     "configurationDefaults": {
+      "[github-actions-workflow]": {
+        "codeBlocks.npmPackageName": "@tree-sitter-grammars/tree-sitter-yaml",
+        "codeBlocks.parserName": "tree-sitter-yaml"
+      },
       "[jsonc]": {
         "codeBlocks.npmPackageName": "tree-sitter-json"
       },
