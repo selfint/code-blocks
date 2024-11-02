@@ -4,43 +4,63 @@ import * as tar from "tar";
 import * as vscode from "vscode";
 import { ExecException, ExecOptions, exec } from "child_process";
 import { Result, err, ok } from "./result";
-import { Language } from "web-tree-sitter";
 import { existsSync } from "fs";
+import { getLogger } from "./outputChannel";
 import { mkdir } from "fs/promises";
 import { parserFinishedInit } from "./extension";
 import which from "which";
 
 const NPM_INSTALL_URL = "https://nodejs.org/en/download";
-const EMCC_INSTALL_URL = "https://emscripten.org/docs/getting_started/downloads.html#download-and-install";
-const DOCKER_INSTALL_URL = "https://docs.docker.com/get-docker/";
 
-export function getAbsoluteParserDir(parsersDir: string, npmPackageName: string): string {
-    return path.resolve(path.join(parsersDir, npmPackageName));
+export type Language = NonNullable<unknown>;
+
+export function getAbsoluteParserDir(parsersDir: string, parserName: string): string {
+    return path.resolve(path.join(parsersDir, parserName));
 }
 
-export function getWasmBindingsPath(parsersDir: string, npmPackageName: string, parserName?: string): string {
-    // this path assumes the .wasm file was built in the parser dir
-    return path.join(
-        getAbsoluteParserDir(parsersDir, npmPackageName),
-        `${parserName ?? npmPackageName}.wasm`
-    );
+export function getAbsoluteBindingsDir(parsersDir: string, parserName: string): string {
+    return path.resolve(path.join(parsersDir, parserName, "bindings", "node", "index.js"));
 }
 
 export async function loadParser(
     parsersDir: string,
-    npmPackageName: string,
-    parserName?: string
+    parserName: string,
+    subdirectory?: string
 ): Promise<Result<Language, string>> {
-    const wasmPath = getWasmBindingsPath(parsersDir, npmPackageName, parserName);
-    if (!existsSync(wasmPath)) {
-        return err(`Expected .wasm parser path doesn't exist: ${wasmPath}`);
+    const logger = getLogger();
+
+    const bindingsDir = getAbsoluteBindingsDir(parsersDir, parserName);
+    if (!existsSync(bindingsDir)) {
+        const msg = `Expected parser directory doesn't exist: ${bindingsDir}`;
+        logger.log(msg);
+        return err(msg);
     } else {
         await parserFinishedInit;
         try {
-            return ok(await Language.load(wasmPath));
+            logger.log(`Loading parser from ${bindingsDir}`);
+
+            // using dynamic import causes issues on windows
+            // make sure to test well on windows before changing this
+            // TODO(02/11/24): change to dynamic import
+            // let { default: language } = (await import(bindingsDir)) as { default: Language };
+
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            let language = require(bindingsDir) as Language;
+
+            logger.log(`Got language: ${JSON.stringify(Object.keys(language))}`);
+
+            if (subdirectory !== undefined) {
+                logger.log(`Loading subdirectory: ${subdirectory}`);
+                // @ts-expect-error we know this is a language
+                language = language[subdirectory] as Language;
+
+                logger.log(`Got subdirectory language: ${JSON.stringify(Object.keys(language))}`);
+            }
+
+            return ok(language);
         } catch (error) {
-            console.debug(`Failed to load ${wasmPath} > ${JSON.stringify(error)}`);
-            return err(`Failed to load ${wasmPath} > ${JSON.stringify(error)}`);
+            logger.log(`Failed to load ${bindingsDir} > ${JSON.stringify(error)}`);
+            return err(`Failed to load ${bindingsDir} > ${JSON.stringify(error)}`);
         }
     }
 }
@@ -48,45 +68,24 @@ export async function loadParser(
 export async function downloadAndBuildParser(
     parsersDir: string,
     parserNpmPackage: string,
-    subdirectory?: string,
+    parserName: string,
     onData?: (data: string) => void,
     npm = "npm",
-    treeSitterCli = "tree-sitter"
+    treeSitterCli = "tree-sitter-cli"
 ): Promise<Result<void, string>> {
+    const logger = getLogger();
+
     // typescript-eslint is wrong, this can return null since we use 'nothrow'
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     const npmCommandOk = (await which(npm, { nothrow: true })) !== null;
     if (!npmCommandOk) {
-        return err(`npm command: '${npm}' is not in PATH, try installing it from: ${NPM_INSTALL_URL}`);
+        const msg = `npm command: '${npm}' is not in PATH, try installing it from: ${NPM_INSTALL_URL}`;
+        logger.log(msg);
+        return err(msg);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    const treeSitterCliOk = await runCmd(`${treeSitterCli} --version`);
-    if (treeSitterCliOk.status === "err") {
-        return err(
-            `
-            tree-sitter cli command '${treeSitterCli}' failed:
-            ${treeSitterCliOk.result[0].name} ${treeSitterCliOk.result[0].message.replace(/\n/g, " > ")}.` +
-            (treeSitterCliOk.result[1].length > 1 ? ` Logs: ${treeSitterCliOk.result[1].join(">")}` : "")
-        );
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    const emccOk = (await which("emcc", { nothrow: true })) !== null;
+    logger.log(`Installing parser ${parserNpmPackage} to ${parsersDir}`);
 
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    const dockerOk = (await which("docker", { nothrow: true })) !== null;
-
-    if (dockerOk && !emccOk) {
-        void vscode.window.showInformationMessage(
-            `tree-sitter requirement emcc not found, but docker was found and is being used. Note that using emcc is much faster, try installing if from: ${EMCC_INSTALL_URL}`
-        );
-    } else if (!dockerOk && !emccOk) {
-        return err(
-            `tree-sitter requirement emcc/docker (either one) not found, try installing emcc (preferred) from: ${EMCC_INSTALL_URL} or installing docker from: ${DOCKER_INSTALL_URL}`
-        );
-    }
-
-    const parserDir = getAbsoluteParserDir(parsersDir, parserNpmPackage);
+    const parserDir = getAbsoluteParserDir(parsersDir, parserName);
     await mkdir(parserDir, { recursive: true });
 
     const installResult = await runCmd(
@@ -98,12 +97,14 @@ export async function downloadAndBuildParser(
     let tarFilename: string | undefined = undefined;
     switch (installResult.status) {
         case "err":
-            console.debug(`Failed to install > ${JSON.stringify(installResult.result)}`);
+            logger.log(`Failed to install > ${JSON.stringify(installResult.result)}`);
             return err(`Failed to install > ${JSON.stringify(installResult.result)}`);
 
         case "ok":
             tarFilename = (JSON.parse(installResult.result) as { filename: string }[])[0].filename;
     }
+
+    logger.log(`Download success. Extracting ${tarFilename} to ${parserDir}`);
 
     try {
         await tar.extract({
@@ -117,23 +118,42 @@ export async function downloadAndBuildParser(
         return err(`failed to extract ${tarFilename} to ${parserDir} > ${JSON.stringify(e)}`);
     }
 
-    const buildCmd = `${treeSitterCli} build-wasm ${subdirectory ?? ""}`;
-    onData?.(`Building parser: ${buildCmd}`);
-
-    const buildResult = await runCmd(buildCmd, { cwd: parserDir }, onData);
-    switch (buildResult.status) {
-        case "err": {
-            const errMsg = `Failed to build .wasm parser > shell command '${buildCmd}' failed > error: ${JSON.stringify(
-                buildResult.result[0]
-            )}, logs: ${buildResult.result[1].join(" | ")}`;
-
-            onData?.(errMsg);
-            return err(errMsg);
-        }
-
-        case "ok":
-            return ok(undefined);
+    // try to load parser optimistically
+    const loadResult = await loadParser(parsersDir, parserName);
+    if (loadResult.status === "ok") {
+        return ok(undefined);
     }
+
+    logger.log(`Optimistic load failed, trying to build parser ${parserName}`);
+    const treeSitterCliOk = await runCmd(`${treeSitterCli} --version`);
+    if (treeSitterCliOk.status === "err") {
+        const msg =
+            `Parser ${parserName} requires local build, but
+            tree-sitter cli command '${treeSitterCli}' failed:
+            ${treeSitterCliOk.result[0].name} ${treeSitterCliOk.result[0].message.replace(/\n/g, " > ")}.` +
+            (treeSitterCliOk.result[1].length > 1 ? ` Logs: ${treeSitterCliOk.result[1].join(">")}` : "");
+
+        logger.log(msg);
+        return err(msg);
+    }
+
+    // if it fails, try to build it
+    const buildResult = await runCmd(`${treeSitterCli} generate`, { cwd: parserDir }, onData);
+    if (buildResult.status === "err") {
+        const msg =
+            "Failed to build parser using tree-sitter cli > " +
+            buildResult.result[0].name +
+            ": " +
+            buildResult.result[0].message.replace(/\n/g, " > ") +
+            (buildResult.result[1].length > 1 ? ` Logs: ${buildResult.result[1].join(">")}` : "");
+
+        logger.log(msg);
+        return err(msg);
+    }
+
+    logger.log(`Built parser ${parserName} successfully`);
+
+    return ok(undefined);
 }
 
 async function runCmd(
@@ -141,6 +161,9 @@ async function runCmd(
     options: ExecOptions = {},
     onData?: (data: string) => void
 ): Promise<Result<string, [ExecException, string[]]>> {
+    const logger = getLogger();
+    logger.log(`Running command: ${cmd}`);
+
     const logs: string[] = [];
     return await new Promise((resolve) => {
         const proc = exec(cmd, options, (error, stdout: string, _stderr) => {
@@ -162,28 +185,35 @@ async function runCmd(
 
 export async function getLanguage(
     parsersDir: string,
-    languageId: string
+    languageId: string,
+    autoInstall = false
 ): Promise<Result<Language | undefined, string>> {
+    const logger = getLogger();
+
     const ignoredLanguageIds = configuration.getIgnoredLanguageIds();
     if (ignoredLanguageIds.includes(languageId)) {
+        logger.log(`Language ${languageId} is ignored`);
         return ok(undefined);
     }
 
     const { npmPackageName, subdirectory, parserName } = configuration.getLanguageConfig(languageId);
-    const parserWasmBindings = getWasmBindingsPath(parsersDir, npmPackageName, parserName);
+    const parserPackagePath = getAbsoluteParserDir(parsersDir, parserName);
 
     const npm = "npm";
     const treeSitterCli = configuration.getTreeSitterCliPath();
 
     await parserFinishedInit;
 
-    if (!existsSync(parserWasmBindings)) {
-        const doInstall = await vscode.window.showInformationMessage(
-            `Parser missing for language '${languageId}', install it?`,
-            "Yes",
-            "No",
-            "Never"
-        );
+    if (!existsSync(parserPackagePath)) {
+        const doInstall = autoInstall
+            ? "Yes"
+            : await vscode.window.showInformationMessage(
+                  `Parser missing for language '${languageId}', install it?`,
+                  "Yes",
+                  "No",
+                  "Never"
+              );
+
         if (doInstall === "Never") {
             const result = await configuration.addIgnoredLanguageId(languageId);
             if (result.status === "ok") {
@@ -194,16 +224,21 @@ export async function getLanguage(
                         "settings.json"
                     )} file.`
                 );
+
+                logger.log(`Language ${languageId} added to the ignore list`);
                 return ok(undefined);
             } else {
                 void vscode.window.showInformationMessage(
                     `Failed to add language '${languageId}' to the ignore list > ${result.result}`
                 );
+
+                logger.log(`Failed to add language ${languageId} to the ignore list > ${result.result}`);
                 return ok(undefined);
             }
         }
 
         if (doInstall !== "Yes") {
+            logger.log(`Not installing language ${languageId}, user refused`);
             return ok(undefined);
         }
 
@@ -212,13 +247,13 @@ export async function getLanguage(
             {
                 location: vscode.ProgressLocation.Notification,
                 cancellable: false,
-                title: `Installing ${parserName}`,
+                title: `Installing ${npmPackageName}`,
             },
             async (progress) => {
                 return await downloadAndBuildParser(
                     parsersDir,
                     npmPackageName,
-                    subdirectory,
+                    parserName,
                     (data) => progress.report({ message: data, increment: number++ }),
                     npm,
                     treeSitterCli
@@ -227,18 +262,21 @@ export async function getLanguage(
         );
 
         if (downloadResult.status === "err") {
-            return err(
-                `Failed to download/build parser for language ${languageId} > ${downloadResult.result}`
-            );
+            const msg = `Failed to download/build parser for language ${languageId} > ${downloadResult.result}`;
+
+            logger.log(msg);
+            return err(msg);
         }
     }
 
-    const loadResult = await loadParser(parsersDir, npmPackageName, parserName);
-    switch (loadResult.status) {
-        case "err":
-            return err(`Failed to load parser for language ${languageId} > ${loadResult.result}`);
+    const loadResult = await loadParser(parsersDir, parserName, subdirectory);
+    if (loadResult.status === "err") {
+        const msg = `Failed to load parser for language ${languageId} > ${loadResult.result}`;
 
-        case "ok":
-            return ok(loadResult.result);
+        logger.log(msg);
+        return err(msg);
     }
+
+    logger.log(`Successfully loaded parser for language ${languageId}`);
+    return ok(loadResult.result);
 }

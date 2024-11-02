@@ -45,17 +45,17 @@ View your code's syntax tree directly
 
 -   `node` / `npm`: Used to download tree-sitter language parsers. Can be installed from [here](https://nodejs.org/en/download).
 
--   `tree-sitter`: Used to build tree-sitter language parsers. After installing `npm`, can be installed by running:
+-   **OPTIONAL:** `tree-sitter`: Used to for tree-sitter language parsers that need to be locally built.
 
-    ```console
-    $ npm i -g tree-sitter-cli
-    ```
+    After installing `npm`, can be installed by running:
+    `npm i -g tree-sitter-cli`.
 
--   `emcc`: Emscripten compiler, used by `tree-sitter` to compile parsers to WASM. Can be provided either through:
+    If you don't want to install `tree-sitter`, there's a good chance you don't
+    need it. Try the extension without it, it will notify you if it's required.
 
-    -   [Emscripten](https://emscripten.org/docs/getting_started/downloads.html) (preferred): Provides `emcc` directly.
+### Note
 
-    -   [Docker](https://docs.docker.com/get-docker/): Provides `emcc` via the [`emscripten/emsdk`](https://hub.docker.com/r/emscripten/emsdk) image. Note that the first parser installation can take some time (depending on internet speed), since the image is 1.68GB. Next installs will re-use the image and should take a few seconds at most.
+The extension **used** to require `emcc` (Emscripten compiler) or `docker` to compile tree-sitter parsers to WASM. **This is no longer required**.
 
 ## Commands
 
@@ -117,7 +117,7 @@ Or [create a pull request](https://github.com/selfint/code-blocks/pulls) with yo
 -   `codeBlocks.npmPackageName`: [NPM](https://www.npmjs.com/) package name of the `tree-sitter` parser to use for the
     language. Defaults to `tree-sitter-<languageId>`, change if the package name doesn't match the languageId.
 
--   `codeBlocks.parserName`: Filename of the WASM parser built by the `tree-sitter build-wasm` command, without the
+-   `codeBlocks.parserName`: Filename of the WASM parser built by the `tree-sitter build --wasm` command, without the
     `.wasm` extension. Defaults to `tree-sitter-<languageId>`, change if the parser filename doesn't match the languageId.
 
 -   `codeBlocks.subdirectory`: Directory inside the NPM package containing the `tree-sitter` grammar. Defaults to the

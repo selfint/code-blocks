@@ -3,6 +3,7 @@ import * as configuration from "./configuration";
 import * as vscode from "vscode";
 import { MoveSelectionDirection } from "./FileTree";
 import { UpdateSelectionDirection } from "./Selection";
+import { getLogger } from "./outputChannel";
 import { state } from "./state";
 
 export const blockModeActive = state(false);
@@ -93,7 +94,8 @@ async function moveSelection(direction: MoveSelectionDirection): Promise<void> {
 
         case "err":
             // TODO: add this as a text box above the cursor (can vscode do that?)
-            console.debug(result.result);
+            getLogger().log(result.result);
+
             break;
     }
 }

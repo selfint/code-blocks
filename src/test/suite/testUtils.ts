@@ -2,13 +2,9 @@ import * as vscode from "vscode";
 import { BlockMode, active, activeFileTree } from "../../extension";
 import { FileTree } from "../../FileTree";
 
-/**
- * Languages with .wasm parsers tracked by git
- */
-export type SupportedTestLanguages = "rust" | "typescriptreact";
 export async function openDocument(
     content: string,
-    language: SupportedTestLanguages
+    language: string
 ): Promise<{ activeEditor: vscode.TextEditor; fileTree: FileTree }> {
     if (!active.get()) {
         active.set(true);

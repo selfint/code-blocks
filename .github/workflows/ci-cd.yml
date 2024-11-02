@@ -19,11 +19,11 @@ jobs:
         runs-on: ${{ matrix.os }}
         steps:
             - name: Checkout
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
             - name: Install Node.js
-              uses: actions/setup-node@v3
+              uses: actions/setup-node@v4
               with:
-                  node-version: 16
+                  node-version: 18
             - name: Install extension dependencies
               run: yarn run install:all
             - name: Build webview
@@ -32,7 +32,7 @@ jobs:
             # TODO: fix this command getting stuck on macos
             - name: Build webview
               if: matrix.os == 'macos-latest'
-              uses: nick-fields/retry@v2
+              uses: nick-fields/retry@v3
               with:
                   timeout_minutes: 1
                   max_attempts: 5
@@ -41,6 +41,8 @@ jobs:
               uses: coactions/setup-xvfb@v1
               with:
                   run: yarn test
+              env:
+                  TEST_TIMEOUT: 2m
 
     package:
         name: Package extension
@@ -48,11 +50,11 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
             - name: Install Node.js
-              uses: actions/setup-node@v3
+              uses: actions/setup-node@v4
               with:
-                  node-version: 16
+                  node-version: 18
             - name: Install extension dependencies
               run: yarn run install:all
             - name: Build webview
@@ -60,7 +62,7 @@ jobs:
             - name: Package extension
               run: npx @vscode/vsce package --yarn --githubBranch ${{ github.ref_name }}
             - name: Upload extension
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: code-blocks-${{ github.ref_name }}.vsix
                   path: code-blocks-*.vsix
@@ -72,7 +74,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Download package
-              uses: actions/download-artifact@v3
+              uses: actions/download-artifact@v4
               with:
                   name: code-blocks-${{ github.ref_name }}.vsix
                   path: .

@@ -7,6 +7,7 @@ export type LanguageConfig = {
     subdirectory?: string;
     queries?: string[];
 };
+
 export function getLanguageConfig(languageId: string): LanguageConfig {
     function get<C>(c: string, d?: C): C {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -16,7 +17,7 @@ export function getLanguageConfig(languageId: string): LanguageConfig {
     const npmPackageName = get("npmPackageName", `tree-sitter-${languageId}`);
     return {
         npmPackageName,
-        parserName: get("parserName", npmPackageName),
+        parserName: get("parserName", `tree-sitter-${languageId}`),
         subdirectory: get("subdirectory"),
         queries: get("queries"),
     };
@@ -58,7 +59,9 @@ export function getColorConfig(): ColorConfig {
 }
 
 export function getTreeSitterCliPath(): string {
-    const treeSitterCliPath = vscode.workspace.getConfiguration("codeBlocks").get<string>("treeSitterCliPath");
+    const treeSitterCliPath = vscode.workspace
+        .getConfiguration("codeBlocks")
+        .get<string>("treeSitterCliPath");
 
     return treeSitterCliPath ?? "tree-sitter";
 }

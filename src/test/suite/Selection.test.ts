@@ -1,13 +1,13 @@
-import { SupportedTestLanguages, openDocument } from "./testUtils";
 import { UpdateSelectionDirection } from "../../Selection";
 import { expect } from "chai";
+import { openDocument } from "./testUtils";
 
 suite("Selection", function () {
     this.timeout(process.env.TEST_TIMEOUT ?? "2s");
     const cursor = "@";
 
     async function selectionAt(
-        language: SupportedTestLanguages,
+        language: string,
         content: string,
         updates: UpdateSelectionDirection[] = []
     ): Promise<string | undefined> {

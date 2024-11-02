@@ -1,9 +1,13 @@
 import * as vscode from "vscode";
+
 import { Block, getQueryBlocks } from "./BlockTree";
-import Parser, { Language, Query, SyntaxNode, Tree } from "web-tree-sitter";
+import Parser, { Query, SyntaxNode, Tree } from "tree-sitter";
 import { Result, err, ok } from "./result";
+
+import { Language } from "./Installer";
 import { Selection } from "./Selection";
 import { getLanguageConfig } from "./configuration";
+import { getLogger } from "./outputChannel";
 import { parserFinishedInit } from "./extension";
 
 function positionToPoint(pos: vscode.Position): Parser.Point {
@@ -44,8 +48,8 @@ export class FileTree implements vscode.Disposable {
 
         const queryStrings = getLanguageConfig(document.languageId).queries;
         if (queryStrings !== undefined) {
-            const language = parser.getLanguage();
-            this.queries = queryStrings.map((q) => language.query(q));
+            const language = parser.getLanguage() as Language;
+            this.queries = queryStrings.map((q) => new Query(language, q));
             this.blocks = getQueryBlocks(this.tree.rootNode, this.queries);
         }
 
@@ -60,7 +64,7 @@ export class FileTree implements vscode.Disposable {
     }
 
     async dispose(): Promise<void> {
-        this.tree.delete();
+        // this.tree.delete();
         await Promise.all(
             this.disposables.map(async (d) => {
                 await d.dispose();
@@ -68,12 +72,28 @@ export class FileTree implements vscode.Disposable {
         );
     }
 
-    public static async new(language: Language, document: vscode.TextDocument): Promise<FileTree> {
+    public static async new(
+        language: Language,
+        document: vscode.TextDocument
+    ): Promise<Result<FileTree, unknown>> {
         await parserFinishedInit;
         const parser = new Parser();
-        parser.setLanguage(language);
+        const logger = getLogger();
+        try {
+            logger.log(
+                `Setting language for parser, language !== undefined = ${JSON.stringify(
+                    // sanity check
+                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                    language !== undefined
+                )}`
+            );
+            parser.setLanguage(language);
+        } catch (error) {
+            logger.log(`Error setting language for parser: ${JSON.stringify(error)}`);
+            return err(error);
+        }
 
-        return new FileTree(parser, document);
+        return ok(new FileTree(parser, document));
     }
 
     private update(event: vscode.TextDocumentChangeEvent): void {
@@ -127,7 +147,7 @@ export class FileTree implements vscode.Disposable {
         endPosition.column -= 1;
         const endNode = root.namedDescendantForPosition(endPosition);
 
-        if (startNode.equals(endNode)) {
+        if (startNode === endNode) {
             return Selection.fromNode(startNode, this.version);
         }
 
@@ -151,10 +171,10 @@ export class FileTree implements vscode.Disposable {
 
         // find lowest common parent of start and end nodes
         const startParentInEndParents = startParents.findIndex((startParent) =>
-            endParents.some((endParent) => endParent.equals(startParent))
+            endParents.some((endParent) => endParent === startParent)
         );
         const endParentInStartParents = endParents.findIndex((endParent) =>
-            startParents.some((startParent) => startParent.equals(endParent))
+            startParents.some((startParent) => startParent === endParent)
         );
 
         let lowestCommonParent: SyntaxNode;

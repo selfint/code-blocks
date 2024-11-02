@@ -1,5 +1,8 @@
 import * as vscode from "vscode";
+
 import { BlockTree, getBlockTrees } from "../../BlockTree";
+import { Language } from "../../Installer";
+import { Query } from "tree-sitter";
 import { expect } from "chai";
 import { openDocument } from "./testUtils";
 
@@ -60,8 +63,8 @@ suite("BlockTrees", function () {
         test("resolves sequential blocks", async function () {
             const text = "fn foo() {}\nfn bar() {}";
             const { fileTree } = await openDocument(text, "rust");
-            const lang = fileTree.tree.getLanguage();
-            const queries = [lang.query("(function_item) @item")];
+            const lang = fileTree.parser.getLanguage() as Language;
+            const queries = [new Query(lang, "(function_item) @item")];
             const blocksTrees = getBlockTrees(fileTree.tree, queries);
 
             expect("\n" + blockTreesToString(text, blocksTrees)).to.equal(`
@@ -95,8 +98,8 @@ fn grandma() {
 }
 `;
             const { fileTree } = await openDocument(text, "rust");
-            const lang = fileTree.tree.getLanguage();
-            const queries = [lang.query("(function_item) @item")];
+            const lang = fileTree.parser.getLanguage() as Language;
+            const queries = [new Query(lang, "(function_item) @item")];
             const blocksTrees = getBlockTrees(fileTree.tree, queries);
 
             expect("\n" + blockTreesToString(text, blocksTrees)).to.equal(`

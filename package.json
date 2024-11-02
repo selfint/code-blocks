@@ -17,7 +17,7 @@
     "color": "#6295E3",
     "theme": "dark"
   },
-  "version": "0.6.1",
+  "version": "0.7.0",
   "private": true,
   "license": "MIT",
   "engines": {
@@ -210,7 +210,9 @@
           "type": "array",
           "markdownDescription": "Array of VScode [languageId](https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers)s not to install/load parsers for.",
           "default": [
-            "plaintext"
+            "plaintext",
+            "Log",
+            "ignore"
           ]
         },
         "codeBlocks.queries": {
@@ -246,6 +248,32 @@
       }
     },
     "configurationDefaults": {
+      "[github-actions-workflow]": {
+        "codeBlocks.npmPackageName": "@tree-sitter-grammars/tree-sitter-yaml",
+        "codeBlocks.parserName": "tree-sitter-yaml"
+      },
+      "[jsonc]": {
+        "codeBlocks.npmPackageName": "tree-sitter-json"
+      },
+      "[zig]": {
+        "codeBlocks.npmPackageName": "@tree-sitter-grammars/tree-sitter-zig"
+      },
+      "[kotlin]": {
+        "codeBlocks.npmPackageName": "@tree-sitter-grammars/tree-sitter-kotlin"
+      },
+      "[yaml]": {
+        "codeBlocks.npmPackageName": "@tree-sitter-grammars/tree-sitter-yaml"
+      },
+      "[xml]": {
+        "codeBlocks.npmPackageName": "@tree-sitter-grammars/tree-sitter-xml"
+      },
+      "[markdown]": {
+        "codeBlocks.npmPackageName": "@tree-sitter-grammars/tree-sitter-markdown"
+      },
+      "[shellscript]": {
+        "codeBlocks.npmPackageName": "tree-sitter-bash",
+        "codeBlocks.parserName": "tree-sitter-bash"
+      },
       "[rust]": {
         "codeBlocks.queries": [
           "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (function_item) @item)",
@@ -267,7 +295,7 @@
       },
       "[typescriptreact]": {
         "codeBlocks.npmPackageName": "tree-sitter-typescript",
-        "codeBlocks.parserName": "tree-sitter-tsx",
+        "codeBlocks.parserName": "tree-sitter-typescript",
         "codeBlocks.subdirectory": "tsx",
         "codeBlocks.queries": [
           "( (comment)* @header . (class_declaration) @item)",
@@ -280,6 +308,7 @@
       },
       "[javascriptreact]": {
         "codeBlocks.npmPackageName": "tree-sitter-javascript",
+        "codeBlocks.parserName": "tree-sitter-javascript",
         "codeBlocks.queries": [
           "( (comment)* @header . (class_declaration) @item)",
           "( (comment)* @header . (method_definition) @item)",
@@ -290,6 +319,7 @@
         ]
       },
       "[svelte]": {
+        "codeBlocks.npmPackageName": "@tree-sitter-grammars/tree-sitter-svelte",
         "codeBlocks.queries": [
           "( (comment)* @header . (element) @item)",
           "( (comment)* @header . (each_statement) @item)",
@@ -326,7 +356,7 @@
     "watch": "tsc -watch -p ./",
     "pretest": "yarn run compile && yarn run lint",
     "test": "node ./out/test/runTest.js",
-    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --external:web-tree-sitter --format=cjs --platform=node",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --external:tree-sitter --format=cjs --platform=node",
     "esbuild": "yarn run esbuild-base --sourcemap",
     "esbuild-watch": "yarn run esbuild-base --sourcemap --watch",
     "lint": "tsc --noEmit && eslint src --ext ts"
@@ -335,7 +365,7 @@
     "@types/chai": "^4.3.5",
     "@types/glob": "^8.0.1",
     "@types/mocha": "^10.0.1",
-    "@types/node": "20.3.3",
+    "@types/node": "^20.3.3",
     "@types/tar": "^6.1.5",
     "@types/vscode": "^1.79.0",
     "@types/which": "^3.0.0",
@@ -351,7 +381,7 @@
   },
   "dependencies": {
     "tar": "^6.1.15",
-    "web-tree-sitter": "^0.20.8",
+    "tree-sitter": "^0.22.0",
     "which": "^3.0.1"
   }
 }

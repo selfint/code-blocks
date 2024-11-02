@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { Block, BlockTree, getBlockTrees } from "../BlockTree";
 import { BlockLocation, BlockLocationTree, MoveCommand, UpdateMessage } from "./messages";
 import { FileTree } from "../FileTree";
-import { Query } from "web-tree-sitter";
+import { Query } from "tree-sitter";
 import { getNonce } from "../utilities/getNonce";
 import { getUri } from "../utilities/getUri";
 
@@ -93,7 +93,7 @@ export class CodeBlocksEditor {
                     return;
                 }
             }
-        } else if (!srcParent.equals(dstParent)) {
+        } else if (srcParent !== dstParent) {
             if (!(await userRequestsForce())) {
                 return;
             }

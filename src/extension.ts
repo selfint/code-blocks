@@ -2,17 +2,13 @@ import * as BlockMode from "./BlockMode";
 import * as vscode from "vscode";
 import { CodeBlocksEditorProvider } from "./editor/CodeBlocksEditorProvider";
 import { FileTree } from "./FileTree";
-import Parser from "web-tree-sitter";
 import { TreeViewer } from "./TreeViewer";
 import { getLanguage } from "./Installer";
+import { getLogger } from "./outputChannel";
 import { join } from "path";
 import { state } from "./state";
 
-export const parserFinishedInit = new Promise<void>((resolve) => {
-    void Parser.init().then(() => {
-        resolve();
-    });
-});
+export const parserFinishedInit = Promise.resolve();
 
 async function reopenWithCodeBocksEditor(): Promise<void> {
     const activeTabInput = vscode.window.tabGroups.activeTabGroup.activeTab?.input as {
@@ -41,27 +37,35 @@ async function getEditorFileTree(
     parsersDir: string,
     editor: vscode.TextEditor | undefined
 ): Promise<FileTree | undefined> {
+    const logger = getLogger();
+
     if (editor?.document === undefined) {
+        logger.log("No active document");
         return undefined;
     }
 
     const activeDocument = editor.document;
     const language = await getLanguage(parsersDir, activeDocument.languageId);
+    if (language.status === "err" || language.result === undefined) {
+        if (language.status === "err") {
+            void vscode.window.showErrorMessage(`Failed to get language: ${language.result}`);
+        } else {
+            logger.log(`No language found for ${activeDocument.languageId}`);
+        }
 
-    switch (language.status) {
-        case "ok":
-            if (language.result !== undefined) {
-                return await FileTree.new(language.result, activeDocument);
-            } else {
-                return undefined;
-            }
-
-        case "err":
-            void vscode.window.showErrorMessage(
-                `Failed to load parser for ${activeDocument.languageId}: ${language.result}`
-            );
-            return undefined;
+        return undefined;
     }
+
+    const tree = await FileTree.new(language.result, activeDocument);
+    if (tree.status === "ok") {
+        return tree.result;
+    }
+
+    void vscode.window.showErrorMessage(
+        `Failed to load parser for ${activeDocument.languageId}: ${JSON.stringify(tree.result)}`
+    );
+
+    return undefined;
 }
 
 export const active = state(true);
@@ -74,7 +78,12 @@ export function toggleActive(): void {
 export { BlockMode };
 
 export function activate(context: vscode.ExtensionContext): void {
-    const parsersDir = join(context.extensionPath, "parsers");
+    getLogger().log("CodeBlocks activated");
+
+    const parsersDir = join(
+        context.extensionPath,
+        context.extensionMode === vscode.ExtensionMode.Test ? "test-parsers" : "parsers"
+    );
 
     void getEditorFileTree(parsersDir, vscode.window.activeTextEditor).then((newActiveFileTree) =>
         activeFileTree.set(newActiveFileTree)
@@ -83,7 +92,7 @@ export function activate(context: vscode.ExtensionContext): void {
     const uiDisposables = [
         vscode.window.registerCustomEditorProvider(
             CodeBlocksEditorProvider.viewType,
-            new CodeBlocksEditorProvider(context)
+            new CodeBlocksEditorProvider(context, parsersDir)
         ),
         vscode.workspace.registerTextDocumentContentProvider(TreeViewer.scheme, TreeViewer.treeViewer),
     ];

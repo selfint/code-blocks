@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { Range, SyntaxNode } from "web-tree-sitter";
+import { Range, SyntaxNode } from "tree-sitter";
 import { Block } from "./BlockTree";
 import { pointToPosition } from "./FileTree";
 
@@ -77,7 +77,7 @@ export class Selection {
                 // check if block is at the same hierarchy level as the selection
                 if (
                     (parent === null && block[0].parent === null) ||
-                    (block[0].parent !== null && parent?.equals(block[0].parent))
+                    (block[0].parent !== null && parent === block[0].parent)
                 ) {
                     const length = blockRange.endIndex - blockRange.startIndex;
                     if (length <= (smallestBlockLength ?? length)) {
