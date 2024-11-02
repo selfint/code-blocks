@@ -38,15 +38,16 @@ export async function run(): Promise<void> {
         const ciParsersDir = path.resolve(__dirname, "..", "..", "..", "ci-parsers");
         const ciParsers = await fs.readdir(ciParsersDir);
         for (const parser of ciParsers) {
-            await fs.cp(path.resolve(ciParsersDir, parser), path.resolve(parsersDir, parser));
+            const src = path.resolve(ciParsersDir, parser);
+            const dst = path.resolve(parsersDir, parser);
+            console.log(`Copying ${src} to ${dst}`);
+            await fs.cp(src, dst, { recursive: true });
         }
     } else {
-        // install rust parser
         let result = await Installer.getLanguage(parsersDir, "rust", true);
         if (result.status === "err") {
             throw new Error(`Failed to install Rust parser: ${result.result}`);
         }
-
         result = await Installer.getLanguage(parsersDir, "typescriptreact", true);
         if (result.status === "err") {
             throw new Error(`Failed to install TSX parser: ${result.result}`);
