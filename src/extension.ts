@@ -69,7 +69,10 @@ export function toggleActive(): void {
 export { BlockMode };
 
 export function activate(context: vscode.ExtensionContext): void {
-    const parsersDir = join(context.extensionPath, "parsers");
+    const parsersDir = join(
+        context.extensionPath,
+        context.extensionMode === vscode.ExtensionMode.Test ? "test-parsers" : "parsers"
+    );
 
     void getEditorFileTree(parsersDir, vscode.window.activeTextEditor).then((newActiveFileTree) =>
         activeFileTree.set(newActiveFileTree)

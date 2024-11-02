@@ -13,8 +13,11 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
 
     private extensionParsersDirPath: string;
 
-    constructor(private readonly context: vscode.ExtensionContext) {
-        this.extensionParsersDirPath = path.join(context.extensionPath, CodeBlocksEditorProvider.parsersDir);
+    constructor(
+        private readonly context: vscode.ExtensionContext,
+        parsersDir: string = CodeBlocksEditorProvider.parsersDir
+    ) {
+        this.extensionParsersDirPath = path.join(context.extensionPath, parsersDir);
     }
 
     public async resolveCustomTextEditor(

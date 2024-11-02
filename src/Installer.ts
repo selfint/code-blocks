@@ -127,7 +127,8 @@ async function runCmd(
 
 export async function getLanguage(
     parsersDir: string,
-    languageId: string
+    languageId: string,
+    autoInstall = false
 ): Promise<Result<Language | undefined, string>> {
     const ignoredLanguageIds = configuration.getIgnoredLanguageIds();
     if (ignoredLanguageIds.includes(languageId)) {
@@ -143,12 +144,14 @@ export async function getLanguage(
     await parserFinishedInit;
 
     if (!existsSync(parserPackagePath)) {
-        const doInstall = await vscode.window.showInformationMessage(
-            `Parser missing for language '${languageId}', install it?`,
-            "Yes",
-            "No",
-            "Never"
-        );
+        const doInstall = autoInstall
+            ? "Yes"
+            : await vscode.window.showInformationMessage(
+                  `Parser missing for language '${languageId}', install it?`,
+                  "Yes",
+                  "No",
+                  "Never"
+              );
 
         if (doInstall === "Never") {
             const result = await configuration.addIgnoredLanguageId(languageId);
