@@ -81,7 +81,7 @@ export function activate(context: vscode.ExtensionContext): void {
     const uiDisposables = [
         vscode.window.registerCustomEditorProvider(
             CodeBlocksEditorProvider.viewType,
-            new CodeBlocksEditorProvider(context)
+            new CodeBlocksEditorProvider(context, parsersDir)
         ),
         vscode.workspace.registerTextDocumentContentProvider(TreeViewer.scheme, TreeViewer.treeViewer),
     ];

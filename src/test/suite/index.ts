@@ -1,7 +1,6 @@
-import * as path from "path";
 import * as Installer from "../../Installer";
-
 import * as fs from "fs/promises";
+import * as path from "path";
 
 import Mocha from "mocha";
 import glob from "glob";
