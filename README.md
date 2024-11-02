@@ -45,11 +45,10 @@ View your code's syntax tree directly
 
 -   `node` / `npm`: Used to download tree-sitter language parsers. Can be installed from [here](https://nodejs.org/en/download).
 
--   **OPTIONAL:** `tree-sitter`: Used to for tree-sitter language parsers that need to be locally built. After installing `npm`, can be installed by running:
+-   **OPTIONAL:** `tree-sitter`: Used to for tree-sitter language parsers that need to be locally built.
 
-    ```console
-    $ npm i -g tree-sitter-cli
-    ```
+    After installing `npm`, can be installed by running:
+    `npm i -g tree-sitter-cli`.
 
     If you don't want to install `tree-sitter`, there's a good chance you don't
     need it. Try the extension without it, it will notify you if it's required.
