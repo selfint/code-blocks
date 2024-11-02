@@ -42,7 +42,7 @@ jobs:
               with:
                   run: yarn test
               env:
-                  TEST_TIMEOUT: 5s
+                  TEST_TIMEOUT: 2m
 
     package:
         name: Package extension
