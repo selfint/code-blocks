@@ -246,6 +246,32 @@
       }
     },
     "configurationDefaults": {
+      "[github-actions-workflow]": {
+        "codeBlocks.npmPackageName": "@tree-sitter-grammars/tree-sitter-yaml",
+        "codeBlocks.parserName": "tree-sitter-yaml"
+      },
+      "[jsonc]": {
+        "codeBlocks.npmPackageName": "tree-sitter-json"
+      },
+      "[zig]": {
+        "codeBlocks.npmPackageName": "@tree-sitter-grammars/tree-sitter-zig"
+      },
+      "[kotlin]": {
+        "codeBlocks.npmPackageName": "@tree-sitter-grammars/tree-sitter-kotlin"
+      },
+      "[yaml]": {
+        "codeBlocks.npmPackageName": "@tree-sitter-grammars/tree-sitter-yaml"
+      },
+      "[xml]": {
+        "codeBlocks.npmPackageName": "@tree-sitter-grammars/tree-sitter-xml"
+      },
+      "[markdown]": {
+        "codeBlocks.npmPackageName": "@tree-sitter-grammars/tree-sitter-markdown"
+      },
+      "[shellscript]": {
+        "codeBlocks.npmPackageName": "tree-sitter-bash",
+        "codeBlocks.parserName": "tree-sitter-bash"
+      },
       "[rust]": {
         "codeBlocks.queries": [
           "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (function_item) @item)",

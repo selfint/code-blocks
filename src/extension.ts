@@ -4,6 +4,7 @@ import { CodeBlocksEditorProvider } from "./editor/CodeBlocksEditorProvider";
 import { FileTree } from "./FileTree";
 import { TreeViewer } from "./TreeViewer";
 import { getLanguage } from "./Installer";
+import { getLogger } from "./outputChannel";
 import { join } from "path";
 import { state } from "./state";
 
@@ -69,7 +70,14 @@ export function toggleActive(): void {
 export { BlockMode };
 
 export function activate(context: vscode.ExtensionContext): void {
-    const parsersDir = join(context.extensionPath, "parsers");
+    getLogger().appendLine("CodeBlocks activated");
+
+    const parsersDir = join(
+        context.extensionPath,
+        context.extensionMode === vscode.ExtensionMode.Test ? "test-parsers" : "parsers"
+    );
+
+    console.log("***************", "using parsersDir", parsersDir, "***************");
 
     void getEditorFileTree(parsersDir, vscode.window.activeTextEditor).then((newActiveFileTree) =>
         activeFileTree.set(newActiveFileTree)
@@ -78,7 +86,7 @@ export function activate(context: vscode.ExtensionContext): void {
     const uiDisposables = [
         vscode.window.registerCustomEditorProvider(
             CodeBlocksEditorProvider.viewType,
-            new CodeBlocksEditorProvider(context)
+            new CodeBlocksEditorProvider(context, parsersDir)
         ),
         vscode.workspace.registerTextDocumentContentProvider(TreeViewer.scheme, TreeViewer.treeViewer),
     ];

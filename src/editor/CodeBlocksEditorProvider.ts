@@ -1,6 +1,5 @@
 import * as Installer from "../Installer";
 import * as configuration from "../configuration";
-import * as path from "path";
 import * as vscode from "vscode";
 import { CodeBlocksEditor } from "./CodeBlocksEditor";
 import { FileTree } from "../FileTree";
@@ -9,13 +8,11 @@ import { Query } from "tree-sitter";
 
 export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider {
     public static readonly viewType = "codeBlocks.editor";
-    public static readonly parsersDir = "parsers";
 
-    private extensionParsersDirPath: string;
-
-    constructor(private readonly context: vscode.ExtensionContext) {
-        this.extensionParsersDirPath = path.join(context.extensionPath, CodeBlocksEditorProvider.parsersDir);
-    }
+    constructor(
+        private readonly context: vscode.ExtensionContext,
+        private readonly extensionParsersDirPath: string
+    ) {}
 
     public async resolveCustomTextEditor(
         document: vscode.TextDocument,

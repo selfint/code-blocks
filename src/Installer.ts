@@ -5,13 +5,14 @@ import * as vscode from "vscode";
 import { ExecException, ExecOptions, exec } from "child_process";
 import { Result, err, ok } from "./result";
 import { existsSync } from "fs";
+import { getLogger } from "./outputChannel";
 import { mkdir } from "fs/promises";
 import { parserFinishedInit } from "./extension";
 import which from "which";
 
 const NPM_INSTALL_URL = "https://nodejs.org/en/download";
 
-export type Language = unknown;
+export type Language = NonNullable<unknown>;
 
 export function getAbsoluteParserDir(parsersDir: string, parserName: string): string {
     return path.resolve(path.join(parsersDir, parserName));
@@ -51,6 +52,8 @@ export async function downloadAndBuildParser(
     npm = "npm",
     treeSitterCli = "tree-sitter-cli"
 ): Promise<Result<void, string>> {
+    const logger = getLogger();
+
     // typescript-eslint is wrong, this can return null since we use 'nothrow'
     const npmCommandOk = (await which(npm, { nothrow: true })) !== null;
     if (!npmCommandOk) {
@@ -98,6 +101,25 @@ export async function downloadAndBuildParser(
         return err(`failed to extract ${tarFilename} to ${parserDir} > ${JSON.stringify(e)}`);
     }
 
+    // try to load parser optimistically
+    const loadResult = await loadParser(parsersDir, parserName);
+    if (loadResult.status === "ok") {
+        return ok(undefined);
+    }
+
+    // if it fails, try to build it
+    const buildResult = await runCmd(`${treeSitterCli} generate`, { cwd: parserDir }, onData);
+    if (buildResult.status === "err") {
+        const cliMsg =
+            buildResult.result[0].name +
+            ": " +
+            buildResult.result[0].message.replace(/\n/g, " > ") +
+            (buildResult.result[1].length > 1 ? ` Logs: ${buildResult.result[1].join(">")}` : "");
+
+        logger.appendLine(`Failed to build parser using tree-sitter cli > ${cliMsg}`);
+        return err(`Failed to build parser using tree-sitter cli > ${cliMsg}`);
+    }
+
     return ok(undefined);
 }
 
@@ -127,7 +149,8 @@ async function runCmd(
 
 export async function getLanguage(
     parsersDir: string,
-    languageId: string
+    languageId: string,
+    autoInstall = false
 ): Promise<Result<Language | undefined, string>> {
     const ignoredLanguageIds = configuration.getIgnoredLanguageIds();
     if (ignoredLanguageIds.includes(languageId)) {
@@ -143,12 +166,14 @@ export async function getLanguage(
     await parserFinishedInit;
 
     if (!existsSync(parserPackagePath)) {
-        const doInstall = await vscode.window.showInformationMessage(
-            `Parser missing for language '${languageId}', install it?`,
-            "Yes",
-            "No",
-            "Never"
-        );
+        const doInstall = autoInstall
+            ? "Yes"
+            : await vscode.window.showInformationMessage(
+                  `Parser missing for language '${languageId}', install it?`,
+                  "Yes",
+                  "No",
+                  "Never"
+              );
 
         if (doInstall === "Never") {
             const result = await configuration.addIgnoredLanguageId(languageId);
@@ -200,11 +225,9 @@ export async function getLanguage(
     }
 
     const loadResult = await loadParser(parsersDir, parserName, subdirectory);
-    switch (loadResult.status) {
-        case "err":
-            return err(`Failed to load parser for language ${languageId} > ${loadResult.result}`);
-
-        case "ok":
-            return ok(loadResult.result);
+    if (loadResult.status === "err") {
+        return err(`Failed to load parser for language ${languageId} > ${loadResult.result}`);
     }
+
+    return ok(loadResult.result);
 }

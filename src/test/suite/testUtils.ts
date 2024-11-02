@@ -8,7 +8,7 @@ import { FileTree } from "../../FileTree";
 export type SupportedTestLanguages = "rust" | "typescriptreact";
 export async function openDocument(
     content: string,
-    language: SupportedTestLanguages
+    language: string
 ): Promise<{ activeEditor: vscode.TextEditor; fileTree: FileTree }> {
     if (!active.get()) {
         active.set(true);

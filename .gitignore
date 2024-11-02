@@ -168,4 +168,5 @@ package
 # End of https://www.toptal.com/developers/gitignore/api/yarn,node,svelte
 
 parsers/
+test-parsers/
 *.vsix

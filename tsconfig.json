@@ -19,6 +19,7 @@
   "exclude": [
     "node_modules",
     "parsers",
+    "test-parsers",
     "webview-ui"
   ]
 }
