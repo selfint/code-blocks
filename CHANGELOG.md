@@ -2,10 +2,22 @@
 
 # 0.7.0
 
+Finally, switch to `node-tree-sitter`! 🎉
+
+This means faster parsing, and no need for `tree-sitter-cli`, `docker`, or
+`emscripten`.
+
 ## Changed
 
 - Switched to `node-tree-sitter` from `web-tree-sitter` for parsing. This means that
   the extension no longer requires `tree-sitter-cli` or `docker` to be installed.
+
+- Deprecated support for `node` v16, it might still work, but the extension now
+  requires `node` v18+.
+
+## Fix
+
+- Fixed `[svelte]` support with `@tree-sitter-grammars/tree-sitter-svelte`.
 
 # 0.6.1
 

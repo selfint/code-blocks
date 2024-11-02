@@ -13,30 +13,22 @@ const NPM_INSTALL_URL = "https://nodejs.org/en/download";
 
 export type Language = unknown;
 
-export function getAbsoluteParserDir(parsersDir: string, npmPackageName: string): string {
-    return path.resolve(path.join(parsersDir, npmPackageName));
-}
-
-export function getWasmBindingsPath(parsersDir: string, npmPackageName: string, parserName?: string): string {
-    // this path assumes the .wasm file was built in the parser dir
-    return path.join(
-        getAbsoluteParserDir(parsersDir, npmPackageName),
-        `${parserName ?? npmPackageName}.wasm`
-    );
+export function getAbsoluteParserDir(parsersDir: string, parserName: string): string {
+    return path.resolve(path.join(parsersDir, parserName));
 }
 
 export async function loadParser(
     parsersDir: string,
-    npmPackageName: string,
+    parserName: string,
     subdirectory?: string
 ): Promise<Result<Language, string>> {
-    const wasmPath = getAbsoluteParserDir(parsersDir, npmPackageName);
-    if (!existsSync(wasmPath)) {
-        return err(`Expected .wasm parser path doesn't exist: ${wasmPath}`);
+    const parserDir = getAbsoluteParserDir(parsersDir, parserName);
+    if (!existsSync(parserDir)) {
+        return err(`Expected parser directory doesn't exist: ${parserDir}`);
     } else {
         await parserFinishedInit;
         try {
-            let language = (await import(wasmPath)) as Language;
+            let language = (await import(parserDir)) as Language;
 
             if (subdirectory !== undefined) {
                 // @ts-expect-error we know this is a language
@@ -45,8 +37,8 @@ export async function loadParser(
 
             return ok(language);
         } catch (error) {
-            console.debug(`Failed to load ${wasmPath} > ${JSON.stringify(error)}`);
-            return err(`Failed to load ${wasmPath} > ${JSON.stringify(error)}`);
+            console.debug(`Failed to load ${parserDir} > ${JSON.stringify(error)}`);
+            return err(`Failed to load ${parserDir} > ${JSON.stringify(error)}`);
         }
     }
 }
@@ -54,17 +46,28 @@ export async function loadParser(
 export async function downloadAndBuildParser(
     parsersDir: string,
     parserNpmPackage: string,
+    parserName: string,
     onData?: (data: string) => void,
-    npm = "npm"
+    npm = "npm",
+    treeSitterCli = "tree-sitter-cli"
 ): Promise<Result<void, string>> {
     // typescript-eslint is wrong, this can return null since we use 'nothrow'
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     const npmCommandOk = (await which(npm, { nothrow: true })) !== null;
     if (!npmCommandOk) {
         return err(`npm command: '${npm}' is not in PATH, try installing it from: ${NPM_INSTALL_URL}`);
     }
 
-    const parserDir = getAbsoluteParserDir(parsersDir, parserNpmPackage);
+    const treeSitterCliOk = await runCmd(`${treeSitterCli} --version`);
+    if (treeSitterCliOk.status === "err") {
+        return err(
+            `
+            tree-sitter cli command '${treeSitterCli}' failed:
+            ${treeSitterCliOk.result[0].name} ${treeSitterCliOk.result[0].message.replace(/\n/g, " > ")}.` +
+                (treeSitterCliOk.result[1].length > 1 ? ` Logs: ${treeSitterCliOk.result[1].join(">")}` : "")
+        );
+    }
+
+    const parserDir = getAbsoluteParserDir(parsersDir, parserName);
     await mkdir(parserDir, { recursive: true });
 
     const installResult = await runCmd(
@@ -131,14 +134,15 @@ export async function getLanguage(
         return ok(undefined);
     }
 
-    const { npmPackageName, subdirectory } = configuration.getLanguageConfig(languageId);
-    const parserNPMPackage = getAbsoluteParserDir(parsersDir, npmPackageName);
+    const { npmPackageName, subdirectory, parserName } = configuration.getLanguageConfig(languageId);
+    const parserPackagePath = getAbsoluteParserDir(parsersDir, parserName);
 
     const npm = "npm";
+    const treeSitterCli = configuration.getTreeSitterCliPath();
 
     await parserFinishedInit;
 
-    if (!existsSync(parserNPMPackage)) {
+    if (!existsSync(parserPackagePath)) {
         const doInstall = await vscode.window.showInformationMessage(
             `Parser missing for language '${languageId}', install it?`,
             "Yes",
@@ -180,8 +184,10 @@ export async function getLanguage(
                 return await downloadAndBuildParser(
                     parsersDir,
                     npmPackageName,
+                    parserName,
                     (data) => progress.report({ message: data, increment: number++ }),
-                    npm
+                    npm,
+                    treeSitterCli
                 );
             }
         );
@@ -193,7 +199,7 @@ export async function getLanguage(
         }
     }
 
-    const loadResult = await loadParser(parsersDir, npmPackageName, subdirectory);
+    const loadResult = await loadParser(parsersDir, parserName, subdirectory);
     switch (loadResult.status) {
         case "err":
             return err(`Failed to load parser for language ${languageId} > ${loadResult.result}`);

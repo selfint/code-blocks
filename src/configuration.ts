@@ -3,9 +3,11 @@ import { Result, err, ok } from "./result";
 
 export type LanguageConfig = {
     npmPackageName: string;
+    parserName: string;
     subdirectory?: string;
     queries?: string[];
 };
+
 export function getLanguageConfig(languageId: string): LanguageConfig {
     function get<C>(c: string, d?: C): C {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -15,6 +17,7 @@ export function getLanguageConfig(languageId: string): LanguageConfig {
     const npmPackageName = get("npmPackageName", `tree-sitter-${languageId}`);
     return {
         npmPackageName,
+        parserName: get("parserName", `tree-sitter-${languageId}`),
         subdirectory: get("subdirectory"),
         queries: get("queries"),
     };

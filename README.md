@@ -51,6 +51,8 @@ View your code's syntax tree directly
     $ npm i -g tree-sitter-cli
     ```
 
+-   The extension **used** to require `emcc` (Emscripten compiler) to compile tree-sitter parsers to WASM. This is **no longer required**, as the extension now downloads pre-compiled parsers from NPM.
+
 -   `emcc`: Emscripten compiler, used by `tree-sitter` to compile parsers to WASM. Can be provided either through:
 
     -   [Emscripten](https://emscripten.org/docs/getting_started/downloads.html) (preferred): Provides `emcc` directly.

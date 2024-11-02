@@ -1,10 +1,9 @@
 import * as vscode from "vscode";
 
-import { expect } from "chai";
-import { Query } from "tree-sitter";
-
 import { BlockTree, getBlockTrees } from "../../BlockTree";
 import { Language } from "../../Installer";
+import { Query } from "tree-sitter";
+import { expect } from "chai";
 import { openDocument } from "./testUtils";
 
 function box(text: string, indent: number): string {

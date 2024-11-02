@@ -1,13 +1,13 @@
 import * as vscode from "vscode";
 
-import Parser, { Query, SyntaxNode, Tree } from "tree-sitter";
-
 import { Block, getQueryBlocks } from "./BlockTree";
+import Parser, { Query, SyntaxNode, Tree } from "tree-sitter";
+import { Result, err, ok } from "./result";
+
+import { Language } from "./Installer";
+import { Selection } from "./Selection";
 import { getLanguageConfig } from "./configuration";
 import { parserFinishedInit } from "./extension";
-import { Language } from "./Installer";
-import { Result, err, ok } from "./result";
-import { Selection } from "./Selection";
 
 function positionToPoint(pos: vscode.Position): Parser.Point {
     return {

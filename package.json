@@ -267,6 +267,7 @@
       },
       "[typescriptreact]": {
         "codeBlocks.npmPackageName": "tree-sitter-typescript",
+        "codeBlocks.parserName": "tree-sitter-typescript",
         "codeBlocks.subdirectory": "tsx",
         "codeBlocks.queries": [
           "( (comment)* @header . (class_declaration) @item)",
@@ -279,6 +280,7 @@
       },
       "[javascriptreact]": {
         "codeBlocks.npmPackageName": "tree-sitter-javascript",
+        "codeBlocks.parserName": "tree-sitter-javascript",
         "codeBlocks.queries": [
           "( (comment)* @header . (class_declaration) @item)",
           "( (comment)* @header . (method_definition) @item)",
@@ -289,6 +291,7 @@
         ]
       },
       "[svelte]": {
+        "codeBlocks.npmPackageName": "@tree-sitter-grammars/tree-sitter-svelte",
         "codeBlocks.queries": [
           "( (comment)* @header . (element) @item)",
           "( (comment)* @header . (each_statement) @item)",
