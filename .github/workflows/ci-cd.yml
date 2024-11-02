@@ -32,7 +32,7 @@ jobs:
             # TODO: fix this command getting stuck on macos
             - name: Build webview
               if: matrix.os == 'macos-latest'
-              uses: nick-fields/retry@v2
+              uses: nick-fields/retry@v3
               with:
                   timeout_minutes: 1
                   max_attempts: 5
@@ -62,7 +62,7 @@ jobs:
             - name: Package extension
               run: npx @vscode/vsce package --yarn --githubBranch ${{ github.ref_name }}
             - name: Upload extension
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: code-blocks-${{ github.ref_name }}.vsix
                   path: code-blocks-*.vsix
@@ -74,7 +74,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Download package
-              uses: actions/download-artifact@v3
+              uses: actions/download-artifact@v4
               with:
                   name: code-blocks-${{ github.ref_name }}.vsix
                   path: .
