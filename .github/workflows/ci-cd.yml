@@ -40,7 +40,9 @@ jobs:
             - name: Run tests
               uses: coactions/setup-xvfb@v1
               with:
-                  run: TEST_TIMEOUT=5s yarn test
+                  run: yarn test
+              env:
+                  TEST_TIMEOUT: 5s
 
     package:
         name: Package extension
