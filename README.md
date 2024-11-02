@@ -45,19 +45,17 @@ View your code's syntax tree directly
 
 -   `node` / `npm`: Used to download tree-sitter language parsers. Can be installed from [here](https://nodejs.org/en/download).
 
--   `tree-sitter`: Used to build tree-sitter language parsers. After installing `npm`, can be installed by running:
+-   **OPTIONAL:** `tree-sitter`: Used to for tree-sitter language parsers that need to be locally built.
 
-    ```console
-    $ npm i -g tree-sitter-cli
-    ```
+    After installing `npm`, can be installed by running:
+    `npm i -g tree-sitter-cli`.
 
--   The extension **used** to require `emcc` (Emscripten compiler) to compile tree-sitter parsers to WASM. This is **no longer required**, as the extension now downloads pre-compiled parsers from NPM.
+    If you don't want to install `tree-sitter`, there's a good chance you don't
+    need it. Try the extension without it, it will notify you if it's required.
 
--   `emcc`: Emscripten compiler, used by `tree-sitter` to compile parsers to WASM. Can be provided either through:
+### Note
 
-    -   [Emscripten](https://emscripten.org/docs/getting_started/downloads.html) (preferred): Provides `emcc` directly.
-
-    -   [Docker](https://docs.docker.com/get-docker/): Provides `emcc` via the [`emscripten/emsdk`](https://hub.docker.com/r/emscripten/emsdk) image. Note that the first parser installation can take some time (depending on internet speed), since the image is 1.68GB. Next installs will re-use the image and should take a few seconds at most.
+The extension **used** to require `emcc` (Emscripten compiler) or `docker` to compile tree-sitter parsers to WASM. **This is no longer required**.
 
 ## Commands
 
