@@ -10,6 +10,7 @@ export async function run(): Promise<void> {
     const mocha = new Mocha({
         ui: "tdd",
         color: true,
+        bail: true,
     });
 
     const testsRoot = path.resolve(__dirname, "..");
