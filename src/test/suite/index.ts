@@ -4,6 +4,7 @@ import * as path from "path";
 
 import Mocha from "mocha";
 import glob from "glob";
+import Parser from "tree-sitter";
 
 export async function run(): Promise<void> {
     // Create the mocha test
@@ -33,9 +34,17 @@ export async function run(): Promise<void> {
     // create parsers dir
     await fs.mkdir(parsersDir);
 
+    const testParser = new Parser();
+
     // install tree-sitter-rust
     let result = await Installer.getLanguage("test-parsers", "rust", true);
     if (result.status === "err") {
+        throw new Error(`Failed to install language: ${result.result}`);
+    }
+
+    try {
+        testParser.setLanguage(result.result);
+    } catch (error) {
         throw new Error(`Failed to install language: ${result.result}`);
     }
 
@@ -44,6 +53,12 @@ export async function run(): Promise<void> {
     // install tree-sitter-typescript
     result = await Installer.getLanguage("test-parsers", "typescript", true);
     if (result.status === "err") {
+        throw new Error(`Failed to install language: ${result.result}`);
+    }
+
+    try {
+        testParser.setLanguage(result.result);
+    } catch (error) {
         throw new Error(`Failed to install language: ${result.result}`);
     }
 
