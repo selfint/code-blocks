@@ -6,7 +6,7 @@ on:
 env:
     TEST_TIMEOUT: 5m
     EXAMPLE_TIMEOUT: 5m
-    BRANCH: ${{ startsWith(github.head_ref, '') && github.head_ref || github.ref_name  }}
+    BRANCH: ${{ startsWith(github.head_ref, '') && github.head_ref || github.ref_name }}
 
 jobs:
     test:
@@ -69,6 +69,24 @@ jobs:
             - name: Upload assets
               uses: actions/upload-artifact@v4
               with:
-                  name: ${{ env.BRANCH }}-assets
+                  name: "${{ env.BRANCH }}-assets"
                   path: |
                       *.gif
+
+            # Optional: Add PR annotation with link to artifact
+            - name: Comment artifact download link
+              if: ${{ github.event_name == 'pull_request' }}
+              run: |
+                  echo "::set-output name=comment::Download the latest artifact [here](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+              id: artifact-link
+            - name: Post artifact link to PR
+              if: ${{ github.event_name == 'pull_request' }}
+              uses: actions/github-script@v6
+              with:
+                  script: |
+                      github.issues.createComment({
+                        issue_number: ${{ github.event.pull_request.number }},
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        body: steps.artifact-link.outputs.comment
+                      })
