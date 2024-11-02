@@ -2,22 +2,35 @@
 
 # 0.7.0
 
-Finally, switch to `node-tree-sitter`! 🎉
+Finally, switched to `node-tree-sitter`! 🎉
 
-This means faster parsing, and no need for `tree-sitter-cli`, `docker`, or
-`emscripten`.
+This means faster parsing, faster language installation, and no need for
+`docker`, or `emscripten`.
+
+## Added
+
+- `c` ([#33](https://github.com/selfint/code-blocks/issues/33)) support, and
+  `svelte` ([#170](https://github.com/selfint/code-blocks/issues/170))
+  using the excellent
+  [@tree-sitter-grammars](https://github.com/tree-sitter-grammars) project.
+
+- Many more languages are now tested in advance: 
+  Rust, TypeScript, TSX, JavaScript, Java, Python, Svelte, C, C++, C#,
+  Go, Ruby, HTML, CSS, YAML, JSON, Markdown, Bash, Kotlin, Zig.
 
 ## Changed
 
-- Switched to `node-tree-sitter` from `web-tree-sitter` for parsing. This means that
-  the extension no longer requires `tree-sitter-cli` or `docker` to be installed.
+- Switched to `node-tree-sitter` from `web-tree-sitter` 
+  ([#125](https://github.com/selfint/code-blocks/issues/125)).
+  This means that the extension no longer requires `emcc` or `docker` to be installed.
 
-- Deprecated support for `node` v16, it might still work, but the extension now
+- `tree-sitter` CLI is now optional, and only required if the extension cannot find
+  a pre-built parser.
+
+## Deprecated
+
+- Support for `node` v16, it might still work, but the extension now
   requires `node` v18+.
-
-## Fix
-
-- Fixed `[svelte]` support with `@tree-sitter-grammars/tree-sitter-svelte`.
 
 # 0.6.1
 
