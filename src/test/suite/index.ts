@@ -39,11 +39,15 @@ export async function run(): Promise<void> {
         throw new Error(`Failed to install language: ${result.result}`);
     }
 
+    console.log(`Installed language: ${JSON.stringify(result.result)}`);
+
     // install tree-sitter-typescript
     result = await Installer.getLanguage("test-parsers", "typescript", true);
     if (result.status === "err") {
         throw new Error(`Failed to install language: ${result.result}`);
     }
+
+    console.log(`Installed language: ${JSON.stringify(result.result)}`);
 
     return new Promise((c, e) => {
         glob("**/**.test.js", { cwd: testsRoot }, (err, files) => {
