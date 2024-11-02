@@ -37,6 +37,10 @@ jobs:
                   timeout_minutes: 1
                   max_attempts: 5
                   command: yarn run build:webview
+            - name: Disable Windows Defender
+              if: matrix.os == 'windows-latest'
+              run: Set-MpPreference -DisableRealtimeMonitoring $true
+              shell: powershell
             - name: Run tests
               uses: coactions/setup-xvfb@v1
               with:
