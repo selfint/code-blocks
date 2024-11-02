@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { SupportedTestLanguages, openDocument } from "./testUtils";
+import { openDocument } from "./testUtils";
 import { CodeBlocksEditorProvider } from "../../editor/CodeBlocksEditorProvider";
 import { TreeViewer } from "../../TreeViewer";
 import { expect } from "chai";
@@ -23,7 +23,7 @@ suite("codeBlocks commands", function () {
         content: string;
         selectionCommands: SelectionCommand[];
         expectedSelectionContent: string;
-        language?: SupportedTestLanguages;
+        language?: string;
     }): Promise<vscode.TextEditor> {
         const cursor = "@";
         const cursorIndex = content.indexOf(cursor);
@@ -47,9 +47,7 @@ suite("codeBlocks commands", function () {
         return activeEditor;
     }
 
-    type MoveCommand =
-        | "codeBlocks.moveDown"
-        | "codeBlocks.moveUp";
+    type MoveCommand = "codeBlocks.moveDown" | "codeBlocks.moveUp";
 
     type TestMoveCommandsParams = {
         content: string;
@@ -57,7 +55,7 @@ suite("codeBlocks commands", function () {
         moveCommands: MoveCommand[];
         expectedContent: string;
         expectedSelectionContent: string;
-        language: SupportedTestLanguages;
+        language: string;
     };
     async function testMoveCommands({
         content,
@@ -99,7 +97,7 @@ suite("codeBlocks commands", function () {
         selectionCommands: SelectionCommand[];
         navigateCommands: NavigationCommand[];
         expectedSelectionContent: string;
-        language: SupportedTestLanguages;
+        language: string;
     };
     async function testNavigateCommands({
         content,
@@ -133,14 +131,16 @@ suite("codeBlocks commands", function () {
         expect(newCursorIndex).to.equal(
             expectedNavigationDestinationIndex,
             "navigation commands didn't arrive to expected destination" +
-            `\n\tactual: ${cleanContent.substring(0, newCursorIndex) +
-            targetCursor +
-            cleanContent.substring(newCursorIndex)
-            }` +
-            `\n\texpect: ${cleanContent.substring(0, expectedNavigationDestinationIndex) +
-            targetCursor +
-            cleanContent.substring(expectedNavigationDestinationIndex)
-            }\n`
+                `\n\tactual: ${
+                    cleanContent.substring(0, newCursorIndex) +
+                    targetCursor +
+                    cleanContent.substring(newCursorIndex)
+                }` +
+                `\n\texpect: ${
+                    cleanContent.substring(0, expectedNavigationDestinationIndex) +
+                    targetCursor +
+                    cleanContent.substring(expectedNavigationDestinationIndex)
+                }\n`
         );
     }
 

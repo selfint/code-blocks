@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { FileTree, MoveSelectionDirection } from "../../FileTree";
-import { SupportedTestLanguages, openDocument } from "./testUtils";
+import { openDocument } from "./testUtils";
 import { Selection } from "../../Selection";
 import assert from "assert";
 import { expect } from "chai";
@@ -13,7 +13,7 @@ suite("FileTree", function () {
         content,
         expectedSelectionText,
     }: {
-        language: SupportedTestLanguages;
+        language: string;
         content: string;
         expectedSelectionText: string | undefined;
     }): Promise<[Selection, FileTree]> {
@@ -48,7 +48,7 @@ suite("FileTree", function () {
         expectedContent,
         expectedSelectionContent,
     }: {
-        language: SupportedTestLanguages;
+        language: string;
         content: string;
         direction: MoveSelectionDirection;
         expectedContent: string;
@@ -78,7 +78,7 @@ suite("FileTree", function () {
         expectedSelectionContent,
         expectedTargetContent,
     }: {
-        language: SupportedTestLanguages;
+        language: string;
         content: string;
         expectedContent: string;
         expectedSelectionContent: string;
@@ -129,7 +129,7 @@ suite("FileTree", function () {
         finalContent,
         expectedFinalTree,
     }: {
-        language: SupportedTestLanguages;
+        language: string;
         initialContent: string;
         expectedInitialTree: string;
         finalContent: string;

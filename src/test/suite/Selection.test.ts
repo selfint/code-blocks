@@ -1,4 +1,4 @@
-import { SupportedTestLanguages, openDocument } from "./testUtils";
+import { openDocument } from "./testUtils";
 import { UpdateSelectionDirection } from "../../Selection";
 import { expect } from "chai";
 
@@ -7,7 +7,7 @@ suite("Selection", function () {
     const cursor = "@";
 
     async function selectionAt(
-        language: SupportedTestLanguages,
+        language: string,
         content: string,
         updates: UpdateSelectionDirection[] = []
     ): Promise<string | undefined> {
