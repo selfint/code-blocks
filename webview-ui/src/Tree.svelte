@@ -21,6 +21,8 @@
 <span
   style="color: {foregroundColor}; background-color: {backgroundColor}"
   class="tree"
+  role="button"
+  tabindex="0"
   on:click|stopPropagation|preventDefault={() => onClick(tree.block)}
   on:keypress|stopPropagation|preventDefault={() => onClick(tree.block)}
 >
