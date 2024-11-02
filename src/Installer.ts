@@ -40,7 +40,11 @@ export async function loadParser(
     } else {
         await parserFinishedInit;
         try {
-            let { default: language } = (await import(parserBindings)) as { default: Language };
+            // using dynamic import causes issues on windows
+            // make sure to test well on windows before changing this
+            // TODO(02/11/24): change to dynamic import
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            let language = require(parserBindings) as Language;
             logger.appendLine(`Imported parser ${parserName}: ${JSON.stringify(Object.keys(language))}`);
 
             if (subdirectory !== undefined) {
