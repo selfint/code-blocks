@@ -1,4 +1,3 @@
-import * as Installer from "../../Installer";
 import * as fs from "fs/promises";
 import * as path from "path";
 
@@ -10,48 +9,22 @@ export async function run(): Promise<void> {
     const mocha = new Mocha({
         ui: "tdd",
         color: true,
-        bail: true,
+        bail: false,
     });
 
     const testsRoot = path.resolve(__dirname, "..");
 
-    // install test parsers
-    const parsersDir = "test-parsers";
-
     // reset parsers dir
-    let exists;
-    try {
-        await fs.access(parsersDir);
-        exists = true;
-    } catch (e) {
-        exists = false;
-    }
+    const parsersDir = path.resolve(testsRoot, "..", "..", "test-parsers");
 
-    if (exists) {
-        await fs.rm(parsersDir, { recursive: true });
-    }
+    // remove all parser directories except tree-sitter-rust and tree-sitter-typescript
+    const parsers = await fs.readdir(parsersDir);
+    for (const parser of parsers) {
+        if (parser === "tree-sitter-rust" || parser === "tree-sitter-typescript") {
+            continue;
+        }
 
-    await fs.mkdir(parsersDir, { recursive: true });
-
-    // on windows, copy parsers from "ci-parsers" to "test-parsers" instead
-    if (process.platform === "win32") {
-        const ciParsersDir = path.resolve(__dirname, "..", "..", "..", "ci-parsers");
-        const ciParsers = await fs.readdir(ciParsersDir);
-        for (const parser of ciParsers) {
-            const src = path.resolve(ciParsersDir, parser);
-            const dst = path.resolve(parsersDir, parser);
-            console.log(`Copying ${src} to ${dst}`);
-            await fs.cp(src, dst, { recursive: true });
-        }
-    } else {
-        let result = await Installer.getLanguage(parsersDir, "rust", true);
-        if (result.status === "err") {
-            throw new Error(`Failed to install Rust parser: ${result.result}`);
-        }
-        result = await Installer.getLanguage(parsersDir, "typescriptreact", true);
-        if (result.status === "err") {
-            throw new Error(`Failed to install TSX parser: ${result.result}`);
-        }
+        await fs.rm(path.join(parsersDir, parser), { recursive: true });
     }
 
     return new Promise((c, e) => {

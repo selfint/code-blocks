@@ -7,8 +7,8 @@ import { Result, err, ok } from "./result";
 import { Language } from "./Installer";
 import { Selection } from "./Selection";
 import { getLanguageConfig } from "./configuration";
-import { parserFinishedInit } from "./extension";
 import { getLogger } from "./outputChannel";
+import { parserFinishedInit } from "./extension";
 
 function positionToPoint(pos: vscode.Position): Parser.Point {
     return {
@@ -82,6 +82,8 @@ export class FileTree implements vscode.Disposable {
         try {
             logger.appendLine(
                 `Setting language for parser, language !== undefined = ${JSON.stringify(
+                    // sanity check
+                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                     language !== undefined
                 )}`
             );

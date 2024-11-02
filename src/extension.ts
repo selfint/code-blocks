@@ -4,9 +4,9 @@ import { CodeBlocksEditorProvider } from "./editor/CodeBlocksEditorProvider";
 import { FileTree } from "./FileTree";
 import { TreeViewer } from "./TreeViewer";
 import { getLanguage } from "./Installer";
+import { getLogger } from "./outputChannel";
 import { join } from "path";
 import { state } from "./state";
-import { getLogger } from "./outputChannel";
 
 export const parserFinishedInit = Promise.resolve();
 
@@ -78,7 +78,6 @@ export function toggleActive(): void {
 export { BlockMode };
 
 export function activate(context: vscode.ExtensionContext): void {
-    // init channel
     getLogger().appendLine("CodeBlocks activated");
 
     const parsersDir = join(

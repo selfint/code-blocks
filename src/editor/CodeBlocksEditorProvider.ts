@@ -9,11 +9,10 @@ import { Query } from "tree-sitter";
 export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider {
     public static readonly viewType = "codeBlocks.editor";
 
-    private extensionParsersDirPath: string;
-
-    constructor(private readonly context: vscode.ExtensionContext, parsersDir: string) {
-        this.extensionParsersDirPath = parsersDir;
-    }
+    constructor(
+        private readonly context: vscode.ExtensionContext,
+        private readonly extensionParsersDirPath: string
+    ) {}
 
     public async resolveCustomTextEditor(
         document: vscode.TextDocument,

@@ -3,8 +3,8 @@ import * as configuration from "./configuration";
 import * as vscode from "vscode";
 import { MoveSelectionDirection } from "./FileTree";
 import { UpdateSelectionDirection } from "./Selection";
-import { state } from "./state";
 import { getLogger } from "./outputChannel";
+import { state } from "./state";
 
 export const blockModeActive = state(false);
 const colorConfig = state(configuration.getColorConfig());

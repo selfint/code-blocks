@@ -1,6 +1,6 @@
-import { openDocument } from "./testUtils";
 import { UpdateSelectionDirection } from "../../Selection";
 import { expect } from "chai";
+import { openDocument } from "./testUtils";
 
 suite("Selection", function () {
     this.timeout(process.env.TEST_TIMEOUT ?? "2s");

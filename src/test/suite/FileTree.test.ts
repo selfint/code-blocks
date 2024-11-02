@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
 import { FileTree, MoveSelectionDirection } from "../../FileTree";
-import { openDocument } from "./testUtils";
 import { Selection } from "../../Selection";
 import assert from "assert";
 import { expect } from "chai";
+import { openDocument } from "./testUtils";
 
 suite("FileTree", function () {
     this.timeout(process.env.TEST_TIMEOUT ?? "2s");

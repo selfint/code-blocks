@@ -34,7 +34,7 @@ suite("Installer integration tests", function () {
         void vscode.workspace.openTextDocument(TreeViewer.uri);
     });
 
-    const tests = [
+    const prebuiltTests = [
         ["Rust", "rust", "fn foo() {}\nfn bar() {}"],
         ["TypeScript", "typescript", "function foo() {}\nfunction bar() {}"],
         ["TSX", "typescriptreact", "function Foo(a: string) { return <div />; }\nfunction Bar() {  }"],
@@ -62,7 +62,7 @@ suite("Installer integration tests", function () {
         ["Zig", "zig", 'const std = @import("std");\n\npub fn main() void { }'],
     ];
 
-    tests.forEach(([name, language, content]) => {
+    prebuiltTests.forEach(([name, language, content]) => {
         test(name, async () => await testParser(language, content));
     });
 });
