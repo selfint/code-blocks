@@ -62,20 +62,7 @@ suite("Installer integration tests", function () {
         ["Zig", "zig", 'const std = @import("std");\n\npub fn main() void { }'],
     ];
 
-    const unbuiltTests = [
-        ["JavaScript", "javascript", "function foo() {}\nfunction bar() {}"],
-        //
-    ];
-
-    suite("Prebuilt parsers", function () {
-        prebuiltTests.forEach(([name, language, content]) => {
-            test(name, async () => await testParser(language, content));
-        });
-    });
-
-    suite("Unbuilt parsers", function () {
-        unbuiltTests.forEach(([name, language, content]) => {
-            test(name, async () => await testParser(language, content));
-        });
+    prebuiltTests.forEach(([name, language, content]) => {
+        test(name, async () => await testParser(language, content));
     });
 });

@@ -1,8 +1,9 @@
+import * as fs from "fs/promises";
 import * as path from "path";
 import Mocha from "mocha";
 import glob from "glob";
 
-export function run(): Promise<void> {
+export async function run(): Promise<void> {
     // Create the mocha test
     const mocha = new Mocha({
         ui: "tdd",
@@ -11,6 +12,19 @@ export function run(): Promise<void> {
     });
 
     const testsRoot = path.resolve(__dirname, "..");
+
+    // reset parsers dir
+    const parsersDir = path.resolve(testsRoot, "..", "..", "test-parsers");
+
+    // remove all parser directories except tree-sitter-rust and tree-sitter-typescript
+    const parsers = await fs.readdir(parsersDir);
+    for (const parser of parsers) {
+        if (parser === "tree-sitter-rust" || parser === "tree-sitter-typescript") {
+            continue;
+        }
+
+        await fs.rm(path.join(parsersDir, parser), { recursive: true });
+    }
 
     return new Promise((c, e) => {
         glob("**/**.test.js", { cwd: testsRoot }, (err, files) => {
