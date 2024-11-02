@@ -1,5 +1,6 @@
 import * as fs from "fs/promises";
 import * as path from "path";
+import * as Installer from "../../Installer";
 
 import Mocha from "mocha";
 import glob from "glob";
@@ -14,17 +15,34 @@ export async function run(): Promise<void> {
 
     const testsRoot = path.resolve(__dirname, "..");
 
-    // reset parsers dir
     const parsersDir = path.resolve(testsRoot, "..", "..", "test-parsers");
 
-    // remove all parser directories except tree-sitter-rust and tree-sitter-typescript
-    const parsers = await fs.readdir(parsersDir);
-    for (const parser of parsers) {
-        if (parser === "tree-sitter-rust" || parser === "tree-sitter-typescript") {
-            continue;
-        }
+    // remove parsers dir
+    let exists = false;
+    try {
+        await fs.access(parsersDir);
+        exists = true;
+    } catch {
+        // do nothing
+    }
 
-        await fs.rm(path.join(parsersDir, parser), { recursive: true });
+    if (exists) {
+        await fs.rm(parsersDir, { recursive: true });
+    }
+
+    // create parsers dir
+    await fs.mkdir(parsersDir);
+
+    // install tree-sitter-rust
+    let result = await Installer.getLanguage("test-parsers", "rust", true);
+    if (result.status === "err") {
+        throw new Error(`Failed to install language: ${result.result}`);
+    }
+
+    // install tree-sitter-typescript
+    result = await Installer.getLanguage("test-parsers", "typescript", true);
+    if (result.status === "err") {
+        throw new Error(`Failed to install language: ${result.result}`);
     }
 
     return new Promise((c, e) => {
