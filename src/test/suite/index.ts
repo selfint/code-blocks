@@ -1,10 +1,7 @@
-import * as Installer from "../../Installer";
-import * as fs from "fs/promises";
 import * as path from "path";
 
 import Mocha from "mocha";
 import glob from "glob";
-import Parser from "tree-sitter";
 
 export async function run(): Promise<void> {
     // Create the mocha test
@@ -15,54 +12,6 @@ export async function run(): Promise<void> {
     });
 
     const testsRoot = path.resolve(__dirname, "..");
-
-    const parsersDir = path.resolve(testsRoot, "..", "..", "test-parsers");
-
-    // remove parsers dir
-    let exists = false;
-    try {
-        await fs.access(parsersDir);
-        exists = true;
-    } catch {
-        // do nothing
-    }
-
-    if (exists) {
-        await fs.rm(parsersDir, { recursive: true });
-    }
-
-    // create parsers dir
-    await fs.mkdir(parsersDir);
-
-    const testParser = new Parser();
-
-    // install tree-sitter-rust
-    let result = await Installer.getLanguage("test-parsers", "rust", true);
-    if (result.status === "err") {
-        throw new Error(`Failed to install language: ${result.result}`);
-    }
-
-    try {
-        testParser.setLanguage(result.result);
-    } catch (error) {
-        throw new Error(`Failed to install language: ${result.result}`);
-    }
-
-    console.log(`Installed language: ${JSON.stringify(result.result)}`);
-
-    // install tree-sitter-typescript
-    result = await Installer.getLanguage("test-parsers", "typescript", true);
-    if (result.status === "err") {
-        throw new Error(`Failed to install language: ${result.result}`);
-    }
-
-    try {
-        testParser.setLanguage(result.result);
-    } catch (error) {
-        throw new Error(`Failed to install language: ${result.result}`);
-    }
-
-    console.log(`Installed language: ${JSON.stringify(result.result)}`);
 
     return new Promise((c, e) => {
         glob("**/**.test.js", { cwd: testsRoot }, (err, files) => {
