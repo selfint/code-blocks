@@ -40,7 +40,7 @@ async function getEditorFileTree(
     const logger = getLogger();
 
     if (editor?.document === undefined) {
-        logger.appendLine("No active document");
+        logger.log("No active document");
         return undefined;
     }
 
@@ -50,7 +50,7 @@ async function getEditorFileTree(
         if (language.status === "err") {
             void vscode.window.showErrorMessage(`Failed to get language: ${language.result}`);
         } else {
-            logger.appendLine(`No language found for ${activeDocument.languageId}`);
+            logger.log(`No language found for ${activeDocument.languageId}`);
         }
 
         return undefined;
@@ -78,7 +78,7 @@ export function toggleActive(): void {
 export { BlockMode };
 
 export function activate(context: vscode.ExtensionContext): void {
-    getLogger().appendLine("CodeBlocks activated");
+    getLogger().log("CodeBlocks activated");
 
     const parsersDir = join(
         context.extensionPath,

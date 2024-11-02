@@ -32,12 +32,12 @@ export async function loadParser(
     const bindingsDir = getAbsoluteBindingsDir(parsersDir, parserName);
     if (!existsSync(bindingsDir)) {
         const msg = `Expected parser directory doesn't exist: ${bindingsDir}`;
-        logger.appendLine(msg);
+        logger.log(msg);
         return err(msg);
     } else {
         await parserFinishedInit;
         try {
-            logger.appendLine(`Loading parser from ${bindingsDir}`);
+            logger.log(`Loading parser from ${bindingsDir}`);
 
             // using dynamic import causes issues on windows
             // make sure to test well on windows before changing this
@@ -47,19 +47,19 @@ export async function loadParser(
             // eslint-disable-next-line @typescript-eslint/no-var-requires
             let language = require(bindingsDir) as Language;
 
-            logger.appendLine(`Got language: ${JSON.stringify(Object.keys(language))}`);
+            logger.log(`Got language: ${JSON.stringify(Object.keys(language))}`);
 
             if (subdirectory !== undefined) {
-                logger.appendLine(`Loading subdirectory: ${subdirectory}`);
+                logger.log(`Loading subdirectory: ${subdirectory}`);
                 // @ts-expect-error we know this is a language
                 language = language[subdirectory] as Language;
 
-                logger.appendLine(`Got subdirectory language: ${JSON.stringify(Object.keys(language))}`);
+                logger.log(`Got subdirectory language: ${JSON.stringify(Object.keys(language))}`);
             }
 
             return ok(language);
         } catch (error) {
-            logger.appendLine(`Failed to load ${bindingsDir} > ${JSON.stringify(error)}`);
+            logger.log(`Failed to load ${bindingsDir} > ${JSON.stringify(error)}`);
             return err(`Failed to load ${bindingsDir} > ${JSON.stringify(error)}`);
         }
     }
@@ -79,11 +79,11 @@ export async function downloadAndBuildParser(
     const npmCommandOk = (await which(npm, { nothrow: true })) !== null;
     if (!npmCommandOk) {
         const msg = `npm command: '${npm}' is not in PATH, try installing it from: ${NPM_INSTALL_URL}`;
-        logger.appendLine(msg);
+        logger.log(msg);
         return err(msg);
     }
 
-    logger.appendLine(`Installing parser ${parserNpmPackage} to ${parsersDir}`);
+    logger.log(`Installing parser ${parserNpmPackage} to ${parsersDir}`);
 
     const parserDir = getAbsoluteParserDir(parsersDir, parserName);
     await mkdir(parserDir, { recursive: true });
@@ -97,14 +97,14 @@ export async function downloadAndBuildParser(
     let tarFilename: string | undefined = undefined;
     switch (installResult.status) {
         case "err":
-            logger.appendLine(`Failed to install > ${JSON.stringify(installResult.result)}`);
+            logger.log(`Failed to install > ${JSON.stringify(installResult.result)}`);
             return err(`Failed to install > ${JSON.stringify(installResult.result)}`);
 
         case "ok":
             tarFilename = (JSON.parse(installResult.result) as { filename: string }[])[0].filename;
     }
 
-    logger.appendLine(`Download success. Extracting ${tarFilename} to ${parserDir}`);
+    logger.log(`Download success. Extracting ${tarFilename} to ${parserDir}`);
 
     try {
         await tar.extract({
@@ -124,7 +124,7 @@ export async function downloadAndBuildParser(
         return ok(undefined);
     }
 
-    logger.appendLine(`Optimistic load failed, trying to build parser ${parserName}`);
+    logger.log(`Optimistic load failed, trying to build parser ${parserName}`);
     const treeSitterCliOk = await runCmd(`${treeSitterCli} --version`);
     if (treeSitterCliOk.status === "err") {
         const msg =
@@ -133,7 +133,7 @@ export async function downloadAndBuildParser(
             ${treeSitterCliOk.result[0].name} ${treeSitterCliOk.result[0].message.replace(/\n/g, " > ")}.` +
             (treeSitterCliOk.result[1].length > 1 ? ` Logs: ${treeSitterCliOk.result[1].join(">")}` : "");
 
-        logger.appendLine(msg);
+        logger.log(msg);
         return err(msg);
     }
 
@@ -147,11 +147,11 @@ export async function downloadAndBuildParser(
             buildResult.result[0].message.replace(/\n/g, " > ") +
             (buildResult.result[1].length > 1 ? ` Logs: ${buildResult.result[1].join(">")}` : "");
 
-        logger.appendLine(msg);
+        logger.log(msg);
         return err(msg);
     }
 
-    logger.appendLine(`Built parser ${parserName} successfully`);
+    logger.log(`Built parser ${parserName} successfully`);
 
     return ok(undefined);
 }
@@ -162,7 +162,7 @@ async function runCmd(
     onData?: (data: string) => void
 ): Promise<Result<string, [ExecException, string[]]>> {
     const logger = getLogger();
-    logger.appendLine(`Running command: ${cmd}`);
+    logger.log(`Running command: ${cmd}`);
 
     const logs: string[] = [];
     return await new Promise((resolve) => {
@@ -192,7 +192,7 @@ export async function getLanguage(
 
     const ignoredLanguageIds = configuration.getIgnoredLanguageIds();
     if (ignoredLanguageIds.includes(languageId)) {
-        logger.appendLine(`Language ${languageId} is ignored`);
+        logger.log(`Language ${languageId} is ignored`);
         return ok(undefined);
     }
 
@@ -225,22 +225,20 @@ export async function getLanguage(
                     )} file.`
                 );
 
-                logger.appendLine(`Language ${languageId} added to the ignore list`);
+                logger.log(`Language ${languageId} added to the ignore list`);
                 return ok(undefined);
             } else {
                 void vscode.window.showInformationMessage(
                     `Failed to add language '${languageId}' to the ignore list > ${result.result}`
                 );
 
-                logger.appendLine(
-                    `Failed to add language ${languageId} to the ignore list > ${result.result}`
-                );
+                logger.log(`Failed to add language ${languageId} to the ignore list > ${result.result}`);
                 return ok(undefined);
             }
         }
 
         if (doInstall !== "Yes") {
-            logger.appendLine(`Not installing language ${languageId}, user refused`);
+            logger.log(`Not installing language ${languageId}, user refused`);
             return ok(undefined);
         }
 
@@ -266,7 +264,7 @@ export async function getLanguage(
         if (downloadResult.status === "err") {
             const msg = `Failed to download/build parser for language ${languageId} > ${downloadResult.result}`;
 
-            logger.appendLine(msg);
+            logger.log(msg);
             return err(msg);
         }
     }
@@ -275,10 +273,10 @@ export async function getLanguage(
     if (loadResult.status === "err") {
         const msg = `Failed to load parser for language ${languageId} > ${loadResult.result}`;
 
-        logger.appendLine(msg);
+        logger.log(msg);
         return err(msg);
     }
 
-    logger.appendLine(`Successfully loaded parser for language ${languageId}`);
+    logger.log(`Successfully loaded parser for language ${languageId}`);
     return ok(loadResult.result);
 }

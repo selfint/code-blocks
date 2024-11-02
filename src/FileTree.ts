@@ -80,7 +80,7 @@ export class FileTree implements vscode.Disposable {
         const parser = new Parser();
         const logger = getLogger();
         try {
-            logger.appendLine(
+            logger.log(
                 `Setting language for parser, language !== undefined = ${JSON.stringify(
                     // sanity check
                     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -89,7 +89,7 @@ export class FileTree implements vscode.Disposable {
             );
             parser.setLanguage(language);
         } catch (error) {
-            logger.appendLine(`Error setting language for parser: ${JSON.stringify(error)}`);
+            logger.log(`Error setting language for parser: ${JSON.stringify(error)}`);
             return err(error);
         }
 
