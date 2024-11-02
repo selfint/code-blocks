@@ -95,19 +95,3 @@ jobs:
               with:
                   name: code-blocks-${{ env.BRANCH }}.vsix
                   path: code-blocks-*.vsix
-
-    comment:
-        name: Post download link in PR
-        needs: [package, test]
-        runs-on: ubuntu-latest
-        steps:
-            - name: Comment on PR with download link
-              if: ${{ github.event_name == 'pull_request' }}
-              uses: peter-evans/create-or-update-comment@v4
-              with:
-                  token: ${{ secrets.GITHUB_TOKEN }}
-                  issue-number: ${{ github.event.pull_request.number }}
-                  body: |
-                      🎉 The latest build is ready for download!
-
-                      You can download the VSIX package for this pull request [here](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifact).
