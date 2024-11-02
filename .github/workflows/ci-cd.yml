@@ -37,6 +37,9 @@ jobs:
                   timeout_minutes: 1
                   max_attempts: 5
                   command: yarn run build:webview
+            - name: Install tree-sitter cli on Windows
+              if: matrix.os == 'windows-latest'
+              run: npm install -g tree-sitter-cli
             - name: Run tests
               uses: coactions/setup-xvfb@v1
               with:
