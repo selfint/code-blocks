@@ -89,7 +89,7 @@ jobs:
             - name: Build webview
               run: yarn run build:webview
             - name: Package extension
-              run: npx @vscode/vsce package --yarn --githubBranch ${{ github.ref_name }}
+              run: npx @vscode/vsce package --yarn --githubBranch ${{ env.BRANCH }}
             - name: Upload extension
               uses: actions/upload-artifact@v4
               with:
