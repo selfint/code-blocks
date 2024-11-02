@@ -93,7 +93,7 @@ jobs:
             - name: Upload extension
               uses: actions/upload-artifact@v4
               with:
-                  name: code-blocks-${{ github.ref_name }}.vsix
+                  name: code-blocks-${{ env.BRANCH }}.vsix
                   path: code-blocks-*.vsix
 
     comment:
