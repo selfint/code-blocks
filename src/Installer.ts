@@ -83,24 +83,7 @@ export async function downloadAndBuildParser(
         return err(msg);
     }
 
-    const treeSitterCliOk = await runCmd(`${treeSitterCli} --version`);
-    if (treeSitterCliOk.status === "err") {
-        const msg =
-            `
-            tree-sitter cli command '${treeSitterCli}' failed:
-            ${treeSitterCliOk.result[0].name} ${treeSitterCliOk.result[0].message.replace(/\n/g, " > ")}.` +
-            (treeSitterCliOk.result[1].length > 1 ? ` Logs: ${treeSitterCliOk.result[1].join(">")}` : "");
-
-        logger.appendLine(msg);
-        return err(msg);
-    }
-
-    logger.appendLine(
-        `Installing parser ${parserNpmPackage} to ${parsersDir}, ${JSON.stringify({
-            npmCommandOk,
-            treeSitterCliOk,
-        })}`
-    );
+    logger.appendLine(`Installing parser ${parserNpmPackage} to ${parsersDir}`);
 
     const parserDir = getAbsoluteParserDir(parsersDir, parserName);
     await mkdir(parserDir, { recursive: true });
@@ -142,6 +125,17 @@ export async function downloadAndBuildParser(
     }
 
     logger.appendLine(`Optimistic load failed, trying to build parser ${parserName}`);
+    const treeSitterCliOk = await runCmd(`${treeSitterCli} --version`);
+    if (treeSitterCliOk.status === "err") {
+        const msg =
+            `Parser ${parserName} requires local build, but
+            tree-sitter cli command '${treeSitterCli}' failed:
+            ${treeSitterCliOk.result[0].name} ${treeSitterCliOk.result[0].message.replace(/\n/g, " > ")}.` +
+            (treeSitterCliOk.result[1].length > 1 ? ` Logs: ${treeSitterCliOk.result[1].join(">")}` : "");
+
+        logger.appendLine(msg);
+        return err(msg);
+    }
 
     // if it fails, try to build it
     const buildResult = await runCmd(`${treeSitterCli} generate`, { cwd: parserDir }, onData);
