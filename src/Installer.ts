@@ -69,9 +69,9 @@ export async function downloadAndBuildParser(
     parsersDir: string,
     parserNpmPackage: string,
     parserName: string,
-    onData?: (data: string) => void,
-    npm = "npm",
-    treeSitterCli = "tree-sitter-cli"
+    npm: string,
+    treeSitterCli: string,
+    onData?: (data: string) => void
 ): Promise<Result<void, string>> {
     const logger = getLogger();
 
@@ -254,9 +254,9 @@ export async function getLanguage(
                     parsersDir,
                     npmPackageName,
                     parserName,
-                    (data) => progress.report({ message: data, increment: number++ }),
                     npm,
-                    treeSitterCli
+                    treeSitterCli,
+                    (data) => progress.report({ message: data, increment: number++ })
                 );
             }
         );
