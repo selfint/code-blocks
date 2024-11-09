@@ -60,7 +60,7 @@ suite("BlockTrees", function () {
             return void vscode.window.showInformationMessage("Start blockTrees.getBlockTrees tests");
         });
 
-        test.only("resolves html blocks", async function () {
+        test("resolves html blocks", async function () {
             const text = "<parent>\n  <child1></child1>\n  <child2></child2>\n</parent>";
             const { fileTree } = await openDocument(text, "html");
             const lang = fileTree.parser.getLanguage() as Language;
