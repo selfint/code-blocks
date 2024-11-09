@@ -99,6 +99,15 @@ export class Selection {
     public getPrevious(blocks: Block[] | undefined): Selection | undefined {
         const previousNode = this.selectedSiblings[0].previousNamedSibling;
         if (previousNode) {
+            // if previousNode starts with parent, ignore it
+            // since previous sibling assumes the same parent
+            // without this check, swapping with the previous sibling
+            // would move us out of the parent
+            // TODO: should this logic be moved only to "move" operations?
+            if (previousNode.parent?.startIndex === previousNode.startIndex) {
+                return undefined;
+            }
+
             return new Selection([previousNode], this.version).expandToBlock(blocks);
         } else {
             return undefined;
@@ -108,6 +117,15 @@ export class Selection {
     public getNext(blocks: Block[] | undefined): Selection | undefined {
         const nextNode = this.selectedSiblings.at(-1)?.nextNamedSibling;
         if (nextNode) {
+            // if nextNode ends with parent, ignore it
+            // since next sibling assumes the same parent
+            // without this check, swapping with the next sibling
+            // would move us out of the parent
+            // TODO: should this logic be moved only to "move" operations?
+            if (nextNode.parent?.endIndex === nextNode.endIndex) {
+                return undefined;
+            }
+
             return new Selection([nextNode], this.version).expandToBlock(blocks);
         } else {
             return undefined;

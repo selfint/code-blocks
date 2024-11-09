@@ -30,6 +30,26 @@ suite("Selection", function () {
         return selectionText;
     }
 
+    suite(".getPrevious", function () {
+        test("Ignores previous nodes that start with parent", async () => {
+            const text = "<parent><child>@1</child><child>2</child></parent>";
+
+            expect(await selectionAt("html", text)).to.equal("1");
+            expect(await selectionAt("html", text, ["parent"])).to.equal("<child>1</child>");
+            expect(await selectionAt("html", text, ["parent", "add-previous"])).to.equal("<child>1</child>");
+        });
+    });
+
+    suite(".getNext", function () {
+        test("Ignores next nodes that start with parent", async () => {
+            const text = "<parent><child>1</child><child>@2</child></parent>";
+
+            expect(await selectionAt("html", text)).to.equal("2");
+            expect(await selectionAt("html", text, ["parent"])).to.equal("<child>2</child>");
+            expect(await selectionAt("html", text, ["parent", "add-next"])).to.equal("<child>2</child>");
+        });
+    });
+
     suite(".update", function () {
         test("Select source_file node is undefined", async () => {
             expect(await selectionAt("rust", "fn main() { }@")).to.be.undefined;
