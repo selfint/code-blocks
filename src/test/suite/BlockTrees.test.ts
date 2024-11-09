@@ -60,6 +60,30 @@ suite("BlockTrees", function () {
             return void vscode.window.showInformationMessage("Start blockTrees.getBlockTrees tests");
         });
 
+        test.only("resolves html blocks", async function () {
+            const text = "<parent>\n  <child1></child1>\n  <child2></child2>\n</parent>";
+            const { fileTree } = await openDocument(text, "html");
+            const lang = fileTree.parser.getLanguage() as Language;
+            const queries = [new Query(lang, "(element) @item")];
+            const blocksTrees = getBlockTrees(fileTree.tree, queries);
+
+            expect("\n" + blockTreesToString(text, blocksTrees)).to.equal(`
++------------------------+
+| <parent>               |
+|                        |
+|  +-------------------+ |
+|  | <child1></child1> | |
+|  |                   | |
+|  +-------------------+ |
+|  +-------------------+ |
+|  | <child2></child2> | |
+|  +-------------------+ |
+|                        |
+| </parent>              |
++------------------------+
+`);
+        });
+
         test("resolves sequential blocks", async function () {
             const text = "fn foo() {}\nfn bar() {}";
             const { fileTree } = await openDocument(text, "rust");
