@@ -8,7 +8,6 @@ import Parser from "tree-sitter";
 import { existsSync } from "fs";
 import { getLogger } from "./outputChannel";
 import { mkdir } from "fs/promises";
-import { parserFinishedInit } from "./extension";
 import which from "which";
 
 const NPM_INSTALL_URL = "https://nodejs.org/en/download";
@@ -36,7 +35,6 @@ export async function loadParser(
         logger.log(msg);
         return err(msg);
     } else {
-        await parserFinishedInit;
         try {
             logger.log(`Loading parser from ${bindingsDir}`);
 
@@ -204,8 +202,6 @@ export async function getLanguage(
 
     const npm = "npm";
     const treeSitterCli = configuration.getTreeSitterCliPath();
-
-    await parserFinishedInit;
 
     if (!existsSync(parserPackagePath)) {
         const doInstall = autoInstall

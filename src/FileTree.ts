@@ -8,7 +8,6 @@ import { Language } from "./Installer";
 import { Selection } from "./Selection";
 import { getLanguageConfig } from "./configuration";
 import { getLogger } from "./outputChannel";
-import { parserFinishedInit } from "./extension";
 
 function positionToPoint(pos: vscode.Position): Parser.Point {
     return {
@@ -76,7 +75,6 @@ export class FileTree implements vscode.Disposable {
         language: Language,
         document: vscode.TextDocument
     ): Promise<Result<FileTree, unknown>> {
-        await parserFinishedInit;
         const parser = new Parser();
         const logger = getLogger();
         try {

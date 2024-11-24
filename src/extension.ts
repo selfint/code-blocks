@@ -8,8 +8,6 @@ import { getLogger } from "./outputChannel";
 import { join } from "path";
 import { state } from "./state";
 
-export const parserFinishedInit = Promise.resolve();
-
 async function reopenWithCodeBocksEditor(): Promise<void> {
     const activeTabInput = vscode.window.tabGroups.activeTabGroup.activeTab?.input as {
         [key: string]: unknown;
