@@ -67,7 +67,7 @@ export async function downloadAndBuildParser(
             `
             tree-sitter cli command '${treeSitterCli}' failed:
             ${treeSitterCliOk.result[0].name} ${treeSitterCliOk.result[0].message.replace("\n", " > ")}.` +
-                (treeSitterCliOk.result[1].length > 1 ? ` Logs: ${treeSitterCliOk.result[1].join(">")}` : "")
+            (treeSitterCliOk.result[1].length > 1 ? ` Logs: ${treeSitterCliOk.result[1].join(">")}` : "")
         );
     }
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -117,7 +117,7 @@ export async function downloadAndBuildParser(
         return err(`failed to extract ${tarFilename} to ${parserDir} > ${JSON.stringify(e)}`);
     }
 
-    const buildCmd = `${treeSitterCli} build-wasm ${subdirectory ?? ""}`;
+    const buildCmd = `${treeSitterCli} build--wasm ${subdirectory ?? ""}`;
     onData?.(`Building parser: ${buildCmd}`);
 
     const buildResult = await runCmd(buildCmd, { cwd: parserDir }, onData);
