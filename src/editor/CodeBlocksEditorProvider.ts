@@ -32,16 +32,24 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
         let language = await Installer.getLanguage(this.extensionParsersDirPath, languageId);
 
         while (language.status !== "ok") {
+            const items =
+                language.result.cause === "loadFailed"
+                    ? (["Remove", "Ok"] as const)
+                    : (["Retry", "Ok"] as const);
+
             const choice = await vscode.window.showErrorMessage(
-                `Parser installation failed: ${language.result}`,
-                "Retry",
-                "Ok"
+                `Parser installation failed: ${JSON.stringify(language.result)}`,
+                ...items
             );
-            if (choice !== "Retry") {
+
+            if (choice === "Remove") {
+                Installer.removeLanguage(this.extensionParsersDirPath, languageId);
+                return;
+            } else if (choice === "Retry") {
+                language = await Installer.getLanguage(this.extensionParsersDirPath, languageId);
+            } else {
                 return;
             }
-
-            language = await Installer.getLanguage(this.extensionParsersDirPath, languageId);
         }
 
         if (language.result === undefined) {
@@ -54,9 +62,8 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
         }
         const fileTreeResult = await FileTree.new(language.result, document);
         if (fileTreeResult.status === "err") {
-            await vscode.window.showErrorMessage(
-                `Failed to load parser for ${languageId}: ${JSON.stringify(fileTreeResult.result)}`
-            );
+            const msg = JSON.stringify(fileTreeResult.result);
+            await Installer.askRemoveLanguage(this.extensionParsersDirPath, languageId, msg);
             return;
         }
 

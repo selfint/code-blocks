@@ -1,9 +1,10 @@
 import * as BlockMode from "./BlockMode";
+import * as configuration from "./configuration";
 import * as vscode from "vscode";
+import * as Installer from "./Installer";
 import { CodeBlocksEditorProvider } from "./editor/CodeBlocksEditorProvider";
 import { FileTree } from "./FileTree";
 import { TreeViewer } from "./TreeViewer";
-import { getLanguage } from "./Installer";
 import { getLogger } from "./outputChannel";
 import { join } from "path";
 import { state } from "./state";
@@ -43,15 +44,39 @@ async function getEditorFileTree(
     }
 
     const activeDocument = editor.document;
-    const language = await getLanguage(parsersDir, activeDocument.languageId);
-    if (language.status === "err" || language.result === undefined) {
-        if (language.status === "err") {
-            void vscode.window.showErrorMessage(`Failed to get language: ${language.result}`);
-        } else {
-            logger.log(`No language found for ${activeDocument.languageId}`);
+    const languageId = activeDocument.languageId;
+    const language = await Installer.getLanguage(parsersDir, languageId);
+
+    // sup-optimal conditional to make tsc happy
+    // tl;dr this is handling logic for 'language not received' scenarios
+    if (language.result === undefined || language.status === "err") {
+        if (language.status === "ok") {
+            logger.log(`No language found for ${languageId}`);
+            return undefined;
         }
 
-        return undefined;
+        switch (language.result.cause) {
+            case "downloadFailed": {
+                const doIgnore = await vscode.window.showErrorMessage(
+                    `Failed to download language: ${language.result.msg}`,
+                    "Add to ignore",
+                    "Ok"
+                );
+
+                if (doIgnore === "Add to ignore") {
+                    // fail silently if we can't add to ignore list
+                    // we don't want to have two consecutive error messages
+                    await configuration.addIgnoredLanguageId(languageId);
+                }
+
+                return undefined;
+            }
+
+            case "loadFailed": {
+                await Installer.askRemoveLanguage(parsersDir, languageId, language.result.msg);
+                return undefined;
+            }
+        }
     }
 
     const tree = await FileTree.new(language.result, activeDocument);
@@ -59,9 +84,7 @@ async function getEditorFileTree(
         return tree.result;
     }
 
-    void vscode.window.showErrorMessage(
-        `Failed to load parser for ${activeDocument.languageId}: ${JSON.stringify(tree.result)}`
-    );
+    await Installer.askRemoveLanguage(parsersDir, languageId, JSON.stringify(tree.result));
 
     return undefined;
 }

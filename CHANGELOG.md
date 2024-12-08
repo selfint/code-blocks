@@ -32,6 +32,10 @@ This means faster parsing, faster language installation, and no need for
 - Support for `node` v16, it might still work, but the extension now
   requires `node` v18+.
 
+## Fixed
+
+- If local parser installation is corrupt, add 'Remove' option to notification.
+
 # 0.6.1
 
 ## Added
