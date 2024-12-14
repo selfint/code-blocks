@@ -1,5 +1,11 @@
 # Changelog
 
+# 0.6.2
+
+## Fixed
+
+- Fixed tree-sitter build command from `build-wasm` to `build --wasm`.
+
 # 0.6.1
 
 ## Added
