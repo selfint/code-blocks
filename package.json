@@ -265,7 +265,8 @@
         "codeBlocks.npmPackageName": "@tree-sitter-grammars/tree-sitter-yaml"
       },
       "[xml]": {
-        "codeBlocks.npmPackageName": "@tree-sitter-grammars/tree-sitter-xml"
+        "codeBlocks.npmPackageName": "@tree-sitter-grammars/tree-sitter-xml",
+        "codeBlocks.subdirectory": "xml"
       },
       "[markdown]": {
         "codeBlocks.npmPackageName": "@tree-sitter-grammars/tree-sitter-markdown"
