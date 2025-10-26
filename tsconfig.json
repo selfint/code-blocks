@@ -19,6 +19,7 @@
   "exclude": [
     "node_modules",
     "node_modules_bun",
+    "node_modules_yarn",
     "parsers",
     "test-parsers",
     "webview-ui"
