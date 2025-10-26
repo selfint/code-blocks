@@ -886,7 +886,7 @@ __metadata:
     glob: "npm:^8.1.0"
     mocha: "npm:^10.2.0"
     tar: "npm:^6.1.15"
-    tree-sitter: "npm:^0.22.0"
+    tree-sitter: "npm:^0.25.0"
     typescript: "npm:^5.1.6"
     which: "npm:^3.0.1"
   languageName: unknown
@@ -2148,23 +2148,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-addon-api@npm:^8.2.1":
-  version: 8.2.1
-  resolution: "node-addon-api@npm:8.2.1"
+"node-addon-api@npm:^8.3.0":
+  version: 8.5.0
+  resolution: "node-addon-api@npm:8.5.0"
   dependencies:
     node-gyp: "npm:latest"
-  checksum: 10c0/b722d8fc10d1d230a714fe6b9642fa3773f39ade44c6c8515aa9711d07009c278f09ecc2b636a8e5190d4b44e0c29eee59fbfa596745b748ef28e8758679bd24
+  checksum: 10c0/e4de0b4e70998fed7ef41933946f60565fc3a17cb83b7d626a0c0bb1f734cf7852e0e596f12681e7c8ed424163ee3cdbb4f0abaa9cc269d03f48834c263ba162
   languageName: node
   linkType: hard
 
-"node-gyp-build@npm:^4.8.2":
-  version: 4.8.2
-  resolution: "node-gyp-build@npm:4.8.2"
+"node-gyp-build@npm:^4.8.4":
+  version: 4.8.4
+  resolution: "node-gyp-build@npm:4.8.4"
   bin:
     node-gyp-build: bin.js
     node-gyp-build-optional: optional.js
     node-gyp-build-test: build-test.js
-  checksum: 10c0/d816b43974d31d6257b6e87d843f2626c72389a285208394bc57a7766b210454d2642860a5e5b5c333d8ecabaeabad3b31b94f58cf8ca1aabdef0c320d02baaa
+  checksum: 10c0/444e189907ece2081fe60e75368784f7782cfddb554b60123743dfb89509df89f1f29c03bbfa16b3a3e0be3f48799a4783f487da6203245fa5bed239ba7407e1
   languageName: node
   linkType: hard
 
@@ -2794,14 +2794,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tree-sitter@npm:^0.22.0":
-  version: 0.22.0
-  resolution: "tree-sitter@npm:0.22.0"
+"tree-sitter@npm:^0.25.0":
+  version: 0.25.0
+  resolution: "tree-sitter@npm:0.25.0"
   dependencies:
-    node-addon-api: "npm:^8.2.1"
+    node-addon-api: "npm:^8.3.0"
     node-gyp: "npm:latest"
-    node-gyp-build: "npm:^4.8.2"
-  checksum: 10c0/465a063edaf9375ab99852b0ba406d58e4d25223281e4bf2af617fb028c418466d685a7395ad32f76ec69f2e182c30b0af6b617466107afbbc94bf200826fdbf
+    node-gyp-build: "npm:^4.8.4"
+  checksum: 10c0/ba994a4be081863e29f90e25658a8b63870193555245edbd3366cc5a4a2400492eea1e41dffaac961648f137274efb3ddb16f05c2896ce049749f0397e0319f4
   languageName: node
   linkType: hard
 

@@ -121,6 +121,26 @@
       {
         "command": "codeBlocks.toggleBlockModeColors",
         "title": "Code Blocks: Toggle block mode colors"
+      },
+      {
+        "command": "codeBlocks.selectInside",
+        "title": "Code Blocks: Select content inside surrounding pair"
+      },
+      {
+        "command": "codeBlocks.selectSurroundingPair",
+        "title": "Code Blocks: Select surrounding pair delimiters"
+      },
+      {
+        "command": "codeBlocks.handleEscape",
+        "title": "Code Blocks: (internal) Handle Escape in pair edit mode"
+      },
+      {
+        "command": "codeBlocks.pairEdit.deleteLeft",
+        "title": "Code Blocks: (internal) Pair edit delete left"
+      },
+      {
+        "command": "codeBlocks.pairEdit.deleteRight",
+        "title": "Code Blocks: (internal) Pair edit delete right"
       }
     ],
     "keybindings": [
@@ -181,6 +201,33 @@
         "key": "shift+down",
         "mac": "shift+down",
         "when": "editorTextFocus && codeBlocks.blockMode"
+      },
+      {
+        "command": "codeBlocks.selectInside",
+        "key": "ctrl+alt+i",
+        "mac": "cmd+alt+i",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "codeBlocks.selectSurroundingPair",
+        "key": "ctrl+alt+'",
+        "mac": "cmd+alt+'",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "codeBlocks.handleEscape",
+        "key": "escape",
+        "when": "editorTextFocus && codeBlocks.awaitingPairEdit"
+      },
+      {
+        "command": "codeBlocks.pairEdit.deleteLeft",
+        "key": "backspace",
+        "when": "editorTextFocus && codeBlocks.awaitingPairEdit"
+      },
+      {
+        "command": "codeBlocks.pairEdit.deleteRight",
+        "key": "delete",
+        "when": "editorTextFocus && codeBlocks.awaitingPairEdit"
       }
     ],
     "configuration": {
@@ -271,7 +318,7 @@
         "codeBlocks.npmPackageName": "@tree-sitter-grammars/tree-sitter-markdown"
       },
       "[shellscript]": {
-        "codeBlocks.npmPackageName": "tree-sitter-bash",
+        "codeBlocks.npmPackageName": "@tree-sitter-grammars/tree-sitter-bash",
         "codeBlocks.parserName": "tree-sitter-bash"
       },
       "[rust]": {
@@ -344,6 +391,15 @@
       "[csharp]": {
         "codeBlocks.npmPackageName": "tree-sitter-c-sharp",
         "codeBlocks.parserName": "tree-sitter-c_sharp"
+      },
+      "[javascript]": {
+        "codeBlocks.npmPackageName": "tree-sitter-javascript"
+      },
+      "[c]": {
+        "codeBlocks.npmPackageName": "tree-sitter-c"
+      },
+      "[go]": {
+        "codeBlocks.npmPackageName": "tree-sitter-go"
       }
     }
   },
@@ -381,7 +437,7 @@
   },
   "dependencies": {
     "tar": "^6.1.15",
-    "tree-sitter": "^0.22.0",
+    "tree-sitter": "^0.25.0",
     "which": "^3.0.1"
   }
 }
