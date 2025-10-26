@@ -45,6 +45,7 @@ build/Release
 # Dependency directories
 node_modules/
 node_modules_bun/
+node_modules_yarn/
 jspm_packages/
 
 # Snowpack dependency directory (https://snowpack.dev/)
@@ -171,4 +172,5 @@ package
 parsers/
 test-parsers/
 *.vsix
-.DS_Store
+**/.DS_Store
+swap_packages.sh
