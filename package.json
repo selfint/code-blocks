@@ -353,7 +353,7 @@
     }
   },
   "scripts": {
-    "install:all": "yarn install && cd webview-ui && yarn install",
+    "install:all": "yarn install --frozen-lockfile && cd webview-ui && yarn install --frozen-lockfile",
     "start:webview": "cd webview-ui && yarn run dev",
     "build:webview": "cd webview-ui && yarn run build && yarn run check",
     "vscode:prepublish": "yarn run esbuild-base --minify",
