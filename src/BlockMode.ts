@@ -37,69 +37,100 @@ function resetDecorations(): void {
 
 function selectBlock(): void {
     const fileTree = codeBlocks.activeFileTree.get();
-    const editor = vscode.window.activeTextEditor;
+    const activeEditor = vscode.window.activeTextEditor;
 
-    if (!editor || !fileTree) return;
+    if (activeEditor?.document === undefined || fileTree === undefined) {
+        return;
+    }
 
-    const bases = editor.selections.length ? editor.selections : [editor.selection];
+    const bases = activeEditor.selections.length ? activeEditor.selections : [activeEditor.selection];
     const nextSelections = bases
         .map((s) => {
-            const idx = editor.document.offsetAt(s.active);
+            const idx = activeEditor.document.offsetAt(s.active);
             const sel = fileTree.selectBlock(idx);
             return sel?.toVscodeSelection();
         })
         .filter((s): s is vscode.Selection => !!s);
 
-    if (nextSelections.length === 0) return;
+    if (nextSelections.length === 0) {
+        return;
+    }
 
     const merged = mergeSelections(nextSelections);
-    if (merged.length === 1) editor.selection = merged[0];
-    else editor.selections = merged;
-    editor.revealRange(merged[0] ?? editor.selection, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
+    if (merged.length === 1) {
+        activeEditor.selection = merged[0];
+    } else {
+        activeEditor.selections = merged;
+    }
+
+    activeEditor.revealRange(
+        merged[0] ?? activeEditor.selection,
+        vscode.TextEditorRevealType.InCenterIfOutsideViewport
+    );
 }
 
 function updateSelection(direction: UpdateSelectionDirection): void {
     const fileTree = codeBlocks.activeFileTree.get();
-    const editor = vscode.window.activeTextEditor;
+    const activeEditor = vscode.window.activeTextEditor;
 
-    if (!editor || !fileTree) return;
+    if (activeEditor?.document === undefined || fileTree === undefined) {
+        return;
+    }
 
-    const bases = editor.selections.length ? editor.selections : [editor.selection];
+    const bases = activeEditor.selections.length ? activeEditor.selections : [activeEditor.selection];
     const updatedSelections: vscode.Selection[] = [];
 
     for (const base of bases) {
-        const sel = fileTree.resolveVscodeSelection(base);
-        if (!sel) continue;
-        sel.update(direction, fileTree.blocks);
-        updatedSelections.push(sel.toVscodeSelection());
+        const selection = fileTree.resolveVscodeSelection(base);
+        if (selection === undefined) {
+            continue;
+        }
+
+        selection.update(direction, fileTree.blocks);
+        updatedSelections.push(selection.toVscodeSelection());
     }
 
-    if (updatedSelections.length === 0) return;
+    if (updatedSelections.length === 0) {
+        return;
+    }
 
     const merged = mergeSelections(updatedSelections);
-    if (merged.length === 1) editor.selection = merged[0];
-    else editor.selections = merged;
-    editor.revealRange(merged[0] ?? editor.selection, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
+    if (merged.length === 1) {
+        activeEditor.selection = merged[0];
+    } else {
+        activeEditor.selections = merged;
+    }
+
+    activeEditor.revealRange(
+        merged[0] ?? activeEditor.selection,
+        vscode.TextEditorRevealType.InCenterIfOutsideViewport
+    );
 }
 
 async function moveSelection(direction: MoveSelectionDirection): Promise<void> {
     const fileTree = codeBlocks.activeFileTree.get();
-    const editor = vscode.window.activeTextEditor;
-    if (!fileTree || !editor) return;
+    const activeEditor = vscode.window.activeTextEditor;
+    if (fileTree === undefined || activeEditor === undefined) {
+        return;
+    }
 
-    const bases = editor.selections.length ? editor.selections : [editor.selection];
+    const bases = activeEditor.selections.length ? activeEditor.selections : [activeEditor.selection];
 
     // Single-selection: preserve existing UX
     if (bases.length === 1) {
-        const sel = fileTree.resolveVscodeSelection(bases[0]);
-        if (!sel) return;
-        const result = await fileTree.moveSelection(sel, direction);
+        const selection = fileTree.resolveVscodeSelection(bases[0]);
+        if (selection === undefined) {
+            return;
+        }
+
+        const result = await fileTree.moveSelection(selection, direction);
         if (result.status === "ok") {
-            editor.selection = result.result;
-            editor.revealRange(result.result, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
+            activeEditor.selection = result.result;
+            activeEditor.revealRange(result.result, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
         } else {
             getLogger().log(result.result);
         }
+
         return;
     }
 
@@ -115,9 +146,12 @@ async function moveSelection(direction: MoveSelectionDirection): Promise<void> {
     const results: (vscode.Selection | undefined)[] = bases.slice();
     for (const i of order) {
         const current = results[i] ?? bases[i];
-        const sel = fileTree.resolveVscodeSelection(current);
-        if (!sel) continue;
-        const res = await fileTree.moveSelection(sel, direction);
+        const selection = fileTree.resolveVscodeSelection(current);
+        if (selection === undefined) {
+            continue;
+        }
+
+        const res = await fileTree.moveSelection(selection, direction);
         if (res.status === "ok") {
             results[i] = res.result;
         } else {
@@ -127,24 +161,29 @@ async function moveSelection(direction: MoveSelectionDirection): Promise<void> {
 
     const finalSelections = results.filter((s): s is vscode.Selection => !!s);
     if (finalSelections.length) {
-        editor.selections = finalSelections;
-        editor.revealRange(finalSelections[0], vscode.TextEditorRevealType.InCenterIfOutsideViewport);
+        activeEditor.selections = finalSelections;
+        activeEditor.revealRange(finalSelections[0], vscode.TextEditorRevealType.InCenterIfOutsideViewport);
     }
 }
 
 function navigate(direction: "up" | "down" | "left" | "right"): void {
     const fileTree = codeBlocks.activeFileTree.get();
-    const editor = vscode.window.activeTextEditor;
+    const activeEditor = vscode.window.activeTextEditor;
 
-    if (!editor || !fileTree) return;
+    if (activeEditor?.document === undefined || fileTree === undefined) {
+        return;
+    }
 
-    const bases = editor.selections.length ? editor.selections : [editor.selection];
+    const bases = activeEditor.selections.length ? activeEditor.selections : [activeEditor.selection];
     const blocks = fileTree.blocks;
     const nextCursors: vscode.Selection[] = [];
 
     for (const base of bases) {
         const selection = fileTree.resolveVscodeSelection(base);
-        if (!selection) continue;
+        if (selection === undefined) {
+            continue;
+        }
+
         const parent = selection.getParent(blocks);
         const previous = selection.getPrevious(blocks);
         const next = selection.getNext(blocks);
@@ -152,16 +191,24 @@ function navigate(direction: "up" | "down" | "left" | "right"): void {
         let newPosition: vscode.Position | undefined;
         switch (direction) {
             case "up":
-                if (parent) newPosition = parent.toVscodeSelection().start;
+                if (parent) {
+                    newPosition = parent.toVscodeSelection().start;
+                }
                 break;
             case "down":
-                if (parent) newPosition = parent.toVscodeSelection().end;
+                if (parent) {
+                    newPosition = parent.toVscodeSelection().end;
+                }
                 break;
             case "left":
-                if (previous) newPosition = previous.toVscodeSelection().start;
+                if (previous) {
+                    newPosition = previous.toVscodeSelection().start;
+                }
                 break;
             case "right":
-                if (next) newPosition = next.toVscodeSelection().start;
+                if (next) {
+                    newPosition = next.toVscodeSelection().start;
+                }
                 break;
         }
 
@@ -170,29 +217,44 @@ function navigate(direction: "up" | "down" | "left" | "right"): void {
         }
     }
 
-    if (nextCursors.length === 0) return;
+    if (nextCursors.length === 0) {
+        return;
+    }
+
     const deduped = dedupeSelections(nextCursors);
-    editor.selections = deduped;
-    editor.revealRange(deduped[0], vscode.TextEditorRevealType.InCenterIfOutsideViewport);
+    activeEditor.selections = deduped;
+    activeEditor.revealRange(deduped[0], vscode.TextEditorRevealType.InCenterIfOutsideViewport);
 }
 
 /**
  * Merge overlapping or touching selections (used to keep UX tidy).
  */
 function mergeSelections(selections: vscode.Selection[]): vscode.Selection[] {
-    if (selections.length <= 1) return selections;
-    const ranges = selections.map(s => new vscode.Range(s.start, s.end));
+    if (selections.length <= 1) {
+        return selections;
+    }
+
+    const ranges = selections.map((s) => new vscode.Range(s.start, s.end));
     ranges.sort((a, b) => {
-        if (a.start.isBefore(b.start)) return -1;
-        if (a.start.isAfter(b.start)) return 1;
-        if (a.end.isBefore(b.end)) return -1;
-        if (a.end.isAfter(b.end)) return 1;
+        if (a.start.isBefore(b.start)) {
+            return -1;
+        }
+        if (a.start.isAfter(b.start)) {
+            return 1;
+        }
+        if (a.end.isBefore(b.end)) {
+            return -1;
+        }
+        if (a.end.isAfter(b.end)) {
+            return 1;
+        }
         return 0;
     });
+
     const merged: vscode.Range[] = [];
     for (const r of ranges) {
-        const last = merged[merged.length - 1];
-        if (!last) {
+        const last = merged.at(-1);
+        if (last === undefined) {
             merged.push(r);
         } else if (!r.start.isAfter(last.end)) {
             const end = r.end.isAfter(last.end) ? r.end : last.end;
@@ -201,21 +263,34 @@ function mergeSelections(selections: vscode.Selection[]): vscode.Selection[] {
             merged.push(r);
         }
     }
-    return merged.map(r => new vscode.Selection(r.start, r.end));
+
+    return merged.map((r) => new vscode.Selection(r.start, r.end));
 }
 
 /**
  * De-duplicate selections while preserving order.
  */
 function dedupeSelections(selections: vscode.Selection[]): vscode.Selection[] {
-    if (selections.length <= 1) return selections;
+    if (selections.length <= 1) {
+        return selections;
+    }
+
     selections.sort((a, b) => {
-        if (a.start.isBefore(b.start)) return -1;
-        if (a.start.isAfter(b.start)) return 1;
-        if (a.end.isBefore(b.end)) return -1;
-        if (a.end.isAfter(b.end)) return 1;
+        if (a.start.isBefore(b.start)) {
+            return -1;
+        }
+        if (a.start.isAfter(b.start)) {
+            return 1;
+        }
+        if (a.end.isBefore(b.end)) {
+            return -1;
+        }
+        if (a.end.isAfter(b.end)) {
+            return 1;
+        }
         return 0;
     });
+
     const seen = new Set<string>();
     const out: vscode.Selection[] = [];
     for (const s of selections) {
