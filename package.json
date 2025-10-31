@@ -21,7 +21,7 @@
   "private": true,
   "license": "MIT",
   "engines": {
-    "vscode": "^1.79.0"
+    "vscode": "^1.105.0"
   },
   "categories": [
     "Visualization",
