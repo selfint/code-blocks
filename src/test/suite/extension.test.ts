@@ -22,25 +22,41 @@ suite("codeBlocks commands", function () {
     }: {
         content: string;
         selectionCommands: SelectionCommand[];
-        expectedSelectionContent: string;
+        expectedSelectionContent: string | string[];
         language?: string;
     }): Promise<vscode.TextEditor> {
+        if (typeof expectedSelectionContent === "string") {
+            expectedSelectionContent = [expectedSelectionContent];
+        }
+
         const cursor = "@";
-        const cursorIndex = content.indexOf(cursor);
-        content = content.replace(cursor, "");
+        const selections = [];
+        let cursorIndex = content.indexOf(cursor);
+        while (cursorIndex > -1) {
+            content = content.replace(cursor, "");
+            selections.push(cursorIndex);
+            cursorIndex = content.indexOf(cursor);
+        }
+
         const { activeEditor } = await openDocument(content, language);
-        activeEditor.selection = new vscode.Selection(
-            activeEditor.document.positionAt(cursorIndex),
-            activeEditor.document.positionAt(cursorIndex)
+        activeEditor.selections = selections.map(
+            (cursorIndex) =>
+                new vscode.Selection(
+                    activeEditor.document.positionAt(cursorIndex),
+                    activeEditor.document.positionAt(cursorIndex)
+                )
         );
 
         for (const command of selectionCommands) {
             await vscode.commands.executeCommand(command);
         }
 
-        const selectionContent = activeEditor.document.getText(activeEditor.selection);
+        const selectionContent = activeEditor.selections
+            .map((s) => activeEditor.document.getText(s))
+            .join("\n--\n");
+
         expect(selectionContent).to.equal(
-            expectedSelectionContent,
+            expectedSelectionContent.join("\n--\n"),
             "selection commands didn't produce desired selection"
         );
 
@@ -54,7 +70,7 @@ suite("codeBlocks commands", function () {
         selectionCommands: SelectionCommand[];
         moveCommands: MoveCommand[];
         expectedContent: string;
-        expectedSelectionContent: string;
+        expectedSelectionContent: string | string[];
         language: string;
     };
     async function testMoveCommands({
@@ -65,6 +81,10 @@ suite("codeBlocks commands", function () {
         expectedSelectionContent,
         language,
     }: TestMoveCommandsParams): Promise<void> {
+        if (typeof expectedSelectionContent === "string") {
+            expectedSelectionContent = [expectedSelectionContent];
+        }
+
         const activeEditor = await testSelectionCommands({
             content,
             selectionCommands,
@@ -77,11 +97,13 @@ suite("codeBlocks commands", function () {
         }
 
         const newContent = activeEditor.document.getText();
-        const newSelectionContent = activeEditor.document.getText(activeEditor.selection);
+        const newSelectionContent = activeEditor.selections
+            .map((s) => activeEditor.document.getText(s))
+            .join("\n--\n");
 
         expect(newContent).to.equal(expectedContent, "move command didn't produce desired content");
         expect(newSelectionContent).to.equal(
-            expectedSelectionContent,
+            expectedSelectionContent.join("\n--\n"),
             "move command didn't preserve selection content"
         );
     }
@@ -96,7 +118,7 @@ suite("codeBlocks commands", function () {
         content: string;
         selectionCommands: SelectionCommand[];
         navigateCommands: NavigationCommand[];
-        expectedSelectionContent: string;
+        expectedSelectionContent: string | string[];
         language: string;
     };
     async function testNavigateCommands({
@@ -106,13 +128,13 @@ suite("codeBlocks commands", function () {
         expectedSelectionContent,
         language,
     }: TestNavigationCommandsParams): Promise<void> {
+        const expectedCursorLocations = content.replace(/@/g, "");
         const targetCursor = "#";
-        const expectedNavigationDestinationIndex = content.replace(/@/g, "").indexOf(targetCursor);
-        expect(expectedNavigationDestinationIndex).not.to.equal(
+        expect(expectedCursorLocations.indexOf(targetCursor)).not.to.equal(
             -1,
             `target cursor '${targetCursor}' missing from input:\n${content}\n\n`
         );
-        content = content.replace(targetCursor, "");
+        content = content.replace(/#/g, "");
 
         const activeEditor = await testSelectionCommands({
             content,
@@ -125,22 +147,21 @@ suite("codeBlocks commands", function () {
             await vscode.commands.executeCommand(command);
         }
 
-        const newCursorIndex = activeEditor.document.offsetAt(activeEditor.selection.active);
+        let actualCursorLocations = content.replace(/@/g, "");
+        const newCursorIndices = activeEditor.selections.map(({ active }) => active.character);
 
-        const cleanContent = content.replace(/@/g, "");
-        expect(newCursorIndex).to.equal(
-            expectedNavigationDestinationIndex,
-            "navigation commands didn't arrive to expected destination" +
-                `\n\tactual: ${
-                    cleanContent.substring(0, newCursorIndex) +
-                    targetCursor +
-                    cleanContent.substring(newCursorIndex)
-                }` +
-                `\n\texpect: ${
-                    cleanContent.substring(0, expectedNavigationDestinationIndex) +
-                    targetCursor +
-                    cleanContent.substring(expectedNavigationDestinationIndex)
-                }\n`
+        for (let i = 0; i < newCursorIndices.length; i++) {
+            const index = newCursorIndices[i] + i;
+
+            actualCursorLocations =
+                actualCursorLocations.substring(0, index) +
+                targetCursor +
+                actualCursorLocations.substring(index);
+        }
+
+        expect(actualCursorLocations).to.equal(
+            expectedCursorLocations,
+            "navigation commands didn't arrive to expected destination"
         );
     }
 
@@ -505,6 +526,78 @@ source_file [0:0 - 0:12]
                     "fn main() {} #fn f() {}".indexOf("#"),
                 ]);
             }).timeout(process.env.TEST_TIMEOUT ?? "1m");
+        });
+    });
+
+    suite("Multiple cursor commands", function () {
+        suite(".selectBlock", function () {
+            test("supports multi-cursor", async function () {
+                await testSelectionCommands({
+                    content: "function @a(){}\nfunction b(){}\nfunction @c(){}",
+                    selectionCommands: ["codeBlocks.selectBlock"],
+                    expectedSelectionContent: ["a", "c"],
+                    language: "typescript",
+                });
+            });
+        });
+
+        suite(".selectNext", function () {
+            test("updates each selection independently", async function () {
+                await testSelectionCommands({
+                    content: "function @a(){}\nfunction b(){}\nfunction @c(){}",
+                    selectionCommands: ["codeBlocks.selectBlock", "codeBlocks.selectNext"],
+                    expectedSelectionContent: ["a()", "c()"],
+                    language: "typescript",
+                });
+            });
+        });
+
+        suite(".navigateDown", function () {
+            test("moves cursors to next siblings", async function () {
+                await testNavigateCommands({
+                    content: "let @a, @#b, #c;",
+                    selectionCommands: ["codeBlocks.selectBlock"],
+                    navigateCommands: ["codeBlocks.navigateDown"],
+                    expectedSelectionContent: ["a", "b"],
+                    language: "typescript",
+                });
+            });
+        });
+
+        suite(".moveDown", function () {
+            test("swaps each selected element with its next sibling", async function () {
+                await testMoveCommands({
+                    content: "fn main() { let a = [@1, 2, @3]; }",
+                    selectionCommands: ["codeBlocks.selectBlock"],
+                    moveCommands: ["codeBlocks.moveDown"],
+                    expectedContent: "fn main() { let a = [2, 1, 3]; }",
+                    expectedSelectionContent: ["1", "3"],
+                    language: "rust",
+                });
+            });
+
+            test.only("respects query-generated blocks", async function () {
+                await testMoveCommands({
+                    content: `\
+pub struct RustStruct {
+    f1: i@32,
+    f2: i@32,
+    #[trait]
+    f3: i32,
+}`,
+                    selectionCommands: ["codeBlocks.selectBlock", "codeBlocks.selectParent"],
+                    moveCommands: ["codeBlocks.moveDown"],
+                    expectedContent: `\
+pub struct RustStruct {
+    #[trait]
+    f3: i32,
+    f1: i32,
+    f2: i32,
+}`,
+                    expectedSelectionContent: ["f1: i32", "f2: i32"],
+                    language: "rust",
+                });
+            });
         });
     });
 });
