@@ -62,56 +62,70 @@ export class Selection {
         const parent = this.firstNode().parent;
         const range = this.getRange();
 
-        let smallestBlockIndex: number | undefined = undefined;
+        let smallestBlock: Block | undefined = undefined;
         let smallestBlockLength: number | undefined = undefined;
-        for (let i = 0; i < blocks.length; i++) {
-            const block = blocks[i];
-
-            const blockRange = {
-                startIndex: block[0].startIndex,
-                endIndex: block[block.length - 1].endIndex,
-            };
+        for (const block of blocks) {
+            const startIndex = block[0].startIndex;
+            const endIndex = block[block.length - 1].endIndex;
 
             // check if block contains selection
-            if (blockRange.startIndex <= range.startIndex && range.endIndex <= blockRange.endIndex) {
+            const contains = startIndex <= range.startIndex && range.endIndex <= endIndex;
+            if (contains) {
                 // check if block is at the same hierarchy level as the selection
-                if (
+                const isSibling =
                     (parent === null && block[0].parent === null) ||
-                    (block[0].parent !== null && parent === block[0].parent)
-                ) {
-                    const length = blockRange.endIndex - blockRange.startIndex;
+                    (block[0].parent !== null &&
+                        parent?.startIndex === block[0].parent.startIndex &&
+                        parent?.endIndex === block[0].parent.endIndex);
+
+                if (isSibling) {
+                    const length = endIndex - startIndex;
                     if (length <= (smallestBlockLength ?? length)) {
-                        smallestBlockIndex = i;
+                        smallestBlock = block;
                         smallestBlockLength = length;
                     }
                 }
             }
         }
 
-        if (smallestBlockIndex !== undefined) {
-            const smallestBlock = blocks[smallestBlockIndex];
-            this.selectedSiblings = smallestBlock;
+        if (smallestBlock === undefined) {
+            return this;
         }
 
+        this.selectedSiblings = smallestBlock;
         return this;
     }
 
     public getPrevious(blocks: Block[] | undefined): Selection | undefined {
         const previousNode = this.selectedSiblings[0].previousNamedSibling;
-        if (previousNode) {
-            return new Selection([previousNode], this.version).expandToBlock(blocks);
-        } else {
+        if (!previousNode) {
             return undefined;
         }
+
+        const previous = Selection.fromNode(previousNode, this.version).expandToBlock(blocks);
+        const parent = this.getParent(blocks)?.toVscodeSelection();
+
+        if (parent !== undefined && previous.toVscodeSelection().isEqual(parent)) {
+            return undefined;
+        }
+
+        return previous;
     }
 
     public getNext(blocks: Block[] | undefined): Selection | undefined {
         const nextNode = this.selectedSiblings.at(-1)?.nextNamedSibling;
-        if (nextNode) {
-            return new Selection([nextNode], this.version).expandToBlock(blocks);
-        } else {
+        if (!nextNode) {
             return undefined;
         }
+
+        const next = Selection.fromNode(nextNode, this.version).expandToBlock(blocks);
+        const parent = this.getParent(blocks)?.toVscodeSelection();
+
+        if (parent !== undefined && next.toVscodeSelection().isEqual(parent)) {
+            return undefined;
+        }
+
+        return next;
     }
 
     public getParent(blocks: Block[] | undefined): Selection | undefined {
@@ -128,7 +142,7 @@ export class Selection {
         }
 
         if (parent) {
-            return new Selection([parent], this.version).expandToBlock(blocks);
+            return Selection.fromNode(parent, this.version).expandToBlock(blocks);
         } else {
             return undefined;
         }
@@ -148,7 +162,7 @@ export class Selection {
         }
 
         if (child) {
-            return new Selection([child], this.version).expandToBlock(blocks);
+            return Selection.fromNode(child, this.version).expandToBlock(blocks);
         } else {
             return undefined;
         }

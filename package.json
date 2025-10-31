@@ -248,6 +248,13 @@
       }
     },
     "configurationDefaults": {
+      "[html]": {
+        "codeBlocks.queries": [
+          "(element (start_tag)) @item",
+          "(text) @item",
+          "(element (end_tag)) @item"
+        ]
+      },
       "[github-actions-workflow]": {
         "codeBlocks.npmPackageName": "@tree-sitter-grammars/tree-sitter-yaml",
         "codeBlocks.parserName": "tree-sitter-yaml"

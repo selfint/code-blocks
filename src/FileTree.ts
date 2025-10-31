@@ -274,7 +274,6 @@ export class FileTree implements vscode.Disposable {
                     break;
                 }
                 case "swap-next": {
-                    // TODO: if block mode, resolve previous block
                     const nextSelection = selection.getNext(blocks);
                     if (!nextSelection) {
                         return err(`Can't move to ${direction}, next node of selection is null`);

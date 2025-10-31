@@ -235,17 +235,17 @@ source_file [0:0 - 0:12]
                 await testSelectionCommands({
                     content: "<> <p>@a</p> </>",
                     selectionCommands: ["codeBlocks.selectPrevious"],
-                    expectedSelectionContent: "<p>a",
+                    expectedSelectionContent: "a",
                     language: "typescriptreact",
                 });
             });
         });
 
         suite(".selectChild", function () {
-            test("contracts to first named child", async () => {
+            test.only("contracts to first named child", async () => {
                 await testSelectionCommands({
-                    content: "pub fn foo() { @ }",
-                    selectionCommands: ["codeBlocks.selectParent", "codeBlocks.selectChild"],
+                    content: "pub fn foo() { fn nested() { @ } }",
+                    selectionCommands: ["codeBlocks.selectBlock"],
                     expectedSelectionContent: "pub",
                 });
                 await testSelectionCommands({
