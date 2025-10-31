@@ -43,8 +43,7 @@ export function loadParser(
         // make sure to test well on windows before changing this
         // TODO(02/11/24): change to dynamic import
         // let { default: language } = (await import(bindingsDir)) as { default: Language };
-
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         let language = require(bindingsDir) as Language;
 
         logger.log(`Got language: ${JSON.stringify(Object.keys(language))}`);
