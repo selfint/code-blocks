@@ -32,7 +32,7 @@ suite("Selection", function () {
 
     suite(".update", function () {
         test("Select source_file node is undefined", async () => {
-            expect(await selectionAt("rust", "fn main() { }@")).to.be.undefined;
+            expect(await selectionAt("rust", "fn main() { }@")).to.equal(undefined);
         });
 
         test("Update selection parent/child", async () => {
@@ -59,7 +59,7 @@ suite("Selection", function () {
         });
 
         test("Select source_file node is undefined", async () => {
-            expect(await selectionAt("typescriptreact", "function main() { }@")).to.be.undefined;
+            expect(await selectionAt("typescriptreact", "function main() { }@")).to.equal(undefined);
         });
 
         test("Update selection parent/child", async () => {

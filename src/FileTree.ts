@@ -78,7 +78,6 @@ export class FileTree implements vscode.Disposable {
             logger.log(
                 `Setting language for parser, language !== undefined = ${JSON.stringify(
                     // sanity check
-                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                     language !== undefined
                 )}`
             );

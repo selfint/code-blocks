@@ -390,7 +390,12 @@ export function activate(): vscode.Disposable[] {
             await vscode.commands.executeCommand("setContext", "codeBlocks.blockMode", active);
         }),
         blockModeActive.onDidChange((active) => {
-            active ? statusBar.show() : statusBar.hide();
+            if (active) {
+                statusBar.show();
+            } else {
+                statusBar.hide();
+            }
+
             resetDecorations();
 
             if (vscode.window.activeTextEditor !== undefined) {

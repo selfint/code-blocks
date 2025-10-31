@@ -368,21 +368,22 @@
   },
   "devDependencies": {
     "@types/chai": "5.2.3",
-    "@types/glob": "8.0.1",
+    "@types/glob": "8.1.0",
     "@types/mocha": "10.0.10",
     "@types/node": "24.9.2",
     "@types/tar": "6.1.13",
     "@types/vscode": "1.105.0",
     "@types/which": "3.0.4",
-    "@typescript-eslint/eslint-plugin": "^5.49.0",
-    "@typescript-eslint/parser": "^5.49.0",
+    "@typescript-eslint/eslint-plugin": "8.46.2",
+    "@typescript-eslint/parser": "8.46.2",
     "@vscode/test-electron": "2.5.2",
     "chai": "6.2.0",
     "esbuild": "0.25.11",
-    "eslint": "^8.44.0",
-    "glob": "8.1.0",
+    "eslint": "9.38.0",
+    "glob": "11.0.3",
     "mocha": "11.7.4",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.46.2"
   },
   "dependencies": {
     "tar": "7.5.2",
