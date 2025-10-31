@@ -1,6 +1,12 @@
 # Changelog
 
-# [Unreleased]
+# 0.8.0
+
+## Added 
+
+- Multi-cursor support in Block Mode, thanks [@CB2Moon](https://github.com/selfint/code-blocks/pull/188)!
+
+- `toml` and `xml` support, thanks [@sanarise](https://github.com/selfint/code-blocks/pull/186)!
 
 ## Fixed
 
