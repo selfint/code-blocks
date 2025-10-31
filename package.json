@@ -285,6 +285,7 @@
           "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (struct_item) @item)",
           "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (impl_item) @item)",
           "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (enum_item) @item)",
+          "(([ (attribute_item) (line_comment) ] @header . [ (attribute_item) (line_comment) ]* @header )? . (field_declaration) @item)",
           "(match_arm) @arm"
         ]
       },
