@@ -55,7 +55,7 @@ jobs:
               run: |
                 sudo DEBIAN_FRONTEND=noninteractive \
                   apt install -y --no-install-recommends \
-                  ffmpeg libnss3 xvfb libx11-6 libxext6 \
+                  ffmpeg libnss3 xvfb \
                   -o Dpkg::Options::="--path-exclude=/usr/share/man/*" \
                   -o Dpkg::Options::="--path-exclude=/usr/share/doc/*"
             - name: Install extension dependencies
