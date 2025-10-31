@@ -60,7 +60,7 @@ export class CodeBlocksEditorProvider implements vscode.CustomTextEditorProvider
         for (const query of languageQueries) {
             queries.push(new Query(language.result, query));
         }
-        const fileTreeResult = await FileTree.new(language.result, document);
+        const fileTreeResult = FileTree.new(language.result, document);
         if (fileTreeResult.status === "err") {
             const msg = JSON.stringify(fileTreeResult.result);
             await Installer.askRemoveLanguage(this.extensionParsersDirPath, languageId, msg);

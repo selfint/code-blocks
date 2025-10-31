@@ -71,10 +71,7 @@ export class FileTree implements vscode.Disposable {
         );
     }
 
-    public static async new(
-        language: Language,
-        document: vscode.TextDocument
-    ): Promise<Result<FileTree, unknown>> {
+    public static new(language: Language, document: vscode.TextDocument): Result<FileTree, unknown> {
         const parser = new Parser();
         const logger = getLogger();
         try {

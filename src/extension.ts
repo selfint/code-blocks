@@ -1,7 +1,7 @@
 import * as BlockMode from "./BlockMode";
+import * as Installer from "./Installer";
 import * as configuration from "./configuration";
 import * as vscode from "vscode";
-import * as Installer from "./Installer";
 import { CodeBlocksEditorProvider } from "./editor/CodeBlocksEditorProvider";
 import { FileTree } from "./FileTree";
 import { TreeViewer } from "./TreeViewer";
@@ -79,7 +79,7 @@ async function getEditorFileTree(
         }
     }
 
-    const tree = await FileTree.new(language.result, activeDocument);
+    const tree = FileTree.new(language.result, activeDocument);
     if (tree.status === "ok") {
         return tree.result;
     }

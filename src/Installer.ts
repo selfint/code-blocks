@@ -4,8 +4,8 @@ import * as tar from "tar";
 import * as vscode from "vscode";
 import { ExecException, ExecOptions, exec } from "child_process";
 import { Result, err, ok } from "./result";
-import Parser from "tree-sitter";
 import { existsSync, rmSync } from "fs";
+import Parser from "tree-sitter";
 import { getLogger } from "./outputChannel";
 import { mkdir } from "fs/promises";
 import which from "which";
@@ -22,11 +22,11 @@ export function getAbsoluteBindingsDir(parsersDir: string, parserName: string): 
     return path.resolve(path.join(parsersDir, parserName, "bindings", "node", "index.js"));
 }
 
-export async function loadParser(
+export function loadParser(
     parsersDir: string,
     parserName: string,
     subdirectory?: string
-): Promise<Result<Language, string>> {
+): Result<Language, string> {
     const logger = getLogger();
 
     const bindingsDir = getAbsoluteBindingsDir(parsersDir, parserName);
@@ -118,7 +118,7 @@ export async function downloadAndBuildParser(
     }
 
     // try to load parser optimistically
-    const loadResult = await loadParser(parsersDir, parserName);
+    const loadResult = loadParser(parsersDir, parserName);
     if (loadResult.status === "ok") {
         return ok(undefined);
     }
@@ -273,7 +273,7 @@ export async function getLanguage(
         }
     }
 
-    const loadResult = await loadParser(parsersDir, parserName, subdirectory);
+    const loadResult = loadParser(parsersDir, parserName, subdirectory);
     if (loadResult.status === "err") {
         const msg = `Failed to load parser for language ${languageId} > ${loadResult.result}`;
 
