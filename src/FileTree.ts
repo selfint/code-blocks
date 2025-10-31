@@ -10,7 +10,7 @@ import { getLanguageConfig } from "./configuration";
 import { getLogger } from "./outputChannel";
 import { parserFinishedInit } from "./extension";
 
-function positionToPoint(pos: vscode.Position): Parser.Point {
+export function positionToPoint(pos: vscode.Position): Parser.Point {
     return {
         row: pos.line,
         column: pos.character,
@@ -48,7 +48,7 @@ export class FileTree implements vscode.Disposable {
 
         const queryStrings = getLanguageConfig(document.languageId).queries;
         if (queryStrings !== undefined) {
-            const language = parser.getLanguage() as Language;
+            const language = parser.getLanguage();
             this.queries = queryStrings.map((q) => new Query(language, q));
             this.blocks = getQueryBlocks(this.tree.rootNode, this.queries);
         }

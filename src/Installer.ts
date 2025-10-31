@@ -6,13 +6,15 @@ import { ExecException, ExecOptions, exec } from "child_process";
 import { Result, err, ok } from "./result";
 import { existsSync } from "fs";
 import { getLogger } from "./outputChannel";
-import { mkdir } from "fs/promises";
+import { mkdir, rm } from "fs/promises";
 import { parserFinishedInit } from "./extension";
 import which from "which";
+import Parser from "tree-sitter";
 
 const NPM_INSTALL_URL = "https://nodejs.org/en/download";
 
-export type Language = NonNullable<unknown>;
+// export type Language = NonNullable<unknown>;
+export type Language = Parser.Language;
 
 export function getAbsoluteParserDir(parsersDir: string, parserName: string): string {
     return path.resolve(path.join(parsersDir, parserName));
@@ -88,21 +90,63 @@ export async function downloadAndBuildParser(
     const parserDir = getAbsoluteParserDir(parsersDir, parserName);
     await mkdir(parserDir, { recursive: true });
 
-    const installResult = await runCmd(
-        `${npm} pack --verbose --json --pack-destination ${parserDir} ${parserNpmPackage}`,
-        {},
-        onData
-    );
+    const candidates = (() => {
+        const list = [parserNpmPackage];
+        const base = parserNpmPackage.includes("/") ? parserNpmPackage.split("/").pop()! : parserNpmPackage;
+
+        // Common fallbacks:
+        // - unscoped: tree-sitter-<lang>
+        // - scoped: @tree-sitter-grammars/tree-sitter-<lang>
+        const unscoped = base.startsWith("tree-sitter-") ? base : `tree-sitter-${base}`;
+        const scoped = `@tree-sitter-grammars/${unscoped}`;
+
+        const pushIfNew = (p: string) => {
+            if (!list.includes(p)) list.push(p);
+        };
+
+        pushIfNew(unscoped);
+        pushIfNew(scoped);
+
+        // If original already had scope, also try dropping scope
+        if (parserNpmPackage.includes("/")) {
+            const last = parserNpmPackage.split("/").pop()!;
+            pushIfNew(last);
+        }
+
+        return list;
+    })();
 
     let tarFilename: string | undefined = undefined;
-    switch (installResult.status) {
-        case "err":
-            logger.log(`Failed to install > ${JSON.stringify(installResult.result)}`);
-            return err(`Failed to install > ${JSON.stringify(installResult.result)}`);
+    let usedPackage = 'unknown';
+    const errors: string[] = [];
 
-        case "ok":
-            tarFilename = (JSON.parse(installResult.result) as { filename: string }[])[0].filename;
+    for (const pkg of candidates) {
+        logger.log(`Attempting to download parser package '${pkg}'`);
+        const res = await runCmd(
+            `${npm} pack --verbose --json --pack-destination ${parserDir} ${pkg}`,
+            {},
+            onData
+        );
+
+        if (res.status === "ok") {
+            try {
+                tarFilename = (JSON.parse(res.result) as { filename: string }[])[0].filename;
+                usedPackage = pkg;
+                break;
+            } catch (e: unknown) {
+                errors.push(`${pkg}: failed to parse npm pack output > ${JSON.stringify(e)}`);
+            }
+        } else {
+            errors.push(`${pkg}: ${res.result[0].name} ${res.result[0].message.replace(/\n/g, " > ")}`);
+        }
     }
+
+    if (!tarFilename) {
+        logger.log(`Failed to install. Tried: ${JSON.stringify(candidates)}. Errors: ${JSON.stringify(errors)}`);
+        return err(`Failed to install > ${JSON.stringify(errors)}`);
+    }
+
+    logger.log(`Download success using '${usedPackage}'. Extracting ${tarFilename} to ${parserDir}`);
 
     logger.log(`Download success. Extracting ${tarFilename} to ${parserDir}`);
 
@@ -274,6 +318,58 @@ export async function getLanguage(
         const msg = `Failed to load parser for language ${languageId} > ${loadResult.result}`;
 
         logger.log(msg);
+
+        const action = await vscode.window.showErrorMessage(
+            msg,
+            "Re-download",
+            "Cancel"
+        );
+
+        if (action === "Re-download") {
+            try {
+                logger.log(`Removing corrupted parser directory: ${parserPackagePath}`);
+                await rm(parserPackagePath, { recursive: true, force: true });
+            } catch (e: unknown) {
+                logger.log(`Failed to remove parser directory ${parserPackagePath} > ${JSON.stringify(e)}`);
+                return err(`Failed to remove parser directory ${parserPackagePath} > ${JSON.stringify(e)}`);
+            }
+
+            let number = 0;
+            const redownload = await vscode.window.withProgress(
+                {
+                    location: vscode.ProgressLocation.Notification,
+                    cancellable: false,
+                    title: `Re-installing ${npmPackageName}`,
+                },
+                async (progress) => {
+                    return await downloadAndBuildParser(
+                        parsersDir,
+                        npmPackageName,
+                        parserName,
+                        npm,
+                        treeSitterCli,
+                        (data) => progress.report({ message: data, increment: number++ })
+                    );
+                }
+            );
+
+            if (redownload.status === "err") {
+                const emsg = `Failed to re-download/build parser for language ${languageId} > ${redownload.result}`;
+                logger.log(emsg);
+                return err(emsg);
+            }
+
+            const reload = await loadParser(parsersDir, parserName, subdirectory);
+            if (reload.status === "err") {
+                const emsg = `Failed to load parser after re-download for language ${languageId} > ${reload.result}`;
+                logger.log(emsg);
+                return err(emsg);
+            }
+
+            logger.log(`Successfully re-downloaded and loaded parser for language ${languageId}`);
+            return ok(reload.result);
+        }
+
         return err(msg);
     }
 
