@@ -148,7 +148,7 @@ suite("codeBlocks commands", function () {
         }
 
         let actualCursorLocations = content.replace(/@/g, "");
-        const newCursorIndices = activeEditor.selections.map(({ active }) => active.character);
+        const newCursorIndices = activeEditor.selections.map((s) => activeEditor.document.offsetAt(s.active));
 
         for (let i = 0; i < newCursorIndices.length; i++) {
             const index = newCursorIndices[i] + i;
@@ -576,7 +576,7 @@ source_file [0:0 - 0:12]
                 });
             });
 
-            test.only("respects query-generated blocks", async function () {
+            test("respects query-generated blocks", async function () {
                 await testMoveCommands({
                     content: `\
 pub struct RustStruct {
