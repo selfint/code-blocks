@@ -1,5 +1,11 @@
 # Changelog
 
+# [Unreleased]
+
+## Fixed
+
+- Add 'Remove' option to notification if local parser installation fails to load.
+
 # 0.7.0
 
 Finally, switched to `node-tree-sitter`! 🎉

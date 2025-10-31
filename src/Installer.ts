@@ -4,11 +4,10 @@ import * as tar from "tar";
 import * as vscode from "vscode";
 import { ExecException, ExecOptions, exec } from "child_process";
 import { Result, err, ok } from "./result";
+import { existsSync, rmSync } from "fs";
 import Parser from "tree-sitter";
-import { existsSync } from "fs";
 import { getLogger } from "./outputChannel";
 import { mkdir } from "fs/promises";
-import { parserFinishedInit } from "./extension";
 import which from "which";
 
 const NPM_INSTALL_URL = "https://nodejs.org/en/download";
@@ -23,11 +22,11 @@ export function getAbsoluteBindingsDir(parsersDir: string, parserName: string): 
     return path.resolve(path.join(parsersDir, parserName, "bindings", "node", "index.js"));
 }
 
-export async function loadParser(
+export function loadParser(
     parsersDir: string,
     parserName: string,
     subdirectory?: string
-): Promise<Result<Language, string>> {
+): Result<Language, string> {
     const logger = getLogger();
 
     const bindingsDir = getAbsoluteBindingsDir(parsersDir, parserName);
@@ -35,34 +34,33 @@ export async function loadParser(
         const msg = `Expected parser directory doesn't exist: ${bindingsDir}`;
         logger.log(msg);
         return err(msg);
-    } else {
-        await parserFinishedInit;
-        try {
-            logger.log(`Loading parser from ${bindingsDir}`);
+    }
 
-            // using dynamic import causes issues on windows
-            // make sure to test well on windows before changing this
-            // TODO(02/11/24): change to dynamic import
-            // let { default: language } = (await import(bindingsDir)) as { default: Language };
+    try {
+        logger.log(`Loading parser from ${bindingsDir}`);
 
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
-            let language = require(bindingsDir) as Language;
+        // using dynamic import causes issues on windows
+        // make sure to test well on windows before changing this
+        // TODO(02/11/24): change to dynamic import
+        // let { default: language } = (await import(bindingsDir)) as { default: Language };
 
-            logger.log(`Got language: ${JSON.stringify(Object.keys(language))}`);
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        let language = require(bindingsDir) as Language;
 
-            if (subdirectory !== undefined) {
-                logger.log(`Loading subdirectory: ${subdirectory}`);
-                // @ts-expect-error we know this is a language
-                language = language[subdirectory] as Language;
+        logger.log(`Got language: ${JSON.stringify(Object.keys(language))}`);
 
-                logger.log(`Got subdirectory language: ${JSON.stringify(Object.keys(language))}`);
-            }
+        if (subdirectory !== undefined) {
+            logger.log(`Loading subdirectory: ${subdirectory}`);
+            // @ts-expect-error we know this is a language
+            language = language[subdirectory] as Language;
 
-            return ok(language);
-        } catch (error) {
-            logger.log(`Failed to load ${bindingsDir} > ${JSON.stringify(error)}`);
-            return err(`Failed to load ${bindingsDir} > ${JSON.stringify(error)}`);
+            logger.log(`Got subdirectory language: ${JSON.stringify(Object.keys(language))}`);
         }
+
+        return ok(language);
+    } catch (error) {
+        logger.log(`Failed to load ${bindingsDir} > ${JSON.stringify(error)}`);
+        return err(`Failed to load ${bindingsDir} > ${JSON.stringify(error)}`);
     }
 }
 
@@ -120,7 +118,7 @@ export async function downloadAndBuildParser(
     }
 
     // try to load parser optimistically
-    const loadResult = await loadParser(parsersDir, parserName);
+    const loadResult = loadParser(parsersDir, parserName);
     if (loadResult.status === "ok") {
         return ok(undefined);
     }
@@ -186,11 +184,16 @@ async function runCmd(
     });
 }
 
+export type GetLanguageError = {
+    cause: "downloadFailed" | "loadFailed";
+    msg: string;
+};
+
 export async function getLanguage(
     parsersDir: string,
     languageId: string,
     autoInstall = false
-): Promise<Result<Language | undefined, string>> {
+): Promise<Result<Language | undefined, GetLanguageError>> {
     const logger = getLogger();
 
     const ignoredLanguageIds = configuration.getIgnoredLanguageIds();
@@ -204,8 +207,6 @@ export async function getLanguage(
 
     const npm = "npm";
     const treeSitterCli = configuration.getTreeSitterCliPath();
-
-    await parserFinishedInit;
 
     if (!existsSync(parserPackagePath)) {
         const doInstall = autoInstall
@@ -268,18 +269,42 @@ export async function getLanguage(
             const msg = `Failed to download/build parser for language ${languageId} > ${downloadResult.result}`;
 
             logger.log(msg);
-            return err(msg);
+            return err({ cause: "downloadFailed", msg });
         }
     }
 
-    const loadResult = await loadParser(parsersDir, parserName, subdirectory);
+    const loadResult = loadParser(parsersDir, parserName, subdirectory);
     if (loadResult.status === "err") {
         const msg = `Failed to load parser for language ${languageId} > ${loadResult.result}`;
 
         logger.log(msg);
-        return err(msg);
+        return err({ cause: "loadFailed", msg });
     }
 
     logger.log(`Successfully loaded parser for language ${languageId}`);
     return ok(loadResult.result);
+}
+
+export async function askRemoveLanguage(parsersDir: string, languageId: string, msg: string): Promise<void> {
+    const doRemove = await vscode.window.showErrorMessage(
+        `Failed to load parser for ${languageId}: ${msg}`,
+        "Remove",
+        "Ok"
+    );
+
+    if (doRemove === "Remove") {
+        removeLanguage(parsersDir, languageId);
+    }
+}
+
+export function removeLanguage(parsersDir: string, languageId: string): void {
+    const logger = getLogger();
+
+    const { parserName } = configuration.getLanguageConfig(languageId);
+    const parserPackagePath = getAbsoluteParserDir(parsersDir, parserName);
+
+    if (existsSync(parserPackagePath)) {
+        rmSync(parserPackagePath, { recursive: true, force: true });
+    }
+    logger.log(`Removed parser '${parserPackagePath}'`);
 }

@@ -9,7 +9,7 @@ export async function testParser(language: string, content?: string): Promise<vo
     // fail the test if the parser could not be installed
     const result = await Installer.getLanguage("test-parsers", language, true);
     if (result.status === "err") {
-        throw new Error(`Failed to install language: ${result.result}`);
+        throw new Error(`Failed to install language: ${JSON.stringify(result.result)}`);
     }
 
     // check the language can be set
