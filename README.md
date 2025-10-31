@@ -178,3 +178,31 @@ MIT License © 2023 [Tom Selfin](https://github.com/selfint)
 
 ## Gallery
 
+### Block Mode - Move - Rust - Functions
+
+![Block Mode - Move - Rust - Functions](assets/examples/Block_Mode_-_Move_-_Rust_-_Functions.gif)
+
+### Block Mode - Move - Rust - Match arms
+
+![Block Mode - Move - Rust - Match arms](assets/examples/Block_Mode_-_Move_-_Rust_-_Match_arms.gif)
+
+### Block Mode - Move - Rust - Parameters
+
+![Block Mode - Move - Rust - Parameters](assets/examples/Block_Mode_-_Move_-_Rust_-_Parameters.gif)
+
+### Block Mode - Select - Rust
+
+![Block Mode - Select - Rust](assets/examples/Block_Mode_-_Select_-_Rust.gif)
+
+### Block Mode - Select - TypeScript
+
+![Block Mode - Select - TypeScript](assets/examples/Block_Mode_-_Select_-_TypeScript.gif)
+
+### Block Mode - Select - TypeScript - Selection expands to block
+
+![Block Mode - Select - TypeScript - Selection expands to block](assets/examples/Block_Mode_-_Select_-_TypeScript_-_Selection_expands_to_block.gif)
+
+### Tree Viewer
+
+![Tree Viewer](assets/examples/Tree_Viewer.gif)
+
