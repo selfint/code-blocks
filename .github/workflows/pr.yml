@@ -52,7 +52,12 @@ jobs:
               with:
                   node-version: 20
             - name: Install asset generation dependencies
-              run: sudo apt install -y ffmpeg libnss3 xvfb
+              run: |
+                sudo DEBIAN_FRONTEND=noninteractive \
+                  apt install -y --no-install-recommends \
+                  ffmpeg libnss3 xvfb \
+                  -o Dpkg::Options::="--path-exclude=/usr/share/man/*" \
+                  -o Dpkg::Options::="--path-exclude=/usr/share/doc/*"
             - name: Install extension dependencies
               run: yarn run install:all
             - name: Build webview
