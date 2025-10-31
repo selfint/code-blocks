@@ -43,15 +43,30 @@ function selectBlock(): void {
         return;
     }
 
-    const cursorIndex = activeEditor.document.offsetAt(activeEditor.selection.active);
-    const selection = fileTree.selectBlock(cursorIndex);
-    if (selection !== undefined) {
-        activeEditor.selection = selection.toVscodeSelection();
-        activeEditor.revealRange(
-            activeEditor.selection,
-            vscode.TextEditorRevealType.InCenterIfOutsideViewport
-        );
+    const bases = activeEditor.selections.length ? activeEditor.selections : [activeEditor.selection];
+    const nextSelections = bases
+        .map((s) => {
+            const idx = activeEditor.document.offsetAt(s.active);
+            const sel = fileTree.selectBlock(idx);
+            return sel?.toVscodeSelection();
+        })
+        .filter((s): s is vscode.Selection => !!s);
+
+    if (nextSelections.length === 0) {
+        return;
     }
+
+    const merged = mergeSelections(nextSelections);
+    if (merged.length === 1) {
+        activeEditor.selection = merged[0];
+    } else {
+        activeEditor.selections = merged;
+    }
+
+    activeEditor.revealRange(
+        merged[0] ?? activeEditor.selection,
+        vscode.TextEditorRevealType.InCenterIfOutsideViewport
+    );
 }
 
 function updateSelection(direction: UpdateSelectionDirection): void {
@@ -62,15 +77,34 @@ function updateSelection(direction: UpdateSelectionDirection): void {
         return;
     }
 
-    const selection = fileTree.resolveVscodeSelection(activeEditor.selection);
-    if (selection !== undefined) {
+    const bases = activeEditor.selections.length ? activeEditor.selections : [activeEditor.selection];
+    const updatedSelections: vscode.Selection[] = [];
+
+    for (const base of bases) {
+        const selection = fileTree.resolveVscodeSelection(base);
+        if (selection === undefined) {
+            continue;
+        }
+
         selection.update(direction, fileTree.blocks);
-        activeEditor.selection = selection.toVscodeSelection();
-        activeEditor.revealRange(
-            activeEditor.selection,
-            vscode.TextEditorRevealType.InCenterIfOutsideViewport
-        );
+        updatedSelections.push(selection.toVscodeSelection());
     }
+
+    if (updatedSelections.length === 0) {
+        return;
+    }
+
+    const merged = mergeSelections(updatedSelections);
+    if (merged.length === 1) {
+        activeEditor.selection = merged[0];
+    } else {
+        activeEditor.selections = merged;
+    }
+
+    activeEditor.revealRange(
+        merged[0] ?? activeEditor.selection,
+        vscode.TextEditorRevealType.InCenterIfOutsideViewport
+    );
 }
 
 async function moveSelection(direction: MoveSelectionDirection): Promise<void> {
@@ -80,23 +114,55 @@ async function moveSelection(direction: MoveSelectionDirection): Promise<void> {
         return;
     }
 
-    const selection = fileTree.resolveVscodeSelection(activeEditor.selection);
-    if (selection === undefined) {
+    const bases = activeEditor.selections.length ? activeEditor.selections : [activeEditor.selection];
+
+    // Single-selection: preserve existing UX
+    if (bases.length === 1) {
+        const selection = fileTree.resolveVscodeSelection(bases[0]);
+        if (selection === undefined) {
+            return;
+        }
+
+        const result = await fileTree.moveSelection(selection, direction);
+        if (result.status === "ok") {
+            activeEditor.selection = result.result;
+            activeEditor.revealRange(result.result, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
+        } else {
+            getLogger().log(result.result);
+        }
+
         return;
     }
 
-    const result = await fileTree.moveSelection(selection, direction);
-    switch (result.status) {
-        case "ok":
-            activeEditor.selection = result.result;
-            activeEditor.revealRange(result.result, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
-            break;
+    // Multi-selection: order moves to reduce interference
+    const order = bases.map((_, i) => i);
+    order.sort((i, j) => {
+        const a = bases[i].start;
+        const b = bases[j].start;
+        const cmp = a.line - b.line || a.character - b.character;
+        return direction === "swap-next" ? -cmp : cmp; // down: bottom->top, up: top->bottom
+    });
 
-        case "err":
-            // TODO: add this as a text box above the cursor (can vscode do that?)
-            getLogger().log(result.result);
+    const results: (vscode.Selection | undefined)[] = bases.slice();
+    for (const i of order) {
+        const current = results[i] ?? bases[i];
+        const selection = fileTree.resolveVscodeSelection(current);
+        if (selection === undefined) {
+            continue;
+        }
 
-            break;
+        const res = await fileTree.moveSelection(selection, direction);
+        if (res.status === "ok") {
+            results[i] = res.result;
+        } else {
+            getLogger().log(res.result);
+        }
+    }
+
+    const finalSelections = results.filter((s): s is vscode.Selection => !!s);
+    if (finalSelections.length) {
+        activeEditor.selections = finalSelections;
+        activeEditor.revealRange(finalSelections[0], vscode.TextEditorRevealType.InCenterIfOutsideViewport);
     }
 }
 
@@ -108,43 +174,133 @@ function navigate(direction: "up" | "down" | "left" | "right"): void {
         return;
     }
 
-    const selection = fileTree.resolveVscodeSelection(activeEditor.selection);
+    const bases = activeEditor.selections.length ? activeEditor.selections : [activeEditor.selection];
     const blocks = fileTree.blocks;
-    const parent = selection?.getParent(blocks);
-    const previous = selection?.getPrevious(blocks);
-    const next = selection?.getNext(blocks);
+    const nextCursors: vscode.Selection[] = [];
 
-    let newPosition;
-    switch (direction) {
-        case "up":
-            if (parent) {
-                newPosition = parent.toVscodeSelection().start;
-            }
-            break;
-        case "down":
-            if (parent) {
-                newPosition = parent.toVscodeSelection().end;
-            }
-            break;
-        case "left":
-            if (previous) {
-                newPosition = previous.toVscodeSelection().start;
-            }
-            break;
-        case "right":
-            if (next) {
-                newPosition = next.toVscodeSelection().start;
-            }
-            break;
+    for (const base of bases) {
+        const selection = fileTree.resolveVscodeSelection(base);
+        if (selection === undefined) {
+            continue;
+        }
+
+        const parent = selection.getParent(blocks);
+        const previous = selection.getPrevious(blocks);
+        const next = selection.getNext(blocks);
+
+        let newPosition: vscode.Position | undefined;
+        switch (direction) {
+            case "up":
+                if (parent) {
+                    newPosition = parent.toVscodeSelection().start;
+                }
+                break;
+            case "down":
+                if (parent) {
+                    newPosition = parent.toVscodeSelection().end;
+                }
+                break;
+            case "left":
+                if (previous) {
+                    newPosition = previous.toVscodeSelection().start;
+                }
+                break;
+            case "right":
+                if (next) {
+                    newPosition = next.toVscodeSelection().start;
+                }
+                break;
+        }
+
+        if (newPosition) {
+            nextCursors.push(new vscode.Selection(newPosition, newPosition));
+        }
     }
 
-    if (newPosition) {
-        activeEditor.selection = new vscode.Selection(newPosition, newPosition);
-        activeEditor.revealRange(
-            activeEditor.selection,
-            vscode.TextEditorRevealType.InCenterIfOutsideViewport
-        );
+    if (nextCursors.length === 0) {
+        return;
     }
+
+    const deduped = dedupeSelections(nextCursors);
+    activeEditor.selections = deduped;
+    activeEditor.revealRange(deduped[0], vscode.TextEditorRevealType.InCenterIfOutsideViewport);
+}
+
+/**
+ * Merge overlapping or touching selections (used to keep UX tidy).
+ */
+function mergeSelections(selections: vscode.Selection[]): vscode.Selection[] {
+    if (selections.length <= 1) {
+        return selections;
+    }
+
+    const ranges = selections.map((s) => new vscode.Range(s.start, s.end));
+    ranges.sort((a, b) => {
+        if (a.start.isBefore(b.start)) {
+            return -1;
+        }
+        if (a.start.isAfter(b.start)) {
+            return 1;
+        }
+        if (a.end.isBefore(b.end)) {
+            return -1;
+        }
+        if (a.end.isAfter(b.end)) {
+            return 1;
+        }
+        return 0;
+    });
+
+    const merged: vscode.Range[] = [];
+    for (const r of ranges) {
+        const last = merged.at(-1);
+        if (last === undefined) {
+            merged.push(r);
+        } else if (!r.start.isAfter(last.end)) {
+            const end = r.end.isAfter(last.end) ? r.end : last.end;
+            merged[merged.length - 1] = new vscode.Range(last.start, end);
+        } else {
+            merged.push(r);
+        }
+    }
+
+    return merged.map((r) => new vscode.Selection(r.start, r.end));
+}
+
+/**
+ * De-duplicate selections while preserving order.
+ */
+function dedupeSelections(selections: vscode.Selection[]): vscode.Selection[] {
+    if (selections.length <= 1) {
+        return selections;
+    }
+
+    selections.sort((a, b) => {
+        if (a.start.isBefore(b.start)) {
+            return -1;
+        }
+        if (a.start.isAfter(b.start)) {
+            return 1;
+        }
+        if (a.end.isBefore(b.end)) {
+            return -1;
+        }
+        if (a.end.isAfter(b.end)) {
+            return 1;
+        }
+        return 0;
+    });
+
+    const seen = new Set<string>();
+    const out: vscode.Selection[] = [];
+    for (const s of selections) {
+        const key = `${s.start.line}:${s.start.character}-${s.end.line}:${s.end.character}`;
+        if (!seen.has(key)) {
+            seen.add(key);
+            out.push(s);
+        }
+    }
+    return out;
 }
 
 function updateTargetHighlights(editor: vscode.TextEditor, vscodeSelection: vscode.Selection): void {

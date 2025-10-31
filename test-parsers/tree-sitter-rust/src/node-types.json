@@ -154,6 +154,10 @@
         "named": true
       },
       {
+        "type": "gen_block",
+        "named": true
+      },
+      {
         "type": "generic_function",
         "named": true
       },
@@ -336,6 +340,10 @@
         "named": true
       },
       {
+        "type": "generic_pattern",
+        "named": true
+      },
+      {
         "type": "identifier",
         "named": true
       },
@@ -471,6 +479,10 @@
         "multiple": false,
         "required": true,
         "types": [
+          {
+            "type": "bounded_type",
+            "named": true
+          },
           {
             "type": "function_type",
             "named": true
@@ -959,6 +971,10 @@
         {
           "type": "lifetime",
           "named": true
+        },
+        {
+          "type": "use_bounds",
+          "named": true
         }
       ]
     }
@@ -1077,6 +1093,10 @@
           },
           {
             "type": "for_expression",
+            "named": true
+          },
+          {
+            "type": "gen_block",
             "named": true
           },
           {
@@ -1406,33 +1426,25 @@
             "named": true
           }
         ]
-      }
-    }
-  },
-  {
-    "type": "constrained_type_parameter",
-    "named": true,
-    "fields": {
-      "bounds": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "trait_bounds",
-            "named": true
-          }
-        ]
       },
-      "left": {
+      "value": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
-            "type": "lifetime",
+            "type": "_literal",
             "named": true
           },
           {
-            "type": "type_identifier",
+            "type": "block",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "negative_literal",
             "named": true
           }
         ]
@@ -1491,6 +1503,10 @@
           },
           {
             "type": "scoped_type_identifier",
+            "named": true
+          },
+          {
+            "type": "tuple_type",
             "named": true
           },
           {
@@ -2214,6 +2230,21 @@
     }
   },
   {
+    "type": "gen_block",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "block",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "generic_function",
     "named": true,
     "fields": {
@@ -2245,6 +2276,36 @@
           }
         ]
       }
+    }
+  },
+  {
+    "type": "generic_pattern",
+    "named": true,
+    "fields": {
+      "type_arguments": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "type_arguments",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "scoped_identifier",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -2616,6 +2677,32 @@
     }
   },
   {
+    "type": "lifetime_parameter",
+    "named": true,
+    "fields": {
+      "bounds": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "trait_bounds",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "lifetime",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "line_comment",
     "named": true,
     "fields": {
@@ -2954,36 +3041,6 @@
     "fields": {}
   },
   {
-    "type": "optional_type_parameter",
-    "named": true,
-    "fields": {
-      "default_type": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "_type",
-            "named": true
-          }
-        ]
-      },
-      "name": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "constrained_type_parameter",
-            "named": true
-          },
-          {
-            "type": "type_identifier",
-            "named": true
-          }
-        ]
-      }
-    }
-  },
-  {
     "type": "or_pattern",
     "named": true,
     "fields": {},
@@ -3189,40 +3246,75 @@
   {
     "type": "range_pattern",
     "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "_literal_pattern",
-          "named": true
-        },
-        {
-          "type": "crate",
-          "named": true
-        },
-        {
-          "type": "identifier",
-          "named": true
-        },
-        {
-          "type": "metavariable",
-          "named": true
-        },
-        {
-          "type": "scoped_identifier",
-          "named": true
-        },
-        {
-          "type": "self",
-          "named": true
-        },
-        {
-          "type": "super",
-          "named": true
-        }
-      ]
+    "fields": {
+      "left": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "_literal_pattern",
+            "named": true
+          },
+          {
+            "type": "crate",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "metavariable",
+            "named": true
+          },
+          {
+            "type": "scoped_identifier",
+            "named": true
+          },
+          {
+            "type": "self",
+            "named": true
+          },
+          {
+            "type": "super",
+            "named": true
+          }
+        ]
+      },
+      "right": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "_literal_pattern",
+            "named": true
+          },
+          {
+            "type": "crate",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "metavariable",
+            "named": true
+          },
+          {
+            "type": "scoped_identifier",
+            "named": true
+          },
+          {
+            "type": "self",
+            "named": true
+          },
+          {
+            "type": "super",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -3583,6 +3675,7 @@
   {
     "type": "source_file",
     "named": true,
+    "root": true,
     "fields": {},
     "children": {
       "multiple": true,
@@ -4380,6 +4473,42 @@
     }
   },
   {
+    "type": "type_parameter",
+    "named": true,
+    "fields": {
+      "bounds": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "trait_bounds",
+            "named": true
+          }
+        ]
+      },
+      "default_type": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "_type",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "type_identifier",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "type_parameters",
     "named": true,
     "fields": {},
@@ -4396,11 +4525,7 @@
           "named": true
         },
         {
-          "type": "constrained_type_parameter",
-          "named": true
-        },
-        {
-          "type": "lifetime",
+          "type": "lifetime_parameter",
           "named": true
         },
         {
@@ -4408,11 +4533,7 @@
           "named": true
         },
         {
-          "type": "optional_type_parameter",
-          "named": true
-        },
-        {
-          "type": "type_identifier",
+          "type": "type_parameter",
           "named": true
         }
       ]
@@ -4552,6 +4673,25 @@
           }
         ]
       }
+    }
+  },
+  {
+    "type": "use_bounds",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "lifetime",
+          "named": true
+        },
+        {
+          "type": "type_identifier",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -4769,7 +4909,7 @@
     "fields": {},
     "children": {
       "multiple": true,
-      "required": true,
+      "required": false,
       "types": [
         {
           "type": "where_predicate",
@@ -5168,6 +5308,10 @@
     "named": false
   },
   {
+    "type": "expr_2021",
+    "named": false
+  },
+  {
     "type": "extern",
     "named": false
   },
@@ -5189,6 +5333,10 @@
   },
   {
     "type": "for",
+    "named": false
+  },
+  {
+    "type": "gen",
     "named": false
   },
   {
@@ -5268,6 +5416,10 @@
     "named": false
   },
   {
+    "type": "pat_param",
+    "named": false
+  },
+  {
     "type": "path",
     "named": false
   },
@@ -5277,6 +5429,10 @@
   },
   {
     "type": "pub",
+    "named": false
+  },
+  {
+    "type": "raw",
     "named": false
   },
   {
