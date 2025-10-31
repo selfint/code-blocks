@@ -22,14 +22,14 @@ signal="$example.signal"
 rm -f "$signal"
 touch "$signal"
 
-# run example in xvfb in the background
-EXAMPLE="$example" xvfb-run -s ":99 -ac -screen 0 800x600x24" node ./out/examples/runExample.js > "$signal" &
+# run example in xvfb in the background (sets DISPLAY to screen xvfb picked)
+EXAMPLE="$example" xvfb-run -a -s "-ac -screen 0 800x600x24" node ./out/examples/runExample.js > "$signal" &
 
 # wait for example to start
 while ! grep -q "@" "$signal"; do sleep 0.1; done
 
 # record example into .mov (mov is better than gif for recording)
-ffmpeg -y -f x11grab -video_size 800x600 -i :99 -c:v libx264 -pix_fmt yuv420p "$mov"
+ffmpeg -y -f x11grab -video_size 800x600 -i "$DISPLAY" -c:v libx264 -pix_fmt yuv420p "$mov"
 
 # wait for example to finish, recording will automatically finish (by crashing)
 wait
