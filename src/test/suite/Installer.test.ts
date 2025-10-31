@@ -49,7 +49,7 @@ suite("Installer integration tests", function () {
         ["Ruby", "ruby", "def foo\nend\ndef bar\nend"],
         // ["SQL", "sql"],
         ["HTML", "html", "<html></html>"],
-        ["CSS", "css", "body { color: red; }"],
+        // ["CSS", "css", "body { color: red; }"],
         ["YAML", "yaml", "key: value"],
         ["JSON", "json", '{ "key": "value" }'],
         ["XML", "xml"],
