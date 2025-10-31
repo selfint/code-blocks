@@ -4,6 +4,7 @@ import * as tar from "tar";
 import * as vscode from "vscode";
 import { ExecException, ExecOptions, exec } from "child_process";
 import { Result, err, ok } from "./result";
+import Parser from "tree-sitter";
 import { existsSync } from "fs";
 import { getLogger } from "./outputChannel";
 import { mkdir } from "fs/promises";
@@ -12,7 +13,7 @@ import which from "which";
 
 const NPM_INSTALL_URL = "https://nodejs.org/en/download";
 
-export type Language = NonNullable<unknown>;
+export type Language = Parser.Language;
 
 export function getAbsoluteParserDir(parsersDir: string, parserName: string): string {
     return path.resolve(path.join(parsersDir, parserName));
@@ -91,7 +92,7 @@ export async function downloadAndBuildParser(
     const installResult = await runCmd(
         `${npm} pack --verbose --json --pack-destination ${parserDir} ${parserNpmPackage}`,
         {},
-        onData
+        (d) => onData?.(d.toString())
     );
 
     let tarFilename: string | undefined = undefined;
@@ -138,7 +139,9 @@ export async function downloadAndBuildParser(
     }
 
     // if it fails, try to build it
-    const buildResult = await runCmd(`${treeSitterCli} generate`, { cwd: parserDir }, onData);
+    const buildResult = await runCmd(`${treeSitterCli} generate`, { cwd: parserDir }, (d) =>
+        onData?.(d.toString())
+    );
     if (buildResult.status === "err") {
         const msg =
             "Failed to build parser using tree-sitter cli > " +
@@ -159,18 +162,18 @@ export async function downloadAndBuildParser(
 async function runCmd(
     cmd: string,
     options: ExecOptions = {},
-    onData?: (data: string) => void
+    onData?: (data: Buffer) => void
 ): Promise<Result<string, [ExecException, string[]]>> {
     const logger = getLogger();
     logger.log(`Running command: ${cmd}`);
 
     const logs: string[] = [];
     return await new Promise((resolve) => {
-        const proc = exec(cmd, options, (error, stdout: string, _stderr) => {
+        const proc = exec(cmd, options, (error, stdout: string | Buffer, _stderr) => {
             if (error !== null) {
                 resolve(err([error, logs]));
             } else {
-                resolve(ok(stdout));
+                resolve(ok(stdout.toString()));
             }
         });
 

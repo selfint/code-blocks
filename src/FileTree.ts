@@ -48,7 +48,7 @@ export class FileTree implements vscode.Disposable {
 
         const queryStrings = getLanguageConfig(document.languageId).queries;
         if (queryStrings !== undefined) {
-            const language = parser.getLanguage() as Language;
+            const language = parser.getLanguage();
             this.queries = queryStrings.map((q) => new Query(language, q));
             this.blocks = getQueryBlocks(this.tree.rootNode, this.queries);
         }
