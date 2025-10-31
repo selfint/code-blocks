@@ -2,25 +2,18 @@ import * as vscode from "vscode";
 import { BlockMode, active, activeFileTree } from "../extension";
 import { FileTree } from "../FileTree";
 import { expect } from "chai";
-import { join } from "path";
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import settings from "./examples-editor/.vscode/settings.json";
 
 const TEST_START_SIGNAL = "@";
 export async function initExample(): Promise<void> {
-    const exampleEditorPath = join(__dirname, "examples-editor");
     await cmd("workbench.action.toggleLightDarkThemes");
-    await cmd("vscode.openFolder", vscode.Uri.file(exampleEditorPath), {
-        forceNewWindow: false,
-    });
+    await cmd("workbench.action.toggleAuxiliaryBar");
     await cmd("notifications.clearAll");
     await sleep(100);
     await cmd("notifications.clearAll");
 }
 
 export async function cmd(c: string, ...args: unknown[]): Promise<void> {
-    await vscode.commands.executeCommand(c, ...args);
+    return await vscode.commands.executeCommand(c, ...args);
 }
 
 export function zoomOut(): void {
@@ -83,7 +76,11 @@ export async function openDocument({
     content,
     maximize = true,
     cursor = undefined,
-}: OpenDocumentParams): Promise<{ activeEditor: vscode.TextEditor; fileTree: FileTree; realContent: string }> {
+}: OpenDocumentParams): Promise<{
+    activeEditor: vscode.TextEditor;
+    fileTree: FileTree;
+    realContent: string;
+}> {
     if (!active.get()) {
         active.set(true);
     }
@@ -115,7 +112,8 @@ export async function openDocument({
     }
 
     if (maximize) {
-        await vscode.commands.executeCommand("workbench.action.maximizeEditor");
+        await cmd("workbench.action.minimizeOtherEditors");
+        await cmd("workbench.action.closeSidebar");
     }
 
     let fileTree = activeFileTree.get();
@@ -185,9 +183,7 @@ export async function selectionExample({
     return activeEditor;
 }
 
-export type MoveCommand =
-    | "codeBlocks.moveDown"
-    | "codeBlocks.moveUp";
+export type MoveCommand = "codeBlocks.moveDown" | "codeBlocks.moveUp";
 
 export type TestMoveCommandsParams = {
     language: SupportedTestLanguages;
@@ -293,13 +289,15 @@ export async function testNavigateCommands({
     expect(newCursorIndex).to.equal(
         expectedNavigationDestinationIndex,
         "navigation commands didn't arrive to expected destination" +
-        `\n\tactual: ${cleanContent.substring(0, newCursorIndex) +
-        targetCursor +
-        cleanContent.substring(newCursorIndex)
-        }` +
-        `\n\texpect: ${cleanContent.substring(0, expectedNavigationDestinationIndex) +
-        targetCursor +
-        cleanContent.substring(expectedNavigationDestinationIndex)
-        }\n`
+            `\n\tactual: ${
+                cleanContent.substring(0, newCursorIndex) +
+                targetCursor +
+                cleanContent.substring(newCursorIndex)
+            }` +
+            `\n\texpect: ${
+                cleanContent.substring(0, expectedNavigationDestinationIndex) +
+                targetCursor +
+                cleanContent.substring(expectedNavigationDestinationIndex)
+            }\n`
     );
 }
