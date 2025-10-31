@@ -22,6 +22,73 @@ export function getAbsoluteBindingsDir(parsersDir: string, parserName: string): 
     return path.resolve(path.join(parsersDir, parserName, "bindings", "node", "index.js"));
 }
 
+async function installTool(toolsDir: string, toolNpmPackage: string): Promise<Result<string, string>> {
+    const logger = getLogger();
+    const expectedInstallPath = path.resolve(toolsDir, "node_modules", ...toolNpmPackage.split("/"));
+    if (existsSync(expectedInstallPath)) {
+        logger.log(`Tool ${toolNpmPackage} already installed at ${expectedInstallPath}`);
+        return ok(expectedInstallPath);
+    }
+
+    const npmCmd = "npm";
+
+    const npmAvailable = (await which(npmCmd, { nothrow: true })) !== null;
+    if (!npmAvailable) {
+        const msg = `npm command '${npmCmd}' is not in PATH. Install it from ${NPM_INSTALL_URL}`;
+        logger.log(msg);
+        return err(msg);
+    }
+
+    logger.log(`Installing ${toolNpmPackage} into ${toolsDir}`);
+    await mkdir(toolsDir, { recursive: true });
+
+    const cmd = `${npmCmd} install --no-audit --no-fund --silent --prefix ${toolsDir} ${toolNpmPackage}`;
+    const installResult = await runCmd(cmd, {}, (d) => logger.log(d.toString()));
+
+    if (installResult.status === "err") {
+        const [error, logs] = installResult.result;
+        const msg =
+            `Failed to install ${toolNpmPackage}: ${error.name}: ${error.message.replace(/\n/g, " > ")}` +
+            (logs.length ? ` Logs: ${logs.join(" > ")}` : "");
+        logger.log(msg);
+        return err(msg);
+    }
+
+    if (!existsSync(expectedInstallPath)) {
+        const msg = `Expected install path doesn't exist after install: ${expectedInstallPath}`;
+        logger.log(msg);
+        return err(msg);
+    }
+
+    logger.log(`Successfully installed ${toolNpmPackage} at ${expectedInstallPath}`);
+    return ok(expectedInstallPath);
+}
+
+export async function ensureCliTools(
+    toolsDir: string
+): Promise<Result<{ treeSitterCli: string; nodeGypBuild: string | undefined }, string>> {
+    const logger = getLogger();
+
+    const treeSitterCliResult = await installTool(toolsDir, "tree-sitter-cli");
+    if (treeSitterCliResult.status === "err") {
+        logger.log(treeSitterCliResult.result);
+        return err(treeSitterCliResult.result);
+    }
+    const treeSitterCli = path.join(treeSitterCliResult.result, ".bin", "tree-sitter");
+
+    // some packages work only with tree-sitter-cli, so it's not a critical error
+    // for node-gyp-build to be missing
+    const expectedInstallPath = await installTool(toolsDir, "node-gyp-build");
+    let nodeGypBuild: string | undefined = undefined;
+    if (expectedInstallPath.status === "err") {
+        logger.log(expectedInstallPath.result);
+    } else {
+        nodeGypBuild = path.join(expectedInstallPath.result, ".bin", "node-gyp-build");
+    }
+
+    return ok({ treeSitterCli, nodeGypBuild });
+}
+
 export function loadParser(
     parsersDir: string,
     parserName: string,
@@ -69,12 +136,10 @@ export async function downloadAndBuildParser(
     parserNpmPackage: string,
     parserName: string,
     npm: string,
-    treeSitterCli: string,
     onData?: (data: string) => void
 ): Promise<Result<void, string>> {
     const logger = getLogger();
 
-    // typescript-eslint is wrong, this can return null since we use 'nothrow'
     const npmCommandOk = (await which(npm, { nothrow: true })) !== null;
     if (!npmCommandOk) {
         const msg = `npm command: '${npm}' is not in PATH, try installing it from: ${NPM_INSTALL_URL}`;
@@ -124,11 +189,37 @@ export async function downloadAndBuildParser(
     }
 
     logger.log(`Optimistic load failed, trying to build parser ${parserName}`);
-    const treeSitterCliOk = await runCmd(`${treeSitterCli} --version`);
+    const toolsResult = await ensureCliTools(path.join(parserDir, "tools"));
+    if (toolsResult.status === "err") {
+        const msg = `Failed to ensure cli tools for building parser ${parserName} > ${toolsResult.result}`;
+        logger.log(msg);
+        return err(msg);
+    }
+    const tools = toolsResult.result;
+
+    // try node-gyp-build first if we can
+    if (tools.nodeGypBuild !== undefined) {
+        logger.log(`Trying to build parser ${parserName} using node-gyp-build`);
+
+        const nodeGypBuildResult = await runCmd(tools.nodeGypBuild, { cwd: parserDir }, (d) =>
+            onData?.(d.toString())
+        );
+        if (nodeGypBuildResult.status === "ok") {
+            logger.log(`Built parser ${parserName} successfully using node-gyp-build`);
+        } else {
+            logger.log(
+                `Failed to build parser ${parserName} using node-gyp-build > ${JSON.stringify(
+                    nodeGypBuildResult.result
+                )}`
+            );
+        }
+    }
+
+    const treeSitterCliOk = await runCmd(`${tools.treeSitterCli} --version`);
     if (treeSitterCliOk.status === "err") {
         const msg =
             `Parser ${parserName} requires local build, but
-            tree-sitter cli command '${treeSitterCli}' failed:
+            tree-sitter cli command '${tools.treeSitterCli}' failed:
             ${treeSitterCliOk.result[0].name} ${treeSitterCliOk.result[0].message.replace(/\n/g, " > ")}.` +
             (treeSitterCliOk.result[1].length > 1 ? ` Logs: ${treeSitterCliOk.result[1].join(">")}` : "");
 
@@ -137,7 +228,7 @@ export async function downloadAndBuildParser(
     }
 
     // if it fails, try to build it
-    const buildResult = await runCmd(`${treeSitterCli} generate`, { cwd: parserDir }, (d) =>
+    const buildResult = await runCmd(`${tools.treeSitterCli} generate`, { cwd: parserDir }, (d) =>
         onData?.(d.toString())
     );
     if (buildResult.status === "err") {
@@ -206,7 +297,6 @@ export async function getLanguage(
     const parserPackagePath = getAbsoluteParserDir(parsersDir, parserName);
 
     const npm = "npm";
-    const treeSitterCli = configuration.getTreeSitterCliPath();
 
     if (!existsSync(parserPackagePath)) {
         const doInstall = autoInstall
@@ -254,13 +344,8 @@ export async function getLanguage(
                 title: `Installing ${npmPackageName}`,
             },
             async (progress) => {
-                return await downloadAndBuildParser(
-                    parsersDir,
-                    npmPackageName,
-                    parserName,
-                    npm,
-                    treeSitterCli,
-                    (data) => progress.report({ message: data, increment: number++ })
+                return await downloadAndBuildParser(parsersDir, npmPackageName, parserName, npm, (data) =>
+                    progress.report({ message: data, increment: number++ })
                 );
             }
         );

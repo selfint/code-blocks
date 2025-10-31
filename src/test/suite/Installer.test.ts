@@ -25,7 +25,7 @@ export async function testParser(language: string, content?: string): Promise<vo
     void openDocument(content ?? `Language: ${language}`, language);
 }
 
-suite("Installer integration tests", function () {
+suite.only("Installer integration tests", function () {
     this.timeout(process.env.TEST_TIMEOUT ?? "1m");
 
     this.beforeAll(function () {

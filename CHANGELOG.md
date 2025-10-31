@@ -2,6 +2,10 @@
 
 # [Unreleased]
 
+## Removed
+
+- `codeBlocks.treeSitterCliPath` configuration: `tree-sitter` command now auto-installed.
+
 ## Fixed
 
 - Add 'Remove' option to notification if local parser installation fails to load.

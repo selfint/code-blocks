@@ -101,7 +101,6 @@ These are the default key bindings, they are only active when "block mode" is ac
 
 ### Global
 
--   `codeBlocks.treeSitterCliPath`: Path to the `tree-sitter` cli command. Defaults to `tree-sitter` (assumes command is in PATH).
 -   `codeBlocks.colors.enabled`: Whether Block Mode should color selections or not. Defaults to `false`.
 -   `codeBlocks.colors.sibling`: CSS string for sibling selection background color. Defaults to `var(--vscode-editor-selectionHighlightBackground)`.
 -   `codeBlocks.colors.parent`: CSS string for parent selection background color. Defaults to `var(--vscode-editor-linkedEditingBackground)`.

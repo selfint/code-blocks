@@ -186,11 +186,6 @@
     "configuration": {
       "title": "CodeBlocks",
       "properties": {
-        "codeBlocks.treeSitterCliPath": {
-          "type": "string",
-          "markdownDescription": "Path to the `tree-sitter` cli command, defaults to `tree-sitter`.",
-          "default": "tree-sitter"
-        },
         "codeBlocks.colors.enabled": {
           "type": "boolean",
           "description": "Whether block mode colors are enabled",

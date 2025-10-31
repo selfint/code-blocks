@@ -14,6 +14,7 @@ export function getLogger(): Logger {
     return {
         log: (message: string): void => {
             channel?.appendLine(message);
+            console.error(message);
         },
     };
 }
