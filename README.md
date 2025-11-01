@@ -45,13 +45,13 @@ View your code's syntax tree directly
 
 -   `node` / `npm`: Used to download tree-sitter language parsers. Can be installed from [here](https://nodejs.org/en/download).
 
--   **OPTIONAL:** `tree-sitter`: Used to for tree-sitter language parsers that need to be locally built.
+-   **OPTIONAL:** `tree-sitter` / `node-gyp-build`: Used for tree-sitter language parsers that need to be locally built.
 
     After installing `npm`, can be installed by running:
-    `npm i -g tree-sitter-cli`.
+    `npm i -g tree-sitter-cli node-gyp-build`.
 
-    If you don't want to install `tree-sitter`, there's a good chance you don't
-    need it. Try the extension without it, it will notify you if it's required.
+    If you don't want to install these tools, there's a good chance you don't
+    need them. Try the extension without it, it will notify you if it's required.
 
 ### Note
 
@@ -136,8 +136,6 @@ Language ID: `typescriptreact`
 
 NPM package name: [tree-sitter-typescript](https://www.npmjs.com/package/tree-sitter-typescript)
 
-WASM parser name: `tree-sitter-ts.wasm`
-
 Desired blocks: JSX blocks, and documentation comments should be merged with documentees.
 
 ```jsonc
@@ -170,7 +168,7 @@ Desired blocks: JSX blocks, and documentation comments should be merged with doc
 
 ## Known Issues
 
--   Out of bounds memory access ([#154](https://github.com/selfint/code-blocks/issues/154)): For now, reloading the editor fixes this.
+None as of 1/11/25.
 
 ## License
 
