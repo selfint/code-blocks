@@ -10,6 +10,8 @@
 
 - `toml` and `xml` support, thanks [@sanarise](https://github.com/selfint/code-blocks/pull/186)!
 
+- `css` support ([#191](https://github.com/selfint/code-blocks/issues/191)) by switching to more robust Parser loading method.
+
 ## Fixed
 
 - Add 'Remove' option to notification if parser fails to load ([#180](https://github.com/selfint/code-blocks/issues/180)).
