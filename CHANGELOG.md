@@ -6,6 +6,8 @@
 
 - Multi-cursor support in Block Mode, thanks [@CB2Moon](https://github.com/selfint/code-blocks/pull/188)!
 
+  ![example](./assets/examples/Block_Mode_-_Move_-_Rust_-_Match_arms.gif)
+
 - `toml` and `xml` support, thanks [@sanarise](https://github.com/selfint/code-blocks/pull/186)!
 
 ## Fixed
