@@ -44,7 +44,9 @@ source_file [1:0 - 10:0]
   struct_item [2:0 - 5:1]
     type_identifier [2:7 - 2:8]
     field_declaration_list [2:9 - 5:1]
-      line_comment [3:4 - 3:18]
+      line_comment [3:4 - 4:0]
+        outer_doc_comment_marker [3:6 - 3:7]
+        doc_comment [3:7 - 4:0]
       field_declaration [4:4 - 4:10]
         field_identifier [4:4 - 4:5]
         primitive_type [4:7 - 4:10]
@@ -60,10 +62,12 @@ source_file [1:0 - 10:0]
     await sleep(1500);
 
     const didChange = new Promise<vscode.Disposable>((r) => {
-        const disposable = vscode.workspace.onDidChangeTextDocument(event => {
+        const disposable = vscode.workspace.onDidChangeTextDocument((event) => {
             if (event.document.uri.toString() === treeViewerDocument.uri.toString()) {
-                if (event.document.getText() !== TreeViewer.placeholder &&
-                    !event.document.getText().startsWith("source_file")) {
+                if (
+                    event.document.getText() !== TreeViewer.placeholder &&
+                    !event.document.getText().startsWith("source_file")
+                ) {
                     r(disposable);
                 }
             }
