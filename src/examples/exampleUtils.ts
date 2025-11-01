@@ -35,13 +35,16 @@ export async function type(
 ): Promise<vscode.Position> {
     const chars = text.split("");
     const document = editor.document;
+
     let target = position;
     let offset = document.offsetAt(position);
     for (const char of chars) {
         const edit = new vscode.WorkspaceEdit();
         edit.insert(document.uri, target, char);
+
         editor.selection = new vscode.Selection(target, target);
         await vscode.workspace.applyEdit(edit);
+
         let noise = Math.random() * (delay / 2) - delay / 4;
         if (char === " ") {
             noise += delay;
