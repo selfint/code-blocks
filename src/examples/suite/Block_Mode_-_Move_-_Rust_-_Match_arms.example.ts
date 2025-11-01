@@ -30,7 +30,7 @@ fn main() {
         expectedSelectionContent: [
             `0 => println!("hi"),
         1 => println!("hello"),`,
-            `4 => println!("howdy there"),
+            `4 => println!("hiya"),
         5 => println!("hello there"),`,
         ],
         expectedContent: `\
