@@ -51,7 +51,7 @@ View your code's syntax tree directly
     `npm i -g tree-sitter-cli node-gyp-build`.
 
     If you don't want to install these tools, there's a good chance you don't
-    need them. Try the extension without it, it will notify you if it's required.
+    need them. Try the extension without it, it will notify you if they are required.
 
 ### Note
 
