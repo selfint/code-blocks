@@ -1,6 +1,6 @@
 <p align="center">
 <a href="https://github.com/selfint/code-blocks">
-<img src="./assets/extension-logo.png"alt="logo" width='128'/>
+<img src="./assets/extension-logo.png" alt="logo" width='128'/>
 </a>
 </p>
 
@@ -31,7 +31,7 @@ and manipulation (e.g. re-order function parameters), right inside your editor.
 
 ### Code Blocks Editor
 
-Birds eye view over all your code blocks, with point and click refactoring.
+Bird's-eye view over all your code blocks, with point and click refactoring.
 
 ![svelte-1](./assets/editor/Code%20Blocks%20Demo%20-%20Editor%20-%20svelte%201.gif)
 
@@ -50,8 +50,8 @@ View your code's syntax tree directly
     After installing `npm`, can be installed by running:
     `npm i -g tree-sitter-cli`.
 
-    If you don't want to install these tools, there's a good chance you don't
-    need them. Try the extension without it, it will notify you if they are required.
+    If you don't want to install this, there's a good chance you don't
+    need to. Try the extension without it, it will notify you if it is required.
 
 ### Note
 
@@ -167,7 +167,7 @@ Desired blocks: JSX blocks, and documentation comments should be merged with doc
 
 ## Known Issues
 
-None as of 1/11/25.
+No known issues as of November 1, 2025.
 
 ## License
 
