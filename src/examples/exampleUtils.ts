@@ -42,7 +42,13 @@ export async function type(
         edit.insert(document.uri, target, char);
         editor.selection = new vscode.Selection(target, target);
         await vscode.workspace.applyEdit(edit);
-        const noise = Math.random() * (delay / 2) - delay / 4;
+        let noise = Math.random() * (delay / 2) - delay / 4;
+        if (char === " ") {
+            noise += delay;
+        } else if ("()[]{}:\"'".includes(char)) {
+            noise += delay * 1.5;
+        }
+
         await sleep(delay + noise);
         offset++;
         target = document.positionAt(offset);
