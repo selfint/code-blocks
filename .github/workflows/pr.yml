@@ -53,6 +53,8 @@ jobs:
                   node-version: 20
             - name: Install asset generation dependencies
               run: |
+                sudo mkdir -p /usr/local/bin
+                sudo ln -sf /bin/true /usr/local/bin/mandb  # no-op to skip man-db triggers
                 sudo DEBIAN_FRONTEND=noninteractive apt update
                 sudo DEBIAN_FRONTEND=noninteractive \
                   apt install -y --no-install-recommends \
