@@ -40,9 +40,9 @@ export async function loadParser(
         let language: Language;
         try {
             language = ((await import(bindingsDir)) as { default: Language }).default;
-        } catch (error) {
+        } catch (_) {
             // TODO(1/11/25): Always use import and remove this backup
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
             language = require(bindingsDir) as Language;
         }
 
