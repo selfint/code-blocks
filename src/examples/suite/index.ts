@@ -1,6 +1,6 @@
 import * as path from "path";
 import Mocha from "mocha";
-import { glob } from "glob"; // ✅ named import for v10+
+import { glob } from "glob";
 
 export async function run(): Promise<void> {
     let example = process.env.EXAMPLE;

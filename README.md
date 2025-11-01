@@ -45,10 +45,10 @@ View your code's syntax tree directly
 
 -   `node` / `npm`: Used to download tree-sitter language parsers. Can be installed from [here](https://nodejs.org/en/download).
 
--   **OPTIONAL:** `tree-sitter` / `node-gyp-build`: Used for tree-sitter language parsers that need to be locally built.
+-   **OPTIONAL:** `tree-sitter`: Used for tree-sitter language parsers that need to be locally built.
 
     After installing `npm`, can be installed by running:
-    `npm i -g tree-sitter-cli node-gyp-build`.
+    `npm i -g tree-sitter-cli`.
 
     If you don't want to install these tools, there's a good chance you don't
     need them. Try the extension without it, it will notify you if they are required.
@@ -117,8 +117,7 @@ Or [create a pull request](https://github.com/selfint/code-blocks/pulls) with yo
 -   `codeBlocks.npmPackageName`: [NPM](https://www.npmjs.com/) package name of the `tree-sitter` parser to use for the
     language. Defaults to `tree-sitter-<languageId>`, change if the package name doesn't match the languageId.
 
--   `codeBlocks.parserName`: Filename of the WASM parser built by the `tree-sitter build --wasm` command, without the
-    `.wasm` extension. Defaults to `tree-sitter-<languageId>`, change if the parser filename doesn't match the languageId.
+-   `codeBlocks.parserName`: Name to save parser as (defaults to `tree-sitter-<languageID>`), change if the package name doesn't match the languageId (e.g., `tree-sitter-typescript` for `[typescriptreact]` languageId).
 
 -   `codeBlocks.subdirectory`: Directory inside the NPM package containing the `tree-sitter` grammar. Defaults to the
     root directory of the package, change if the grammar isn't there.

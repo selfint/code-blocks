@@ -1,10 +1,9 @@
 import * as vscode from "vscode";
 
 import { Block, getQueryBlocks } from "./BlockTree";
-import Parser, { Query, SyntaxNode, Tree } from "tree-sitter";
+import Parser, { type Language, Query, SyntaxNode, Tree } from "tree-sitter";
 import { Result, err, ok } from "./result";
 
-import { Language } from "./Installer";
 import { Selection } from "./Selection";
 import { getLanguageConfig } from "./configuration";
 import { getLogger } from "./outputChannel";
