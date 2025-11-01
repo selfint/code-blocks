@@ -10,7 +10,11 @@
 
 ## Fixed
 
-- Add 'Remove' option to notification if local parser installation fails to load.
+- Add 'Remove' option to notification if parser fails to load ([#180](https://github.com/selfint/code-blocks/issues/180)).
+
+## Deprecated
+
+- Support for `node` v18, it might still work, but the extension now requires `node` v20+.
 
 # 0.7.0
 
