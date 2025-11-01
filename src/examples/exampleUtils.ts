@@ -98,12 +98,14 @@ export async function openDocument({
         BlockMode.toggleBlockMode();
     }
 
-    let cursorIndex = -1;
+    const selections = [];
     if (cursor !== undefined) {
-        cursorIndex = content.indexOf(cursor);
-        expect(cursorIndex).not.to.equal(-1, `failed to find cursor '${cursor}' in content:\n${content}`);
-
-        content = content.replace(cursor, "");
+        let cursorIndex = content.indexOf(cursor);
+        while (cursorIndex > -1) {
+            content = content.replace(cursor, "");
+            selections.push(cursorIndex);
+            cursorIndex = content.indexOf(cursor);
+        }
     }
 
     const activeEditor = await vscode.window.showTextDocument(
@@ -113,10 +115,13 @@ export async function openDocument({
         })
     );
 
-    if (cursorIndex !== -1) {
-        activeEditor.selection = new vscode.Selection(
-            activeEditor.document.positionAt(cursorIndex),
-            activeEditor.document.positionAt(cursorIndex)
+    if (selections.length > 0) {
+        activeEditor.selections = selections.map(
+            (cursorIndex) =>
+                new vscode.Selection(
+                    activeEditor.document.positionAt(cursorIndex),
+                    activeEditor.document.positionAt(cursorIndex)
+                )
         );
     }
 
@@ -151,7 +156,7 @@ export type TestSelectionCommandsParams = {
     content: string;
     cursor: string;
     selectionCommands: SelectionCommand[];
-    expectedSelectionContent: string;
+    expectedSelectionContent: string | string[];
     pause: number;
 };
 
@@ -163,6 +168,10 @@ export async function selectionExample({
     language,
     pause,
 }: TestSelectionCommandsParams): Promise<vscode.TextEditor> {
+    if (typeof expectedSelectionContent === "string") {
+        expectedSelectionContent = [expectedSelectionContent];
+    }
+
     await initExample();
 
     const { activeEditor } = await openDocument({
@@ -183,9 +192,12 @@ export async function selectionExample({
         await sleep(pause);
     }
 
-    const selectionContent = activeEditor.document.getText(activeEditor.selection);
+    const selectionContent = activeEditor.selections
+        .map((s) => activeEditor.document.getText(s))
+        .join("\n--\n");
+
     expect(selectionContent).to.equal(
-        expectedSelectionContent,
+        expectedSelectionContent.join("\n--\n"),
         "selection commands didn't produce desired selection"
     );
 
@@ -201,7 +213,7 @@ export type TestMoveCommandsParams = {
     selectionCommands: SelectionCommand[];
     selectionMessage: string;
     moveCommands: MoveCommand[];
-    expectedSelectionContent: string;
+    expectedSelectionContent: string | string[];
     expectedContent: string;
     pause: number;
 };
@@ -216,6 +228,10 @@ export async function moveExample({
     expectedContent,
     pause,
 }: TestMoveCommandsParams): Promise<void> {
+    if (typeof expectedSelectionContent === "string") {
+        expectedSelectionContent = [expectedSelectionContent];
+    }
+
     await initExample();
 
     const { activeEditor } = await openDocument({
@@ -239,9 +255,12 @@ export async function moveExample({
 
     await sleep(pause);
 
-    const selectionContent = activeEditor.document.getText(activeEditor.selection);
+    const selectionContent = activeEditor.selections
+        .map((s) => activeEditor.document.getText(s))
+        .join("\n--\n");
+
     expect(selectionContent).to.equal(
-        expectedSelectionContent,
+        expectedSelectionContent.join("\n--\n"),
         "selection commands didn't produce desired selection"
     );
 
@@ -253,11 +272,13 @@ export async function moveExample({
     }
 
     const newContent = activeEditor.document.getText();
-    const newSelectionContent = activeEditor.document.getText(activeEditor.selection);
+    const newSelectionContent = activeEditor.selections
+        .map((s) => activeEditor.document.getText(s))
+        .join("\n--\n");
 
     expect(newContent).to.equal(expectedContent, "move command didn't produce desired content");
     expect(newSelectionContent).to.equal(
-        expectedSelectionContent,
+        expectedSelectionContent.join("\n--\n"),
         "move command didn't preserve selection content"
     );
 }
