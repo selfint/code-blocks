@@ -53,6 +53,7 @@ jobs:
                   node-version: 20
             - name: Install asset generation dependencies
               run: |
+                sudo DEBIAN_FRONTEND=noninteractive apt update
                 sudo DEBIAN_FRONTEND=noninteractive \
                   apt install -y --no-install-recommends \
                   ffmpeg libnss3 xvfb \
