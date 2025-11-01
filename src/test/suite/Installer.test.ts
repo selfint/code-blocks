@@ -4,10 +4,12 @@ import * as vscode from "vscode";
 import Parser from "tree-sitter";
 import { TreeViewer } from "../../TreeViewer";
 import { openDocument } from "./testUtils";
+import path from "path";
 
 export async function testParser(language: string, content?: string): Promise<void> {
     // fail the test if the parser could not be installed
-    const result = await Installer.getLanguage("test-parsers", language, true);
+    const testParsersDir = path.resolve(__dirname, "..", "..", "..", "test-parsers");
+    const result = await Installer.getLanguage(testParsersDir, language, true);
     if (result.status === "err") {
         throw new Error(`Failed to install language: ${JSON.stringify(result.result)}`);
     }
@@ -49,7 +51,7 @@ suite("Installer integration tests", function () {
         ["Ruby", "ruby", "def foo\nend\ndef bar\nend"],
         // ["SQL", "sql"],
         ["HTML", "html", "<html></html>"],
-        // ["CSS", "css", "body { color: red; }"],
+        ["CSS", "css", "body { color: red; }"],
         ["YAML", "yaml", "key: value"],
         ["JSON", "json", '{ "key": "value" }'],
         ["XML", "xml"],
@@ -57,7 +59,7 @@ suite("Installer integration tests", function () {
         // ["LaTeX", "latex"],
         ["Bash", "shellscript", "echo 'Hello, World!'"],
         ["TOML", "toml"],
-        // ["Swift", "swift"],
+        ["Swift", "swift"],
         ["Kotlin", "kotlin", "fun main() { }"],
         ["Zig", "zig", 'const std = @import("std");\n\npub fn main() void { }'],
     ];

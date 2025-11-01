@@ -5,14 +5,12 @@ import * as vscode from "vscode";
 import { ExecException, ExecOptions, exec } from "child_process";
 import { Result, err, ok } from "./result";
 import { existsSync, rmSync } from "fs";
-import Parser from "tree-sitter";
+import type { Language } from "tree-sitter";
 import { getLogger } from "./outputChannel";
 import { mkdir } from "fs/promises";
 import which from "which";
 
 const NPM_INSTALL_URL = "https://nodejs.org/en/download";
-
-export type Language = Parser.Language;
 
 export function getAbsoluteParserDir(parsersDir: string, parserName: string): string {
     return path.resolve(path.join(parsersDir, parserName));
@@ -22,11 +20,11 @@ export function getAbsoluteBindingsDir(parsersDir: string, parserName: string): 
     return path.resolve(path.join(parsersDir, parserName, "bindings", "node", "index.js"));
 }
 
-export function loadParser(
+export async function loadParser(
     parsersDir: string,
     parserName: string,
     subdirectory?: string
-): Result<Language, string> {
+): Promise<Result<Language, string>> {
     const logger = getLogger();
 
     const bindingsDir = getAbsoluteBindingsDir(parsersDir, parserName);
@@ -39,12 +37,14 @@ export function loadParser(
     try {
         logger.log(`Loading parser from ${bindingsDir}`);
 
-        // using dynamic import causes issues on windows
-        // make sure to test well on windows before changing this
-        // TODO(02/11/24): change to dynamic import
-        // let { default: language } = (await import(bindingsDir)) as { default: Language };
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        let language = require(bindingsDir) as Language;
+        let language: Language;
+        try {
+            language = ((await import(bindingsDir)) as { default: Language }).default;
+        } catch (error) {
+            // TODO(1/11/25): Always use import and remove this backup
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            language = require(bindingsDir) as Language;
+        }
 
         logger.log(`Got language: ${JSON.stringify(Object.keys(language))}`);
 
@@ -117,7 +117,7 @@ export async function downloadAndBuildParser(
     }
 
     // try to load parser optimistically
-    const loadResult = loadParser(parsersDir, parserName);
+    const loadResult = await loadParser(parsersDir, parserName);
     if (loadResult.status === "ok") {
         return ok(undefined);
     }
@@ -136,7 +136,7 @@ export async function downloadAndBuildParser(
     }
 
     // if it fails, try to build it
-    const buildResult = await runCmd(`${treeSitterCli} generate`, { cwd: parserDir }, (d) =>
+    const buildResult = await runCmd(`${treeSitterCli} build`, { cwd: parserDir }, (d) =>
         onData?.(d.toString())
     );
     if (buildResult.status === "err") {
@@ -272,7 +272,7 @@ export async function getLanguage(
         }
     }
 
-    const loadResult = loadParser(parsersDir, parserName, subdirectory);
+    const loadResult = await loadParser(parsersDir, parserName, subdirectory);
     if (loadResult.status === "err") {
         const msg = `Failed to load parser for language ${languageId} > ${loadResult.result}`;
 
