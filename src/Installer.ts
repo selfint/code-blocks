@@ -37,14 +37,7 @@ export async function loadParser(
     try {
         logger.log(`Loading parser from ${bindingsDir}`);
 
-        let language: Language;
-        try {
-            language = ((await import(bindingsDir)) as { default: Language }).default;
-        } catch (_) {
-            // TODO(1/11/25): Always use import and remove this backup
-            // eslint-disable-next-line @typescript-eslint/no-require-imports
-            language = require(bindingsDir) as Language;
-        }
+        let language = ((await import(bindingsDir)) as { default: Language }).default;
 
         logger.log(`Got language: ${JSON.stringify(Object.keys(language))}`);
 
