@@ -68,7 +68,7 @@ export async function downloadAndBuildParser(
     parserNpmPackage: string,
     parserName: string,
     npm: string,
-    treeSitterCli: string,
+    rebuild: boolean = false,
     onData?: (data: string) => void
 ): Promise<Result<void, string>> {
     const logger = getLogger();
@@ -117,31 +117,37 @@ export async function downloadAndBuildParser(
     }
 
     // try to load parser optimistically
-    const loadResult = await loadParser(parsersDir, parserName);
-    if (loadResult.status === "ok") {
-        return ok(undefined);
+    if (!rebuild) {
+        const loadResult = await loadParser(parsersDir, parserName);
+        if (loadResult.status === "ok") {
+            return ok(undefined);
+        }
+        logger.log(`Optimistic load failed for parser ${parserName}`);
     }
 
-    logger.log(`Optimistic load failed, trying to build parser ${parserName}`);
-    const treeSitterCliOk = await runCmd(`${treeSitterCli} --version`);
-    if (treeSitterCliOk.status === "err") {
+    // if it fails, try to build it
+    logger.log(`Building parser ${parserName}`);
+    const installDepsResult = await runCmd(`${npm} install --verbose`, { cwd: parserDir }, (d) =>
+        onData?.(d.toString())
+    );
+    if (installDepsResult.status === "err") {
         const msg =
-            `Parser ${parserName} requires local build, but
-            tree-sitter cli command '${treeSitterCli}' failed:
-            ${treeSitterCliOk.result[0].name} ${treeSitterCliOk.result[0].message.replace(/\n/g, " > ")}.` +
-            (treeSitterCliOk.result[1].length > 1 ? ` Logs: ${treeSitterCliOk.result[1].join(">")}` : "");
+            "Failed to install parser dependencies > " +
+            installDepsResult.result[0].name +
+            ": " +
+            installDepsResult.result[0].message.replace(/\n/g, " > ") +
+            (installDepsResult.result[1].length > 1 ? ` Logs: ${installDepsResult.result[1].join(">")}` : "");
 
         logger.log(msg);
         return err(msg);
     }
 
-    // if it fails, try to build it
-    const buildResult = await runCmd(`${treeSitterCli} build`, { cwd: parserDir }, (d) =>
+    const buildResult = await runCmd(`${npm} rebuild --verbose`, { cwd: parserDir }, (d) =>
         onData?.(d.toString())
     );
     if (buildResult.status === "err") {
         const msg =
-            "Failed to build parser using tree-sitter cli > " +
+            "Failed to build parser > " +
             buildResult.result[0].name +
             ": " +
             buildResult.result[0].message.replace(/\n/g, " > ") +
@@ -191,7 +197,8 @@ export type GetLanguageError = {
 export async function getLanguage(
     parsersDir: string,
     languageId: string,
-    autoInstall = false
+    autoInstall = false,
+    rebuild = false
 ): Promise<Result<Language | undefined, GetLanguageError>> {
     const logger = getLogger();
 
@@ -205,7 +212,6 @@ export async function getLanguage(
     const parserPackagePath = getAbsoluteParserDir(parsersDir, parserName);
 
     const npm = "npm";
-    const treeSitterCli = configuration.getTreeSitterCliPath();
 
     if (!existsSync(parserPackagePath)) {
         const doInstall = autoInstall
@@ -258,7 +264,7 @@ export async function getLanguage(
                     npmPackageName,
                     parserName,
                     npm,
-                    treeSitterCli,
+                    rebuild,
                     (data) => progress.report({ message: data, increment: number++ })
                 );
             }
