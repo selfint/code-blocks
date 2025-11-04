@@ -24,8 +24,7 @@ Supercharge your editor with syntactically aware code navigation and manipulatio
 
 ### Block mode
 
-Syntactically aware code selection (e.g. select scope), navigation (e.g. goto next function)
-and manipulation (e.g. re-order function parameters), right inside your editor.
+Syntactically aware code selection (e.g. select scope), navigation (e.g. goto next function) and manipulation (e.g. re-order function parameters), right inside your editor.
 
 ![rust_parameters_example](./assets/examples/Block_Mode_-_Move_-_Rust_-_Parameters.gif)
 
@@ -43,15 +42,7 @@ View your code's syntax tree directly
 
 ## Requirements
 
--   `node` / `npm`: Used to download tree-sitter language parsers. Can be installed from [here](https://nodejs.org/en/download).
-
--   **OPTIONAL:** `tree-sitter`: Used for tree-sitter language parsers that need to be locally built.
-
-    After installing `npm`, can be installed by running:
-    `npm i -g tree-sitter-cli`.
-
-    If you don't want to install this, there's a good chance you don't
-    need to. Try the extension without it, it will notify you if it is required.
+- `npm`: Used to download and build tree-sitter language parsers. Can be installed from [here](https://nodejs.org/en/download). Must be in `PATH`.
 
 ### Note
 
@@ -101,28 +92,24 @@ These are the default key bindings, they are only active when "block mode" is ac
 
 ### Global
 
--   `codeBlocks.colors.enabled`: Whether Block Mode should color selections or not. Defaults to `false`.
--   `codeBlocks.colors.sibling`: CSS string for sibling selection background color. Defaults to `var(--vscode-editor-selectionHighlightBackground)`.
--   `codeBlocks.colors.parent`: CSS string for parent selection background color. Defaults to `var(--vscode-editor-linkedEditingBackground)`.
--   `codeBlocks.ignoredLanguageIds`: Array of VScode [languageId](https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers)s not to install/load parsers for.
+- `codeBlocks.colors.enabled`: Whether Block Mode should color selections or not. Defaults to `false`.
+- `codeBlocks.colors.sibling`: CSS string for sibling selection background color. Defaults to `var(--vscode-editor-selectionHighlightBackground)`.
+- `codeBlocks.colors.parent`: CSS string for parent selection background color. Defaults to `var(--vscode-editor-linkedEditingBackground)`.
+- `codeBlocks.ignoredLanguageIds`: Array of VScode [languageId](https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers)s not to install/load parsers for.
 
 ### Language specific (advanced)
 
 These configurations are set at the [languageId](https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers) level.
 
-Most languages should just work™, if you find a language that requires manual configuration please [create an issue](https://github.com/selfint/code-blocks/issues).
-Or [create a pull request](https://github.com/selfint/code-blocks/pulls) with your configuration added to the `configurationDefaults` section of the `package.json` file.
+Most languages should just work™, if you find a language that requires manual configuration please [create an issue](https://github.com/selfint/code-blocks/issues). Or [create a pull request](https://github.com/selfint/code-blocks/pulls) with your configuration added to the `configurationDefaults` section of the `package.json` file.
 
--   `codeBlocks.npmPackageName`: [NPM](https://www.npmjs.com/) package name of the `tree-sitter` parser to use for the
-    language. Defaults to `tree-sitter-<languageId>`, change if the package name doesn't match the languageId.
+- `codeBlocks.npmPackageName`: [NPM](https://www.npmjs.com/) package name of the `tree-sitter` parser to use for the language. Defaults to `tree-sitter-<languageId>`, change if the package name doesn't match the languageId.
 
--   `codeBlocks.parserName`: Name to save parser as (defaults to `tree-sitter-<languageID>`), change if the package name doesn't match the languageId (e.g., `tree-sitter-typescript` for `[typescriptreact]` languageId).
+- `codeBlocks.parserName`: Name to save parser as (defaults to `tree-sitter-<languageID>`), change if the package name doesn't match the languageId (e.g., `tree-sitter-typescript` for `[typescriptreact]` languageId).
 
--   `codeBlocks.subdirectory`: Directory inside the NPM package containing the `tree-sitter` grammar. Defaults to the
-    root directory of the package, change if the grammar isn't there.
+- `codeBlocks.subdirectory`: Directory inside the NPM package containing the `tree-sitter` grammar. Defaults to the root directory of the package, change if the grammar isn't there.
 
--   `codeBlocks.queries`: Tree-sitter [queries](https://tree-sitter.github.io/tree-sitter/using-parsers#query-syntax)
-    to generate blocks, must contain at least one `@capture`. The name of the capture doesn't matter, the entire match will be a block.
+- `codeBlocks.queries`: Tree-sitter [queries](https://tree-sitter.github.io/tree-sitter/using-parsers#query-syntax) to generate blocks, must contain at least one `@capture`. The name of the capture doesn't matter, the entire match will be a block.
 
     Required by [Code Blocks Editor](#code-blocks-editor).
 
@@ -162,7 +149,7 @@ Desired blocks: JSX blocks, and documentation comments should be merged with doc
 
 ### Custom editors
 
--   Code Blocks Editor (viewType `codeBlocks.editor`): UI for moving code blocks inside a file. Useful when refactoring large blocks over long distances.
+- Code Blocks Editor (viewType `codeBlocks.editor`): UI for moving code blocks inside a file. Useful when refactoring large blocks over long distances.
 
 ## Known Issues
 
@@ -201,4 +188,3 @@ MIT License © 2023 [Tom Selfin](https://github.com/selfint)
 ### Tree Viewer
 
 ![Tree Viewer](assets/examples/Tree_Viewer.gif)
-
