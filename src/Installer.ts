@@ -17,7 +17,7 @@ export function getAbsoluteParserDir(parsersDir: string, parserName: string): st
     return path.resolve(path.join(parsersDir, parserName));
 }
 
-export function getAbsoluteBindingsDir(parsersDir: string, parserName: string): string {
+export function getAbsoluteBindingsPath(parsersDir: string, parserName: string): string {
     return path.resolve(path.join(parsersDir, parserName, "bindings", "node", "index.js"));
 }
 
@@ -28,17 +28,17 @@ export async function loadParser(
 ): Promise<Result<Language, string>> {
     const logger = getLogger();
 
-    const bindingsDir = getAbsoluteBindingsDir(parsersDir, parserName);
-    if (!existsSync(bindingsDir)) {
-        const msg = `Expected parser directory doesn't exist: ${bindingsDir}`;
+    const bindingsPath = getAbsoluteBindingsPath(parsersDir, parserName);
+    if (!existsSync(bindingsPath)) {
+        const msg = `Expected parser bindings don't exist: ${bindingsPath}`;
         logger.log(msg);
         return err(msg);
     }
 
     try {
-        logger.log(`Loading parser from ${bindingsDir}`);
+        logger.log(`Loading parser from ${bindingsPath}`);
 
-        let language = ((await import(pathToFileURL(bindingsDir).href)) as { default: Language }).default;
+        let language = ((await import(pathToFileURL(bindingsPath).href)) as { default: Language }).default;
 
         logger.log(`Got language: ${JSON.stringify(Object.keys(language))}`);
 
@@ -52,8 +52,8 @@ export async function loadParser(
 
         return ok(language);
     } catch (error) {
-        logger.log(`Failed to load ${bindingsDir} > ${JSON.stringify(error)}`);
-        return err(`Failed to load ${bindingsDir} > ${JSON.stringify(error)}`);
+        logger.log(`Failed to load ${bindingsPath} > ${JSON.stringify(error)}`);
+        return err(`Failed to load ${bindingsPath} > ${JSON.stringify(error)}`);
     }
 }
 
