@@ -51,9 +51,11 @@ export async function loadParser(
         }
 
         return ok(language);
-    } catch (error) {
-        logger.log(`Failed to load ${bindingsPath} > ${JSON.stringify(error)}`);
-        return err(`Failed to load ${bindingsPath} > ${JSON.stringify(error)}`);
+    } catch (error: unknown) {
+        const msg = error instanceof Error ? `${error.name}: ${error.message}` : JSON.stringify(error);
+
+        logger.log(`Failed to load ${bindingsPath} > ${msg}`);
+        return err(`Failed to load ${bindingsPath} > ${msg}`);
     }
 }
 
@@ -245,7 +247,6 @@ export async function getLanguage(
             return ok(undefined);
         }
 
-        let number = 0;
         const downloadResult = await vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Notification,
@@ -259,7 +260,7 @@ export async function getLanguage(
                     parserName,
                     npm,
                     rebuild,
-                    (data) => progress.report({ message: data, increment: number++ })
+                    (data) => progress.report({ message: data })
                 );
             }
         );
