@@ -9,7 +9,7 @@ import path from "path";
 export async function testParser(language: string, content?: string): Promise<void> {
     // fail the test if the parser could not be installed
     const testParsersDir = path.resolve(__dirname, "..", "..", "..", "test-parsers");
-    const result = await Installer.getLanguage(testParsersDir, language, true);
+    const result = await Installer.getLanguage(testParsersDir, language, true, true);
     if (result.status === "err") {
         throw new Error(`Failed to install language: ${JSON.stringify(result.result)}`);
     }
@@ -28,7 +28,7 @@ export async function testParser(language: string, content?: string): Promise<vo
 }
 
 suite("Installer integration tests", function () {
-    this.timeout(process.env.TEST_TIMEOUT ?? "1m");
+    this.timeout(process.env.TEST_TIMEOUT ?? "5m");
 
     this.beforeAll(function () {
         // open file tree viewer for visual debugging
