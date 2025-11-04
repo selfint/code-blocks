@@ -120,7 +120,7 @@ export async function downloadAndBuildParser(
 
     // if it fails, try to build it
     logger.log(`Building parser ${parserName}`);
-    const installDepsResult = await runCmd(`${npm} install --verbose`, { cwd: parserDir }, (d) =>
+    const installDepsResult = await runCmd(`${npm} install --loglevel=silly`, { cwd: parserDir }, (d) =>
         onData?.(d.toString())
     );
     if (installDepsResult.status === "err") {
@@ -135,7 +135,7 @@ export async function downloadAndBuildParser(
         return err(msg);
     }
 
-    const buildResult = await runCmd(`${npm} rebuild --verbose`, { cwd: parserDir }, (d) =>
+    const buildResult = await runCmd(`${npm} rebuild --loglevel=silly`, { cwd: parserDir }, (d) =>
         onData?.(d.toString())
     );
     if (buildResult.status === "err") {
