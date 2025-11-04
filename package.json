@@ -344,6 +344,12 @@
             "[csharp]": {
                 "codeBlocks.npmPackageName": "tree-sitter-c-sharp",
                 "codeBlocks.parserName": "tree-sitter-c_sharp"
+            },
+            "[latex]": {
+                "codeBlocks.npmPackageName": "@pfoerster/tree-sitter-latex"
+            },
+            "[sql]": {
+                "codeBlocks.npmPackageName": "@derekstride/tree-sitter-sql"
             }
         }
     },
