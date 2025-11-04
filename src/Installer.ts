@@ -64,6 +64,7 @@ export async function downloadAndBuildParser(
     parserNpmPackage: string,
     parserName: string,
     npm: string,
+    nodeGyp: string,
     rebuild: boolean = false,
     onData?: (data: string) => void
 ): Promise<Result<void, string>> {
@@ -123,23 +124,10 @@ export async function downloadAndBuildParser(
 
     // if it fails, try to build it
     logger.log(`Building parser ${parserName}`);
-    const installDepsResult = await runCmd(`${npm} install --loglevel=silly`, { cwd: parserDir }, (d) =>
-        onData?.(d.toString())
-    );
-    if (installDepsResult.status === "err") {
-        const msg =
-            "Failed to install parser dependencies > " +
-            installDepsResult.result[0].name +
-            ": " +
-            installDepsResult.result[0].message.replace(/\n/g, " > ") +
-            (installDepsResult.result[1].length > 1 ? ` Logs: ${installDepsResult.result[1].join(">")}` : "");
-
-        logger.log(msg);
-        return err(msg);
-    }
-
-    const buildResult = await runCmd(`${npm} rebuild --loglevel=silly`, { cwd: parserDir }, (d) =>
-        onData?.(d.toString())
+    const buildResult = await runCmd(
+        `${nodeGyp} --loglevel silly rebuild --target=${process.versions.electron} --dist-url=https://electronjs.org/headers --runtime=electron`,
+        { cwd: parserDir },
+        (d) => onData?.(d.toString())
     );
     if (buildResult.status === "err") {
         const msg =
@@ -208,6 +196,7 @@ export async function getLanguage(
     const parserPackagePath = getAbsoluteParserDir(parsersDir, parserName);
 
     const npm = "npm";
+    const nodeGyp = "npx --yes node-gyp";
 
     if (!existsSync(parserPackagePath)) {
         const doInstall = autoInstall
@@ -259,6 +248,7 @@ export async function getLanguage(
                     npmPackageName,
                     parserName,
                     npm,
+                    nodeGyp,
                     rebuild,
                     (data) => progress.report({ message: data })
                 );
