@@ -20,6 +20,10 @@
 
 - Support for `node` v18, it might still work, but the extension now requires `node` v20+.
 
+## Removed
+
+- `codeBlocks.treeSitterCliPath` configuration: The Extension now only requires `npm`.
+
 # 0.7.0
 
 Finally, switched to `node-tree-sitter`! 🎉
