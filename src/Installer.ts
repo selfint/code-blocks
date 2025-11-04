@@ -8,6 +8,7 @@ import { existsSync, rmSync } from "fs";
 import type { Language } from "tree-sitter";
 import { getLogger } from "./outputChannel";
 import { mkdir } from "fs/promises";
+import { pathToFileURL } from "node:url";
 import which from "which";
 
 const NPM_INSTALL_URL = "https://nodejs.org/en/download";
@@ -37,7 +38,7 @@ export async function loadParser(
     try {
         logger.log(`Loading parser from ${bindingsDir}`);
 
-        let language = ((await import(bindingsDir)) as { default: Language }).default;
+        let language = ((await import(pathToFileURL(bindingsDir).href)) as { default: Language }).default;
 
         logger.log(`Got language: ${JSON.stringify(Object.keys(language))}`);
 
