@@ -64,7 +64,6 @@ export async function downloadAndBuildParser(
     parserNpmPackage: string,
     parserName: string,
     npm: string,
-    nodeGyp: string,
     rebuild: boolean = false,
     onData?: (data: string) => void
 ): Promise<Result<void, string>> {
@@ -125,7 +124,7 @@ export async function downloadAndBuildParser(
     // if it fails, try to build it
     logger.log(`Building parser ${parserName}`);
     const buildResult = await runCmd(
-        `${nodeGyp} --loglevel silly rebuild --target=${process.versions.electron} --dist-url=https://electronjs.org/headers --runtime=electron`,
+        `${npm} exec --yes --loglevel silly --prefix ${parsersDir} node-gyp rebuild --target=${process.versions.electron} --dist-url=https://electronjs.org/headers --runtime=electron`,
         { cwd: parserDir },
         (d) => onData?.(d.toString())
     );
@@ -196,7 +195,6 @@ export async function getLanguage(
     const parserPackagePath = getAbsoluteParserDir(parsersDir, parserName);
 
     const npm = "npm";
-    const nodeGyp = "npx --yes node-gyp";
 
     if (!existsSync(parserPackagePath)) {
         const doInstall = autoInstall
@@ -248,7 +246,6 @@ export async function getLanguage(
                     npmPackageName,
                     parserName,
                     npm,
-                    nodeGyp,
                     rebuild,
                     (data) => progress.report({ message: data })
                 );
