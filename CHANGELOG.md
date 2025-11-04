@@ -10,11 +10,17 @@
 
 - `toml` and `xml` support, thanks [@sanarise](https://github.com/selfint/code-blocks/pull/186)!
 
-- `css` support ([#191](https://github.com/selfint/code-blocks/issues/191)) by switching to more robust Parser loading method.
+- `sql` and `latex` support using [@derekstride/tree-sitter-sql](https://github.com/DerekStride/tree-sitter-sql) and [@derekstride/tree-sitter-sql](https://github.com/latex-lsp/tree-sitter-latex).
+
+- ESM-based parser loading for parsers like CSS ([#191](https://github.com/selfint/code-blocks/issues/191)).
+
+- 'Remove' option to notification when parser fails to load ([#180](https://github.com/selfint/code-blocks/issues/180)).
+
+- More languages are now tested in advance: TOML, XML, CSS, Zig, Swift, SQL, LaTeX.
 
 ## Fixed
 
-- Add 'Remove' option to notification if parser fails to load ([#180](https://github.com/selfint/code-blocks/issues/180)).
+- Parser build method ([[#193](https://github.com/selfint/code-blocks/issues/193)]), now uses `node-gyp` instead of `tree-sitter-cli`.
 
 ## Deprecated
 
