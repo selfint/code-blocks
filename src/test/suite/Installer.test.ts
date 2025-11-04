@@ -27,7 +27,7 @@ export async function testParser(language: string, content?: string): Promise<vo
     void openDocument(content ?? `Language: ${language}`, language);
 }
 
-suite.only("Installer integration tests", function () {
+suite("Installer integration tests", function () {
     this.timeout(process.env.TEST_TIMEOUT ?? "5m");
 
     this.beforeAll(function () {
@@ -36,7 +36,7 @@ suite.only("Installer integration tests", function () {
         void vscode.workspace.openTextDocument(TreeViewer.uri);
     });
 
-    const _prebuiltTests = [
+    const prebuiltTests = [
         ["Rust", "rust", "fn foo() {}\nfn bar() {}"],
         ["TypeScript", "typescript", "function foo() {}\nfunction bar() {}"],
         ["TSX", "typescriptreact", "function Foo(a: string) { return <div />; }\nfunction Bar() {  }"],
@@ -64,11 +64,7 @@ suite.only("Installer integration tests", function () {
         ["Zig", "zig", 'const std = @import("std");\n\npub fn main() void { }'],
     ];
 
-    [["CSS", "css", "body { color: red; }"]].forEach(([name, language, content]) => {
+    prebuiltTests.forEach(([name, language, content]) => {
         test(name, async () => await testParser(language, content));
     });
-
-    // prebuiltTests.forEach(([name, language, content]) => {
-    //     test(name, async () => await testParser(language, content));
-    // });
 });
