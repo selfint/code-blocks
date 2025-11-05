@@ -83,7 +83,6 @@ jobs:
 
     package:
         name: Package extension
-        needs: examples
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
