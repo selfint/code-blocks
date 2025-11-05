@@ -7,8 +7,5 @@
 !LICENSE
 !README.md
 !assets/extension-logo.png
-!node_modules/tree-sitter
-!node_modules/node-gyp-build
-!node_modules/node-addon-api
 !out/extension.js
 !webview-ui/public
