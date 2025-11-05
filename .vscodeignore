@@ -10,10 +10,12 @@
 !out/extension.js
 !webview-ui/public
 
-# order matters here - keep tree sitter dependency
-!node_modules/tree-sitter
+# keep only non-compiled dependency files
 !node_modules/node-gyp-build
 !node_modules/node-addon-api
-
-# but do NOT keep the .node files
-**/*.node
+!node_modules/tree-sitter/src
+!node_modules/tree-sitter/vendor
+!node_modules/tree-sitter/binding.gyp
+!node_modules/tree-sitter/index.js
+!node_modules/tree-sitter/package.json
+!node_modules/tree-sitter/LICENSE
