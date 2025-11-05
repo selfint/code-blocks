@@ -295,3 +295,42 @@ export function removeLanguage(parsersDir: string, languageId: string): void {
     }
     logger.log(`Removed parser '${parserPackagePath}'`);
 }
+
+export async function installTreeSitter(extensionDir: string, npm: string): Promise<Result<void, string>> {
+    const logger = getLogger();
+
+    // try to load tree-sitter optimistically
+    try {
+        await import("tree-sitter");
+        return ok(undefined);
+    } catch (_) {
+        logger.log(`Tree-sitter not found, installing it with npm`);
+    }
+
+    const result = await vscode.window.withProgress(
+        {
+            location: vscode.ProgressLocation.Notification,
+            cancellable: false,
+            title: `Installing extension dependencies`,
+        },
+        async (progress) =>
+            await runCmd(`${npm} install --loglevel=silly --production`, { cwd: extensionDir }, (d) =>
+                progress.report({ message: d.toString() })
+            )
+    );
+
+    if (result.status === "ok") {
+        return ok(undefined);
+    }
+
+    const msg =
+        "Failed to install extension dependencies > " +
+        result.result[0].name +
+        ": " +
+        result.result[0].message.replace(/\n/g, " > ") +
+        (result.result[1].length > 1 ? ` Logs: ${result.result[1].join(">")}` : "");
+
+    void vscode.window.showErrorMessage(msg);
+    logger.log(msg);
+    return err(msg);
+}
