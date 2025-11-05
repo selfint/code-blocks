@@ -9,3 +9,11 @@
 !assets/extension-logo.png
 !out/extension.js
 !webview-ui/public
+
+# order matters here - keep tree sitter dependency
+!node_modules/tree-sitter
+!node_modules/node-gyp-build
+!node_modules/node-addon-api
+
+# but do NOT keep the .node files
+**/*.node

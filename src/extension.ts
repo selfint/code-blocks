@@ -101,20 +101,6 @@ export { BlockMode };
 export function activate(context: vscode.ExtensionContext): void {
     getLogger().log("CodeBlocks activated");
 
-    const npm = "npm";
-
-    Installer.installTreeSitter(context.extensionPath, npm)
-        .then(() => _activate(context))
-        .catch(() => {
-            vscode.window.showErrorMessage(
-                "Failed to install Tree-sitter. Please ensure that Node.js and npm are installed and available in your PATH."
-            );
-        });
-}
-
-export function _activate(context: vscode.ExtensionContext): void {
-    getLogger().log("CodeBlocks _activated");
-
     const parsersDir = join(
         context.extensionPath,
         context.extensionMode === vscode.ExtensionMode.Test ? "test-parsers" : "parsers"
