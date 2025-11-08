@@ -10,12 +10,6 @@
 !out/extension.js
 !webview-ui/public
 
-# keep only non-compiled dependency files
 !node_modules/node-gyp-build
 !node_modules/node-addon-api
-!node_modules/tree-sitter/src
-!node_modules/tree-sitter/vendor
-!node_modules/tree-sitter/binding.gyp
-!node_modules/tree-sitter/index.js
-!node_modules/tree-sitter/package.json
-!node_modules/tree-sitter/LICENSE
+!node_modules/tree-sitter

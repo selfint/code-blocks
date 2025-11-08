@@ -22,6 +22,8 @@
 
 - Parser build method ([[#193](https://github.com/selfint/code-blocks/issues/193)]), now uses `node-gyp` instead of `tree-sitter-cli`.
 
+- Binary dependency caused extension to fail on non-Mac systems ([#195](https://github.com/selfint/code-blocks/issues/195)).
+
 ## Deprecated
 
 - Support for `node` v18, it might still work, but the extension now requires `node` v20+.

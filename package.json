@@ -12,7 +12,7 @@
         "email": "selfint@gmail.com"
     },
     "homepage": "https://github.com/selfint/code-blocks#readme",
-    "icon": "./assets/extension-logo.png",
+    "icon": "assets/extension-logo.png",
     "galleryBanner": {
         "color": "#6295E3",
         "theme": "dark"
