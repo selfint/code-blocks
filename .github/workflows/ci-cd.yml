@@ -72,8 +72,8 @@ jobs:
             npm_config_arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
         with:
           node-version: 22.x
       - name: Install extension dependencies
@@ -89,7 +89,7 @@ jobs:
       - shell: pwsh
         run: echo "target=${{ matrix.platform }}-${{ matrix.arch }}" >> $env:GITHUB_ENV
       - run: npx --yes vsce package --yarn --githubBranch ${{ env.BRANCH }} --target ${{ env.target }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: code-blocks-${{ env.BRANCH }}-${{ env.target }}
           path: "*.vsix"
@@ -99,11 +99,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-            node-version: 20
+          node-version: 22.x
       - name: Install asset generation dependencies
         run: |
           sudo mkdir -p /usr/local/bin
@@ -128,7 +128,7 @@ jobs:
           chmod +x ./generate-example-asset.sh
           ./generate-assets.sh ./out/examples .
       - name: Upload assets
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ env.BRANCH }}-assets
           path: |
@@ -139,12 +139,12 @@ jobs:
     needs: test
     if: success() && startsWith(github.ref, 'refs/tags/v') && github.event_name == 'workflow_dispatch' && inputs.publish == true
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
       - run: npx vsce publish --packagePath $(find . -iname *.vsix)
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
       - name: Publish GitHub release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
           files: code-blocks-*.vsix
