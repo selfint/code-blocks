@@ -1,87 +1,141 @@
 name: CI/CD
 
 on:
-    push:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish extension to VSCode Marketplace"
+        type: boolean
+        required: true
+        default: false
 
 permissions:
-    contents: write
+  contents: write
 
 env:
-    TEST_TIMEOUT: 5m
+  TEST_TIMEOUT: 5m
+  BRANCH: ${{ startsWith(github.head_ref, '') && github.head_ref || github.ref_name }}
 
 jobs:
-    test:
-        timeout-minutes: 60
-        strategy:
-            fail-fast: false
-            matrix:
-                os: [macos-latest, ubuntu-latest, windows-latest]
-        runs-on: ${{ matrix.os }}
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
-            - name: Install Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: 20
-            - name: Install extension dependencies
-              run: yarn run install:all
-            - name: Build webview
-              if: matrix.os != 'macos-latest'
-              run: yarn run build:webview
-            # TODO: fix this command getting stuck on macos
-            - name: Build webview
-              if: matrix.os == 'macos-latest'
-              uses: nick-fields/retry@v3
-              with:
-                  timeout_minutes: 1
-                  max_attempts: 5
-                  command: yarn run build:webview
-            - name: Run tests
-              uses: coactions/setup-xvfb@v1
-              with:
-                  run: yarn test
-              env:
-                  TEST_TIMEOUT: 2m
+  test:
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: win32
+            arch: x64
+            npm_config_arch: x64
+          - os: windows-latest
+            platform: win32
+            arch: arm64
+            npm_config_arch: arm
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+            npm_config_arch: x64
+          - os: ubuntu-latest
+            platform: linux
+            arch: arm64
+            npm_config_arch: arm64
+          - os: ubuntu-latest
+            platform: linux
+            arch: armhf
+            npm_config_arch: arm
+          - os: ubuntu-latest
+            platform: alpine
+            arch: x64
+            npm_config_arch: x64
+          - os: ubuntu-latest
+            platform: alpine
+            arch: arm64
+            npm_config_arch: arm64
+          - os: macos-latest
+            platform: darwin
+            arch: x64
+            npm_config_arch: x64
+          - os: macos-latest
+            platform: darwin
+            arch: arm64
+            npm_config_arch: arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+      - name: Install extension dependencies
+        run: yarn run install:all
+      - name: Build webview
+        run: yarn run build:webview
+      - name: Run tests
+        uses: coactions/setup-xvfb@v1
+        with:
+          run: yarn test
+        env:
+          TEST_TIMEOUT: 2m
+      - shell: pwsh
+        run: echo "target=${{ matrix.platform }}-${{ matrix.arch }}" >> $env:GITHUB_ENV
+      - run: npx --yes vsce package --yarn --githubBranch ${{ github.ref_name }} --target ${{ env.target }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.target }}
+          path: "*.vsix"
 
-    package:
-        name: Package extension
-        needs: test
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
-            - name: Install Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: 20
-            - name: Install extension dependencies
-              run: yarn run install:all
-            - name: Build webview
-              run: yarn run build:webview
-            - name: Package extension
-              run: npx --yes @vscode/vsce package --yarn --githubBranch ${{ github.ref_name }}
-            - name: Upload extension
-              uses: actions/upload-artifact@v4
-              with:
-                  name: code-blocks-${{ github.ref_name }}.vsix
-                  path: code-blocks-*.vsix
+  examples:
+    name: Build examples
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+            node-version: 20
+      - name: Install asset generation dependencies
+        run: |
+          sudo mkdir -p /usr/local/bin
+          sudo ln -sf /bin/true /usr/local/bin/mandb  # no-op to skip man-db triggers
+          sudo DEBIAN_FRONTEND=noninteractive apt update
+          sudo DEBIAN_FRONTEND=noninteractive \
+            apt install -y --no-install-recommends \
+            ffmpeg libnss3 xvfb \
+            -o Dpkg::Options::="--path-exclude=/usr/share/man/*" \
+            -o Dpkg::Options::="--path-exclude=/usr/share/doc/*"
+      - name: Install extension dependencies
+        run: yarn run install:all
+      - name: Build webview
+        run: yarn run build:webview
+      - name: Build extension
+        run: yarn run compile
+      - name: Setting global vscode settings
+        run: cp -r ./out/examples/examples-editor/.vscode ~/.vscode
+      - name: Generate assets
+        run: |
+          chmod +x ./generate-assets.sh
+          chmod +x ./generate-example-asset.sh
+          ./generate-assets.sh ./out/examples .
+      - name: Upload assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BRANCH }}-assets
+          path: |
+            *.gif
 
-    release:
-        name: Release extension
-        if: startsWith(github.ref, 'refs/tags/v')
-        needs: package
-        runs-on: ubuntu-latest
-        steps:
-            - name: Download package
-              uses: actions/download-artifact@v4
-              with:
-                  name: code-blocks-${{ github.ref_name }}.vsix
-                  path: .
-            - name: Publish GitHub release
-              uses: softprops/action-gh-release@v1
-              with:
-                  generate_release_notes: true
-                  files: code-blocks-*.vsix
-            # - name: Publish GitHub release
-            #   run: npx @vscode/vsce publish -i $(ls code-blocks-*.vsix)
+  publish:
+    runs-on: ubuntu-latest
+    needs: test
+    if: success() && startsWith(github.ref, 'refs/tags/v') && github.event_name == 'workflow_dispatch' && inputs.publish == true
+    steps:
+      - uses: actions/download-artifact@v4
+      - run: npx vsce publish --packagePath $(find . -iname *.vsix)
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+          files: code-blocks-*.vsix
