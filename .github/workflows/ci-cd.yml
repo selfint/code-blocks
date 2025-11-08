@@ -16,6 +16,10 @@ on:
         required: true
         default: false
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
