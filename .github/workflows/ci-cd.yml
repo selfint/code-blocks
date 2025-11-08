@@ -82,7 +82,7 @@ jobs:
       - run: npx --yes vsce package --yarn --githubBranch ${{ github.ref_name }} --target ${{ env.target }}
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.target }}
+          name: code-blocks-${{ github.ref_name }}-${{ github.ref_name }}
           path: "*.vsix"
 
   examples:
