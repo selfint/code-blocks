@@ -66,7 +66,7 @@ export async function downloadAndBuildParser(
     npm: string,
     rebuild: boolean = false,
     onData?: (data: string) => void
-): Promise<Result<void, string>> {
+): Promise<Result<boolean, string>> {
     const logger = getLogger();
 
     // typescript-eslint is wrong, this can return null since we use 'nothrow'
@@ -112,13 +112,16 @@ export async function downloadAndBuildParser(
         return err(`failed to extract ${tarFilename} to ${parserDir} > ${JSON.stringify(e)}`);
     }
 
-    // try to load parser optimistically
-    if (!rebuild) {
+    // try to load parser optimistically if prebuilds dir exists
+    let requiresVscodeReload = false;
+    if (!rebuild && existsSync(path.join(parserDir, "prebuilds"))) {
         const loadResult = await loadParser(parsersDir, parserName);
         if (loadResult.status === "ok") {
-            return ok(undefined);
+            return ok(false);
+        } else {
+            logger.log(`Optimistic load failed for parser ${parserName}`);
+            requiresVscodeReload = true;
         }
-        logger.log(`Optimistic load failed for parser ${parserName}`);
     }
 
     // if it fails, try to build it
@@ -142,7 +145,7 @@ export async function downloadAndBuildParser(
 
     logger.log(`Built parser ${parserName} successfully`);
 
-    return ok(undefined);
+    return ok(requiresVscodeReload);
 }
 
 async function runCmd(
@@ -234,7 +237,7 @@ export async function getLanguage(
             return ok(undefined);
         }
 
-        const downloadResult = await vscode.window.withProgress(
+        const buildRequiresVscodeReload = await vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Notification,
                 cancellable: false,
@@ -252,11 +255,23 @@ export async function getLanguage(
             }
         );
 
-        if (downloadResult.status === "err") {
-            const msg = `Failed to download/build parser for language ${languageId} > ${downloadResult.result}`;
+        if (buildRequiresVscodeReload.status === "err") {
+            const msg = `Failed to download/build parser for language ${languageId} > ${buildRequiresVscodeReload.result}`;
 
             logger.log(msg);
             return err({ cause: "downloadFailed", msg });
+        }
+
+        // reload vscode if needed
+        if (buildRequiresVscodeReload.result) {
+            const selection = await vscode.window.showInformationMessage(
+                `Parser for language ${languageId} installed but requires VSCode reload, please click 'Reload'.`,
+                "Reload"
+            );
+
+            if (selection === "Reload") {
+                await vscode.commands.executeCommand("workbench.action.reloadWindow");
+            }
         }
     }
 
