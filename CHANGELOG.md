@@ -2,10 +2,6 @@
 
 # 0.8.0
 
-> [!IMPORTANT]
->
-> This release also fixes the issue that caused the extension to fail on non-Mac systems - [#195](https://github.com/selfint/code-blocks/issues/195).
-
 ## Added 
 
 - Multi-cursor support in Block Mode, thanks [@CB2Moon](https://github.com/selfint/code-blocks/pull/188)!
