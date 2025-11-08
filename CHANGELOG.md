@@ -12,7 +12,7 @@
 
 - `sql` and `latex` support using [@derekstride/tree-sitter-sql](https://github.com/DerekStride/tree-sitter-sql) and [@derekstride/tree-sitter-sql](https://github.com/latex-lsp/tree-sitter-latex).
 
-- ESM-based parser loading for parsers like CSS ([#191](https://github.com/selfint/code-blocks/issues/191)).
+- ESM-based loading for parsers ([#191](https://github.com/selfint/code-blocks/issues/191)).
 
 - 'Remove' option to notification when parser fails to load ([#180](https://github.com/selfint/code-blocks/issues/180)).
 
@@ -20,7 +20,7 @@
 
 ## Fixed
 
-- Parser build method ([[#193](https://github.com/selfint/code-blocks/issues/193)]), now uses `node-gyp` instead of `tree-sitter-cli`.
+- Parsers failing to build ([#193](https://github.com/selfint/code-blocks/issues/193)). The extension now uses `node-gyp` via `npm exec` instead of `tree-sitter-cli`.
 
 - Binary dependency caused extension to fail on non-Mac systems ([#195](https://github.com/selfint/code-blocks/issues/195)).
 
