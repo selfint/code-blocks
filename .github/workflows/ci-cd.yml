@@ -84,10 +84,10 @@ jobs:
           TEST_TIMEOUT: 2m
       - shell: pwsh
         run: echo "target=${{ matrix.platform }}-${{ matrix.arch }}" >> $env:GITHUB_ENV
-      - run: npx --yes vsce package --yarn --githubBranch ${{ github.ref_name }} --target ${{ env.target }}
+      - run: npx --yes vsce package --yarn --githubBranch ${{ env.BRANCH }} --target ${{ env.target }}
       - uses: actions/upload-artifact@v4
         with:
-          name: code-blocks-${{ github.ref_name }}-${{ github.ref_name }}
+          name: code-blocks-${{ env.BRANCH }}-${{ env.target }}
           path: "*.vsix"
 
   examples:
