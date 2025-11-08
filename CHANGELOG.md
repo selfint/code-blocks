@@ -18,6 +18,8 @@
 
 - More languages are now tested in advance: TOML, XML, CSS, Zig, Swift, SQL, LaTeX.
 
+- Extension no longer in `preview` mode! 🎉
+
 ## Fixed
 
 - Parsers failing to build ([#193](https://github.com/selfint/code-blocks/issues/193)). The extension now uses `node-gyp` via `npm exec` instead of `tree-sitter-cli`.

@@ -35,7 +35,7 @@
         "treesitter",
         "visualization"
     ],
-    "preview": true,
+    "preview": false,
     "activationEvents": [
         "onLanguage"
     ],
