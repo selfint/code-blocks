@@ -44,10 +44,6 @@ View your code's syntax tree directly
 
 - `npm`: Used to download and build tree-sitter language parsers. Can be installed from [here](https://nodejs.org/en/download). Must be in `PATH`.
 
-### Note
-
-The extension **used** to require `emcc` (Emscripten compiler) or `docker` to compile tree-sitter parsers to WASM. **This is no longer required**.
-
 ## Commands
 
 | Command                            | Usage                                                           |
