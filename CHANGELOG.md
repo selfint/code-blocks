@@ -1,5 +1,11 @@
 # Changelog
 
+# 0.8.1
+
+## Fixed
+
+- Extension not working in remote SSH session ([[#201](https://github.com/selfint/code-blocks/issues/201)]).
+
 # 0.8.0
 
 ## Added 
