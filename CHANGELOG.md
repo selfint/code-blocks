@@ -4,7 +4,7 @@
 
 ## Fixed
 
-- Extension not working in remote SSH session ([[#201](https://github.com/selfint/code-blocks/issues/201)]).
+- Extension not working in remote SSH session ([#201](https://github.com/selfint/code-blocks/issues/201)). The extension now runs on the local host rather than the remote. This means that parsers are now installed only once, and `npm` is required only on the local machine.
 
 # 0.8.0
 
