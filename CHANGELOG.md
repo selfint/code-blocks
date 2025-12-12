@@ -16,7 +16,7 @@
 
 - `toml` and `xml` support, thanks [@sanarise](https://github.com/selfint/code-blocks/pull/186)!
 
-- `sql` and `latex` support using [@derekstride/tree-sitter-sql](https://github.com/DerekStride/tree-sitter-sql) and [@derekstride/tree-sitter-sql](https://github.com/latex-lsp/tree-sitter-latex).
+- `sql` and `latex` support using [@derekstride/tree-sitter-sql](https://github.com/DerekStride/tree-sitter-sql) and [@pfoerster/tree-sitter-latex](https://github.com/latex-lsp/tree-sitter-latex).
 
 - ESM-based loading for parsers ([#191](https://github.com/selfint/code-blocks/issues/191)).
 
