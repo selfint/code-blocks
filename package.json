@@ -384,7 +384,7 @@
         "chai": "6.2.0",
         "esbuild": "0.25.11",
         "eslint": "9.38.0",
-        "glob": "11.0.3",
+        "glob": "11.1.0",
         "mocha": "11.7.4",
         "typescript": "5.9.3",
         "typescript-eslint": "8.46.2"
