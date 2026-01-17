@@ -390,7 +390,7 @@
         "typescript-eslint": "8.46.2"
     },
     "dependencies": {
-        "tar": "7.5.2",
+        "tar": "7.5.3",
         "tree-sitter": "0.25.0",
         "which": "5.0.0"
     }
